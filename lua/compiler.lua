@@ -14,6 +14,9 @@ function clue.compiler.translate_call(fn, ...)
 end
 
 function clue.compiler.translate_expr(expr)
+    if type(expr) ~= "table" then
+        return tostring(expr)
+    end
     if expr.type == "list" then
         return clue.compiler.translate_call(unpack(expr.value))
     elseif expr.type == "symbol" then
@@ -21,8 +24,8 @@ function clue.compiler.translate_expr(expr)
             return "clue._ns_[\"" .. expr.name .. "\"]"
         end
         return "clue.var(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")"
-    else -- number
-        return tostring(expr.value)
+    else
+        error("unexpected expression type")
     end
 end
 

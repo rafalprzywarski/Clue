@@ -3,6 +3,10 @@ require 'core'
 clue = clue or {}
 clue.reader = clue.reader or {}
 
+function clue.reader.number(value)
+    return {type = "number", value = value}
+end
+
 function clue.reader.is_space(c)
     return c == " " or c == "," or c == "\t" or c == "\r" or c == "\n"
 end
@@ -20,9 +24,9 @@ end
 
 function clue.reader.read_number(s)
     for i = 2, s:len() do
-        if not tonumber(s:sub(1, i)) then return clue.number(tonumber(s:sub(1, i - 1))), s:sub(i) end
+        if not tonumber(s:sub(1, i)) then return clue.reader.number(tonumber(s:sub(1, i - 1))), s:sub(i) end
     end
-    return clue.number(tonumber(s)), ""
+    return clue.reader.number(tonumber(s)), ""
 end
 
 function clue.reader.read_symbol(s)
@@ -72,11 +76,14 @@ function clue.reader.read_sequence(source, create)
 end
 
 function clue.reader.read_expression(source)
-    t, source = clue.reader.read_token(source)
+    local t, source = clue.reader.read_token(source)
     if t == nil then
         return nil, source
     end
-    if t.type == "symbol" or t.type == "number" then
+    if t.type == "number" then
+        return t.value, source
+    end
+    if t.type == "symbol" then
         return t, source
     end
     if t.type == "delimiter" and t.value == ")" then
@@ -95,8 +102,8 @@ function clue.reader.read_expression(source)
 end
 
 function clue.reader.read(source)
-    es = {}
-    e, source = clue.reader.read_expression(source)
+    local es = {}
+    local e, source = clue.reader.read_expression(source)
     while e do
         table.insert(es, e)
         e, source = clue.reader.read_expression(source)
