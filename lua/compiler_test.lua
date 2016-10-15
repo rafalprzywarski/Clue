@@ -28,9 +28,14 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile("(fn [] (f 1 2))"), "function() return clue._ns_[\"f\"](1, 2) end")
                     t.assert_equals(clue.compiler.compile("(fn [] (f 1) (g 2) (h 3))"), "function() clue._ns_[\"f\"](1); clue._ns_[\"g\"](2); return clue._ns_[\"h\"](3) end")
                 end,
-                ["with parameters"] = function()
+                ["with declared parameters"] = function()
                     t.assert_equals(clue.compiler.compile("(fn [a] (f 1 2))"), "function(a) return clue._ns_[\"f\"](1, 2) end")
                     t.assert_equals(clue.compiler.compile("(fn [b c d] (f 1 2))"), "function(b, c, d) return clue._ns_[\"f\"](1, 2) end")
+                end,
+                ["with parameters used in the body"] = function()
+                    t.assert_equals(clue.compiler.compile("(fn [a] (a 1 2))"), "function(a) return a(1, 2) end")
+                    t.assert_equals(clue.compiler.compile("(fn [f x] (f x y))"), "function(f, x) return f(x, clue._ns_[\"y\"]) end")
+                    t.assert_equals(clue.compiler.compile("(fn [a b c] (a b) [a b c])"), "function(a, b, c) a(b); return {a, b, c} end")  
                 end
             }
         }

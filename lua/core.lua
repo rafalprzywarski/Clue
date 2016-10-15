@@ -25,3 +25,11 @@ function clue.map_array(f, a)
     end
     return m
 end
+
+function clue.to_set(a)
+    local s = {}
+    for _, v in ipairs(a) do
+        s[v] = true
+    end
+    return s
+end
