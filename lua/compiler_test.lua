@@ -17,7 +17,18 @@ t.describe("clue.compiler", {
             ["symbols into vars"] = function()
                 t.assert_equals(clue.compiler.compile("an-example"), "clue._ns_[\"an-example\"]")
                 t.assert_equals(clue.compiler.compile("my.ns.example/an-example"), "clue.var(\"my.ns.example\", \"an-example\")")
-            end
+            end,
+            ["vectors into arrays"] = function()
+                t.assert_equals(clue.compiler.compile("[]"), "{}")
+                t.assert_equals(clue.compiler.compile("[1 2 3 4]"), "{1, 2, 3, 4}")
+                t.assert_equals(clue.compiler.compile("[(hello) s/x]"), "{clue._ns_[\"hello\"](), clue.var(\"s\", \"x\")}")
+            end,
+            ["function definitions"] = {
+                ["with no parameters"] = function()
+                    t.assert_equals(clue.compiler.compile("(fn [] (f 1 2))"), "function() return clue._ns_[\"f\"](1, 2) end")
+                    t.assert_equals(clue.compiler.compile("(fn [] (f 1) (g 2) (h 3))"), "function() clue._ns_[\"f\"](1); clue._ns_[\"g\"](2); return clue._ns_[\"h\"](3) end")
+                end
+            }
         }
     }
 })
