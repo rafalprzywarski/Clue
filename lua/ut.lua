@@ -111,6 +111,7 @@ function M.describe(name, spec)
     end
     if #failures > 0 then
         print(#failures .. " failure" .. (#failures > 1 and "s" or ""))
+        os.exit(1)
     else
         print(name .. " ok")
     end
