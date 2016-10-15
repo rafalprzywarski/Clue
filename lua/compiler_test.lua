@@ -36,6 +36,9 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile("(fn [a] (a 1 2))"), "function(a) return a(1, 2) end")
                     t.assert_equals(clue.compiler.compile("(fn [f x] (f x y))"), "function(f, x) return f(x, clue._ns_[\"y\"]) end")
                     t.assert_equals(clue.compiler.compile("(fn [a b c] (a b) [a b c])"), "function(a, b, c) a(b); return {a, b, c} end")
+                end,
+                ["with parameters used in the body of a nested function"] = function()
+                    t.assert_equals(clue.compiler.compile("(fn [a b] (fn [c d] (a b c d)))"), "function(a, b) return function(c, d) return a(b, c, d) end end")
                 end
             },
             ["variable definitions"] = function()

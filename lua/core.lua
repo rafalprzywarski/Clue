@@ -33,3 +33,10 @@ function clue.to_set(a)
     end
     return s
 end
+
+function clue.set_union(s1, s2)
+    local s = {}
+    for k, _ in pairs(s1) do s[k] = true end
+    for k, _ in pairs(s2) do s[k] = true end
+    return s
+end

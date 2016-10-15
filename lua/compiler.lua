@@ -4,9 +4,9 @@ require 'reader'
 clue = clue or {}
 clue.compiler = clue.compiler or {}
 clue.compiler.special_forms = {
-    fn = function(params, ...)
+    fn = function(locals, params, ...)
         local param_names = clue.map_array(function(s) return s.name end, params.value)
-        local locals = clue.to_set(param_names)
+        locals = clue.set_union(locals, clue.to_set(param_names))
         local translated = {}
         for i = 1, select("#", ...) do
             table.insert(translated, clue.compiler.translate_expr(locals, select(i, ...)))
@@ -14,14 +14,14 @@ clue.compiler.special_forms = {
         translated[#translated] = "return " .. translated[#translated]
         return "function(" .. table.concat(param_names, ", ") .. ") " .. table.concat(translated, "; ") .. " end"
     end,
-    def = function(sym, value)
+    def = function(locals, sym, value)
         return "clue._ns_[\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr({}, value)
     end
 }
 
 function clue.compiler.translate_call(locals, fn, ...)
     if fn.type == "symbol" and fn.ns == nil and clue.compiler.special_forms[fn.name] then
-        return clue.compiler.special_forms[fn.name](...)
+        return clue.compiler.special_forms[fn.name](locals, ...)
     end
     local s = clue.compiler.translate_expr(locals, fn) .. "(";
     for i = 1, select("#", ...) do
