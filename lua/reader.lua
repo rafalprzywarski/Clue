@@ -2,6 +2,7 @@ require 'core'
 
 clue = clue or {}
 clue.reader = clue.reader or {}
+clue.reader.constants = { ["nil"] = clue.nil_ }
 
 function clue.reader.number(value)
     return {type = "number", value = value}
@@ -84,7 +85,7 @@ function clue.reader.read_expression(source)
         return t.value, source
     end
     if t.type == "symbol" then
-        return t, source
+        return (t.ns == nil and clue.reader.constants[t.name]) or t, source
     end
     if t.type == "delimiter" and t.value == ")" then
         return nil

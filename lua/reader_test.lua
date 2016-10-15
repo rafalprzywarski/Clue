@@ -7,6 +7,10 @@ t.describe("clue.reader", {
             ["an empty string"] = function()
                 t.assert_equals(clue.reader.read(""), {})
             end,
+            ["nil"] = function()
+                t.assert_equals(clue.reader.read("nil"), {clue.nil_})
+                t.assert_equals(clue.reader.read("1 nil nil"), {1, clue.nil_, clue.nil_})
+            end,
             ["numbers"] = function()
                 t.assert_equals(clue.reader.read("10"), {10})
                 t.assert_equals(clue.reader.read(" 1 50 3789 "), {1, 50, 3789})

@@ -1,5 +1,7 @@
 clue = clue or {}
 
+clue.nil_ = { nil__ = true }
+
 function clue.symbol(ns, name)
     if name == nil then
         name = ns
