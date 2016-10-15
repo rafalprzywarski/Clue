@@ -2,7 +2,11 @@ require 'core'
 
 clue = clue or {}
 clue.reader = clue.reader or {}
-clue.reader.constants = { ["nil"] = clue.nil_ }
+clue.reader.constants = {
+    ["nil"] = clue.nil_,
+    ["true"] = true,
+    ["false"] = false
+}
 
 function clue.reader.number(value)
     return {type = "number", value = value}
@@ -66,7 +70,7 @@ end
 function clue.reader.read_sequence(source, create)
     local l = {}
     local e, nsource = clue.reader.read_expression(source)
-    while e do
+    while e ~= nil do
         table.insert(l, e)
         source = nsource
         e, nsource = clue.reader.read_expression(source)
@@ -85,7 +89,10 @@ function clue.reader.read_expression(source)
         return t.value, source
     end
     if t.type == "symbol" then
-        return (t.ns == nil and clue.reader.constants[t.name]) or t, source
+        if t.ns == nil and clue.reader.constants[t.name] ~= nil then
+            return clue.reader.constants[t.name], source
+        end
+        return t, source
     end
     if t.type == "delimiter" and t.value == ")" then
         return nil
@@ -105,7 +112,7 @@ end
 function clue.reader.read(source)
     local es = {}
     local e, source = clue.reader.read_expression(source)
-    while e do
+    while e ~= nil do
         table.insert(es, e)
         e, source = clue.reader.read_expression(source)
     end

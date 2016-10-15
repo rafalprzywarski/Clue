@@ -11,6 +11,10 @@ t.describe("clue.reader", {
                 t.assert_equals(clue.reader.read("nil"), {clue.nil_})
                 t.assert_equals(clue.reader.read("1 nil nil"), {1, clue.nil_, clue.nil_})
             end,
+            ["boolean constants"] = function()
+                t.assert_equals(clue.reader.read("true false"), {true, false})
+                t.assert_equals(clue.reader.read("[true false]"), {clue.vector(true, false)})
+            end,
             ["numbers"] = function()
                 t.assert_equals(clue.reader.read("10"), {10})
                 t.assert_equals(clue.reader.read(" 1 50 3789 "), {1, 50, 3789})
