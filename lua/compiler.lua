@@ -13,6 +13,9 @@ clue.compiler.special_forms = {
         end
         translated[#translated] = "return " .. translated[#translated]
         return "function(" .. table.concat(param_names, ", ") .. ") " .. table.concat(translated, "; ") .. " end"
+    end,
+    def = function(sym, value)
+        return "clue._ns_[\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr({}, value)
     end
 }
 

@@ -35,9 +35,13 @@ t.describe("clue.compiler", {
                 ["with parameters used in the body"] = function()
                     t.assert_equals(clue.compiler.compile("(fn [a] (a 1 2))"), "function(a) return a(1, 2) end")
                     t.assert_equals(clue.compiler.compile("(fn [f x] (f x y))"), "function(f, x) return f(x, clue._ns_[\"y\"]) end")
-                    t.assert_equals(clue.compiler.compile("(fn [a b c] (a b) [a b c])"), "function(a, b, c) a(b); return {a, b, c} end")  
+                    t.assert_equals(clue.compiler.compile("(fn [a b c] (a b) [a b c])"), "function(a, b, c) a(b); return {a, b, c} end")
                 end
-            }
+            },
+            ["variable definitions"] = function()
+                t.assert_equals(clue.compiler.compile("(def a 10)"), "clue._ns_[\"a\"] = 10")
+                t.assert_equals(clue.compiler.compile("(def ready? (fn [x] x))"), "clue._ns_[\"ready?\"] = function(x) return x end")
+            end
         }
     }
 })
