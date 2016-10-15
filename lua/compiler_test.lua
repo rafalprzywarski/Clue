@@ -44,7 +44,21 @@ t.describe("clue.compiler", {
             ["variable definitions"] = function()
                 t.assert_equals(clue.compiler.compile("(def a 10)"), "clue._ns_[\"a\"] = 10")
                 t.assert_equals(clue.compiler.compile("(def ready? (fn [x] x))"), "clue._ns_[\"ready?\"] = function(x) return x end")
-            end
+            end,
+            ["let definitions"] = {
+                ["without constants"] = function()
+                    t.assert_equals(clue.compiler.compile("(let [])"), "clue.nil_")
+                    t.assert_equals(clue.compiler.compile("(let [] (f 1 2))"), "(function() return clue._ns_[\"f\"](1, 2) end)()")
+                    t.assert_equals(clue.compiler.compile("(let [] (f) (f 1 2))"), "(function() clue._ns_[\"f\"](); return clue._ns_[\"f\"](1, 2) end)()")
+                end,
+                ["with constants"] = function()
+                    t.assert_equals(clue.compiler.compile("(let [a (f)])"), "(function() local a = clue._ns_[\"f\"](); return clue.nil_ end)()")
+                    t.assert_equals(clue.compiler.compile("(let [a f b 2] (a b))"), "(function() local a = clue._ns_[\"f\"]; local b = 2; return a(b) end)()")
+                    t.assert_equals(clue.compiler.compile("(let [a 1 b 2] (a) (b))"), "(function() local a = 1; local b = 2; a(); return b() end)()")
+                    t.assert_equals(clue.compiler.compile("(fn [a] (let [b a] (b a)))"), "function(a) return (function() local b = a; return b(a) end)() end")
+                    t.assert_equals(clue.compiler.compile("(let [a a a a a b b a] (b a)"), "(function() local a = clue._ns_[\"a\"]; local a = a; local a = clue._ns_[\"b\"]; local b = a; return b(a) end)()")
+                end
+            }
         }
     }
 })

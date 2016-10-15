@@ -16,6 +16,25 @@ clue.compiler.special_forms = {
     end,
     def = function(locals, sym, value)
         return "clue._ns_[\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr({}, value)
+    end,
+    let = function(locals, defs, ...)
+        if select("#", ...) == 0 and #defs.value == 0 then
+            return "clue.nil_"
+        end
+        local translated = {}
+        local locals = clue.set_union(locals, {})
+        for i = 1, #defs.value, 2 do
+            table.insert(translated, "local " .. defs.value[i].name .. " = " .. clue.compiler.translate_expr(locals, defs.value[i + 1]))
+            locals[defs.value[i].name] = true
+        end
+        for i = 1, select("#", ...) do
+            table.insert(translated, clue.compiler.translate_expr(locals, select(i, ...)))
+        end
+        if select("#", ...) == 0 then
+            table.insert(translated, "clue.nil_")
+        end
+        translated[#translated] = "return " .. translated[#translated]
+        return "(function() " .. table.concat(translated, "; ") .. " end)()"
     end
 }
 
