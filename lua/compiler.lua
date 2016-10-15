@@ -4,13 +4,14 @@ require 'reader'
 clue = clue or {}
 clue.compiler = clue.compiler or {}
 clue.compiler.special_forms = {
-    fn = function(args, ...)
+    fn = function(params, ...)
         local translated = {}
         for i = 1, select("#", ...) do
             table.insert(translated, clue.compiler.translate_expr(select(i, ...)))
         end
         translated[#translated] = "return " .. translated[#translated]
-        return "function() " .. table.concat(translated, "; ") .. " end"
+        local param_names = clue.map_array(function(s) return s.name end, params.value)
+        return "function(" .. table.concat(param_names, ", ") .. ") " .. table.concat(translated, "; ") .. " end"
     end
 }
 

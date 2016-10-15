@@ -27,6 +27,10 @@ t.describe("clue.compiler", {
                 ["with no parameters"] = function()
                     t.assert_equals(clue.compiler.compile("(fn [] (f 1 2))"), "function() return clue._ns_[\"f\"](1, 2) end")
                     t.assert_equals(clue.compiler.compile("(fn [] (f 1) (g 2) (h 3))"), "function() clue._ns_[\"f\"](1); clue._ns_[\"g\"](2); return clue._ns_[\"h\"](3) end")
+                end,
+                ["with parameters"] = function()
+                    t.assert_equals(clue.compiler.compile("(fn [a] (f 1 2))"), "function(a) return clue._ns_[\"f\"](1, 2) end")
+                    t.assert_equals(clue.compiler.compile("(fn [b c d] (f 1 2))"), "function(b, c, d) return clue._ns_[\"f\"](1, 2) end")
                 end
             }
         }
