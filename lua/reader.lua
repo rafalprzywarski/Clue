@@ -8,7 +8,7 @@ function clue.reader.is_space(c)
 end
 
 function clue.reader.is_delimiter(c)
-    return c == "(" or c == ")"
+    return c == "(" or c == ")" or c == "[" or c == "]"
 end
 
 function clue.reader.skip_space(s)
@@ -48,7 +48,7 @@ function clue.reader.read_token(source)
     if first == "" then
         return nil, source
     end
-    if first == "(" or first == ")" then
+    if clue.reader.is_delimiter(first) then
         return {type = "delimiter", value = first}, source:sub(2)
     elseif tonumber(first) then
         return clue.reader.read_number(source)
@@ -56,6 +56,19 @@ function clue.reader.read_token(source)
         symbol, source = clue.reader.read_symbol(source)
         return clue.reader.split_symbol(symbol), source
     end
+end
+
+function clue.reader.read_sequence(source, create)
+    local l = {}
+    local e, nsource = clue.reader.read_expression(source)
+    while e do
+        table.insert(l, e)
+        source = nsource
+        e, nsource = clue.reader.read_expression(source)
+    end
+
+    local t, source = clue.reader.read_token(source) -- ) or ]
+    return create(unpack(l)), source
 end
 
 function clue.reader.read_expression(source)
@@ -69,17 +82,16 @@ function clue.reader.read_expression(source)
     if t.type == "delimiter" and t.value == ")" then
         return nil
     end
-
-    local l = clue.list()
-    local e, nsource = clue.reader.read_expression(source)
-    while e do
-        table.insert(l.value, e)
-        source = nsource
-        e, nsource = clue.reader.read_expression(source)
+    if t.type == "delimiter" and t.value == "(" then
+        return clue.reader.read_sequence(source, clue.list)
     end
-
-    local t, source = clue.reader.read_token(source) -- )
-    return l, source
+    if t.type == "delimiter" and t.value == "]" then
+        return nil
+    end
+    if t.type == "delimiter" and t.value == "[" then
+        return clue.reader.read_sequence(source, clue.vector)
+    end
+    error("unexpected token: " .. t.value)
 end
 
 function clue.reader.read(source)

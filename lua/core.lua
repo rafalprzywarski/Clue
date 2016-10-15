@@ -15,3 +15,7 @@ end
 function clue.list(...)
     return {type = "list", value = {...}}
 end
+
+function clue.vector(...)
+    return {type = "vector", value = {...}}
+end
