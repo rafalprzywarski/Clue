@@ -12,7 +12,7 @@ clue.compiler.special_forms = {
             table.insert(translated, clue.compiler.translate_expr(locals, select(i, ...)))
         end
         translated[#translated] = "return " .. translated[#translated]
-        return "function(" .. table.concat(param_names, ", ") .. ") " .. table.concat(translated, "; ") .. " end"
+        return "(function(" .. table.concat(param_names, ", ") .. ") " .. table.concat(translated, "; ") .. " end)"
     end,
     def = function(locals, sym, value)
         return "clue._ns_[\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr({}, value)
