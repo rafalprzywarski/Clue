@@ -40,3 +40,17 @@ function clue.set_union(s1, s2)
     for k, _ in pairs(s2) do s[k] = true end
     return s
 end
+
+function clue.get_or_create_ns(name)
+    n = clue.namespaces[name]
+    if n then return n end
+    n = {_name_ = name, _aliases_ = {}}
+    clue.namespaces[name] = n
+    return n
+end
+
+function clue.ns(name, aliases)
+    clue._ns_ = clue.get_or_create_ns(name)
+    clue._ns_._aliases_ = aliases
+end
+    

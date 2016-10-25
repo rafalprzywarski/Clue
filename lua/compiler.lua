@@ -15,7 +15,7 @@ clue.compiler.special_forms = {
         return "(function(" .. table.concat(param_names, ", ") .. ") " .. table.concat(translated, "; ") .. " end)"
     end,
     def = function(ns, locals, sym, value)
-        return "clue.namespaces[\"" .. ns .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value)
+        return "clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value)
     end,
     let = function(ns, locals, defs, ...)
         if select("#", ...) == 0 and #defs.value == 0 then
@@ -36,8 +36,26 @@ clue.compiler.special_forms = {
         translated[#translated] = "return " .. translated[#translated]
         return "(function() " .. table.concat(translated, "; ") .. " end)()"
     end,
-    ns = function(ns, locals, sym)
-        return "clue.ns(\"" .. sym.name .. "\")", sym.name
+    ns = function(ns, locals, sym, requires)
+        local translated_reqs = ""
+        local aliases = {}
+        if requires then
+            local reqs = {}
+            for i=2,#requires.value do
+                local req_ns, req_alias
+                if requires.value[i].type == 'vector' then
+                    req_ns = requires.value[i].value[1].name
+                    req_alias = requires.value[i].value[3].name
+                    aliases[req_alias] = req_ns
+                else
+                    req_ns = requires.value[i].name
+                    req_alias = req_ns
+                end
+                table.insert(reqs, "[\"" .. req_alias .. "\"" .. "] = " .. "\"" .. req_ns .. "\"")
+            end
+            translated_reqs = ", " .. "{" .. table.concat(reqs, ", ") .. "}"
+        end
+        return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")", {name = sym.name, aliases = aliases}
     end
 }
 
@@ -72,9 +90,9 @@ function clue.compiler.translate_expr(ns, locals, expr)
             if locals[expr.name] then
                 return expr.name
             end
-            return "clue.namespaces[\"" .. ns .. "\"][\"" .. expr.name .. "\"]"
+            return "clue.namespaces[\"" .. ns.name .. "\"][\"" .. expr.name .. "\"]"
         end
-        return "clue.namespaces[\"" .. expr.ns .. "\"][\"" .. expr.name .. "\"]"
+        return "clue.namespaces[\"" .. ((ns.aliases or {})[expr.ns] or expr.ns) .. "\"][\"" .. expr.name .. "\"]"
     elseif expr.type == "vector" then
         return clue.compiler.translate_vector(ns, locals, expr.value)
     else
