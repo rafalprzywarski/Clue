@@ -35,6 +35,9 @@ clue.compiler.special_forms = {
         end
         translated[#translated] = "return " .. translated[#translated]
         return "(function() " .. table.concat(translated, "; ") .. " end)()"
+    end,
+    ns = function(ns, locals, sym)
+        return "clue.ns(\"" .. sym.name .. "\")", sym.name
     end
 }
 
@@ -82,7 +85,9 @@ end
 function clue.compiler.translate(ns, exprs)
     local translated = {}
     for _, expr in ipairs(exprs) do
-    	table.insert(translated, clue.compiler.translate_expr(ns, {}, expr))
+        local t, new_ns = clue.compiler.translate_expr(ns, {}, expr)
+        if new_ns then ns = new_ns end
+    	table.insert(translated, t)
     end
     return table.concat(translated, ";\n")
 end

@@ -73,8 +73,19 @@ t.describe("clue.compiler", {
             },
             ["multiple expressions into multiple statements"] = function()
                 ns = "some"
-                t.assert_equals(clue.compiler.compile("some", "(def x 9)(f1)"), "clue.namespaces[\"some\"][\"x\"] = 9;\nclue.namespaces[\"some\"][\"f1\"]()")
-                t.assert_equals(clue.compiler.compile("some", "(def x 9)(f1)(f2)"), "clue.namespaces[\"some\"][\"x\"] = 9;\nclue.namespaces[\"some\"][\"f1\"]();\nclue.namespaces[\"some\"][\"f2\"]()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)"), "clue.namespaces[\"some\"][\"x\"] = 9;\nclue.namespaces[\"some\"][\"f1\"]()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)(f2)"), "clue.namespaces[\"some\"][\"x\"] = 9;\nclue.namespaces[\"some\"][\"f1\"]();\nclue.namespaces[\"some\"][\"f2\"]()")
+            end,
+            ["namespace definitions"] = function()
+                t.assert_equals(clue.compiler.compile("some", "(ns user.core)"), "clue.ns(\"user.core\")")
+                t.assert_equals(clue.compiler.compile(
+                    "some",
+                    "(ns user.core)(f1)(f2)"),
+                    "clue.ns(\"user.core\");\nclue.namespaces[\"user.core\"][\"f1\"]();\nclue.namespaces[\"user.core\"][\"f2\"]()")
+                t.assert_equals(clue.compiler.compile(
+                    "some",
+                    "(f1 (ns other))(f2)"),
+                    "clue.namespaces[\"some\"][\"f1\"](clue.ns(\"other\"));\nclue.namespaces[\"some\"][\"f2\"]()")
             end
         }
     }
