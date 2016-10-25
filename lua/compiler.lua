@@ -80,11 +80,11 @@ function clue.compiler.translate_expr(ns, locals, expr)
 end
 
 function clue.compiler.translate(ns, exprs)
-    local s = ""
+    local translated = {}
     for _, expr in ipairs(exprs) do
-    	s = s .. clue.compiler.translate_expr(ns, {}, expr)
+    	table.insert(translated, clue.compiler.translate_expr(ns, {}, expr))
     end
-    return s
+    return table.concat(translated, ";\n")
 end
 
 function clue.compiler.compile(ns, source)
