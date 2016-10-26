@@ -1,6 +1,6 @@
 clue = clue or {}
 clue.namespaces = clue.namespaces or {}
-clue.namespaces["org.lua.core"] = setmetatable({}, {__index = _G})
+clue.namespaces["lua"] = setmetatable({}, {__index = _G})
 
 clue.nil_ = { nil__ = true }
 
@@ -53,5 +53,55 @@ end
 
 function clue.ns(name, aliases)
     clue._ns_ = clue.get_or_create_ns(name)
+    for n, v in pairs(clue.namespaces["clue.core"]) do
+        if n ~= "_name_" and n ~= "_aliases_" then
+            clue._ns_[n] = v
+        end
+    end
     clue._ns_._aliases_ = aliases
+end
+
+clue.ns("clue.core")
+
+clue.namespaces["clue.core"]["+"] = function(...)
+    local s = 0
+    for i=1,select("#", ...) do
+        s = s + select(i, ...)
+    end
+    return s
+end
+
+clue.namespaces["clue.core"]["-"] = function(...)
+    if select("#", ...) == 1 then
+        return -select(1, ...)
+    end
+    local s = select(1, ...)
+    for i=2,select("#", ...) do
+        s = s - select(i, ...)
+    end
+    return s
+end
+
+clue.namespaces["clue.core"]["*"] = function(...)
+    local s = 1
+    for i=1,select("#", ...) do
+        s = s * select(i, ...)
+    end
+    return s
+end
+
+clue.namespaces["clue.core"]["/"] = function(...)
+    local s = select(1, ...)
+    for i=2,select("#", ...) do
+        s = s / select(i, ...)
+    end
+    return s
+end
+
+clue.namespaces["clue.core"]["%"] = function(...)
+    local s = select(1, ...)
+    for i=2,select("#", ...) do
+        s = s % select(i, ...)
+    end
+    return s
 end
