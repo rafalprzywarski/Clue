@@ -4,7 +4,7 @@ require("reader")
 t.describe("clue.reader", {
     [".read"] = {
         ["should read"] = {
-            ["an empty string"] = function()
+            ["an empty input"] = function()
                 t.assert_equals(clue.reader.read(""), {})
             end,
             ["nil"] = function()
@@ -18,6 +18,10 @@ t.describe("clue.reader", {
             ["numbers"] = function()
                 t.assert_equals(clue.reader.read("10"), {10})
                 t.assert_equals(clue.reader.read(" 1 50 3789 "), {1, 50, 3789})
+            end,
+            ["string"] = function()
+                t.assert_equals(clue.reader.read("\"\""), {""})
+                t.assert_equals(clue.reader.read("\"sonia\""), {"sonia"})
             end,
             ["a symbol"] = function()
                 t.assert_equals(clue.reader.read("hello"), {clue.symbol("hello")})

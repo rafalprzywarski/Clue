@@ -12,6 +12,10 @@ function clue.reader.number(value)
     return {type = "number", value = value}
 end
 
+function clue.reader.string(value)
+    return {type = "string", value = value}
+end
+
 function clue.reader.is_space(c)
     return c == " " or c == "," or c == "\t" or c == "\r" or c == "\n"
 end
@@ -25,6 +29,13 @@ function clue.reader.skip_space(s)
         if not clue.reader.is_space(s:sub(i, i)) then return s:sub(i) end
     end
     return ""
+end
+
+function clue.reader.read_string(s)
+    for i = 2, s:len() do
+        if s:sub(i, i) == "\"" then return clue.reader.string(s:sub(2, i - 1)), s:sub(i + 1) end
+    end
+    error("missing closing \"")
 end
 
 function clue.reader.read_number(s)
@@ -62,6 +73,8 @@ function clue.reader.read_token(source)
     end
     if clue.reader.is_delimiter(first) then
         return {type = "delimiter", value = first}, source:sub(2)
+    elseif first == "\"" then
+        return clue.reader.read_string(source)
     elseif tonumber(first) then
         return clue.reader.read_number(source)
     else
@@ -89,6 +102,9 @@ function clue.reader.read_expression(source)
         return nil, source
     end
     if t.type == "number" then
+        return t.value, source
+    end
+    if t.type == "string" then
         return t.value, source
     end
     if t.type == "symbol" then
