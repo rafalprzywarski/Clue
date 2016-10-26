@@ -1,4 +1,6 @@
 clue = clue or {}
+clue.namespaces = clue.namespaces or {}
+clue.namespaces["org.lua.core"] = setmetatable({}, {__index = _G})
 
 clue.nil_ = { nil__ = true }
 
@@ -53,4 +55,3 @@ function clue.ns(name, aliases)
     clue._ns_ = clue.get_or_create_ns(name)
     clue._ns_._aliases_ = aliases
 end
-    
