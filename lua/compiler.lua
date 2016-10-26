@@ -3,6 +3,15 @@ require 'reader'
 
 clue = clue or {}
 clue.compiler = clue.compiler or {}
+
+function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, ...)
+    local translated = {}
+    for i = 1, select("#", ...) do
+        table.insert(translated, clue.compiler.translate_expr(ns, locals, select(i, ...)))
+    end
+    return table.concat(translated, delimiter)
+end
+
 clue.compiler.special_forms = {
     fn = function(ns, locals, params, ...)
         local param_names = clue.map_array(function(s) return s.name end, params.value)
@@ -56,6 +65,25 @@ clue.compiler.special_forms = {
             translated_reqs = ", " .. "{" .. table.concat(reqs, ", ") .. "}"
         end
         return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")", {name = sym.name, aliases = aliases}
+    end,
+    ["+"] = function(ns, locals, ...)
+        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " + ", ...) .. ")"
+    end,
+    ["-"] = function(ns, locals, ...)
+        local translated = clue.compiler.translate_and_concat_expressions(ns, locals, " - ", ...)
+        if select("#", ...) == 1 then
+            translated = "-" .. translated
+        end
+        return "(" .. translated .. ")"
+    end,
+    ["*"] = function(ns, locals, ...)
+        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " * ", ...) .. ")"
+    end,
+    ["/"] = function(ns, locals, ...)
+        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " / ", ...) .. ")"
+    end,
+    ["%"] = function(ns, locals, ...)
+        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " % ", ...) .. ")"
     end
 }
 

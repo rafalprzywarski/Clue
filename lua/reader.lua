@@ -44,6 +44,9 @@ function clue.reader.read_symbol(s)
 end
 
 function clue.reader.split_symbol(s)
+    if s.name == "/" then
+        return s
+    end
     local slash = s.name:find("/")
     if not slash then
         return s

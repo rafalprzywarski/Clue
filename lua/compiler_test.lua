@@ -98,6 +98,33 @@ t.describe("clue.compiler", {
                         "clue.ns(\"user.core\", {[\"some\"] = \"org.some.xyz\"});\n" ..
                         "clue.namespaces[\"org.some.xyz\"][\"f1\"]()")
                 end
+            },
+            ["operator"] = {
+                ["+"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "(+ 1)"), "(1)")
+                    t.assert_equals(clue.compiler.compile(nil, "(+ 1 2)"), "(1 + 2)")
+                    t.assert_equals(clue.compiler.compile(nil, "(+ 1 2 3)"), "(1 + 2 + 3)")
+                end,
+                ["-"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "(- 1)"), "(-1)")
+                    t.assert_equals(clue.compiler.compile(nil, "(- 1 2)"), "(1 - 2)")
+                    t.assert_equals(clue.compiler.compile(nil, "(- 1 2 3)"), "(1 - 2 - 3)")
+                end,
+                ["*"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "(* 1)"), "(1)")
+                    t.assert_equals(clue.compiler.compile(nil, "(* 1 2)"), "(1 * 2)")
+                    t.assert_equals(clue.compiler.compile(nil, "(* 1 2 3)"), "(1 * 2 * 3)")
+                end,
+                ["/"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "(/ 1)"), "(1)")
+                    t.assert_equals(clue.compiler.compile(nil, "(/ 1 2)"), "(1 / 2)")
+                    t.assert_equals(clue.compiler.compile(nil, "(/ 1 2 3)"), "(1 / 2 / 3)")
+                end,
+                ["%"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "(% 1)"), "(1)")
+                    t.assert_equals(clue.compiler.compile(nil, "(% 1 2)"), "(1 % 2)")
+                    t.assert_equals(clue.compiler.compile(nil, "(% 1 2 3)"), "(1 % 2 % 3)")
+                end
             }
         }
     }

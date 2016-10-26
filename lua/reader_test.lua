@@ -59,6 +59,13 @@ t.describe("clue.reader", {
                 t.assert_equals(clue.reader.read("(1 (2))"), {clue.list(1, clue.list(2))})
                 t.assert_equals(clue.reader.read("((1) 2)"), {clue.list(clue.list(1), 2)})
                 t.assert_equals(clue.reader.read("(((1) 2) 3)"), {clue.list(clue.list(clue.list(1), 2), 3)})
+            end,
+            ["operators"] = function()
+                t.assert_equals(clue.reader.read("+"), {clue.symbol("+")})
+                t.assert_equals(clue.reader.read("-"), {clue.symbol("-")})
+                t.assert_equals(clue.reader.read("*"), {clue.symbol("*")})
+                t.assert_equals(clue.reader.read("/"), {clue.symbol("/")})
+                t.assert_equals(clue.reader.read("%"), {clue.symbol("%")})
             end
         }
     }
