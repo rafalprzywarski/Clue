@@ -58,6 +58,11 @@ function clue.ns(name, aliases)
             clue._ns_[n] = v
         end
     end
+    for _, ref_ns in pairs(aliases or {}) do
+        if not clue.namespaces[ref_ns] then
+            loadstring(clue.compiler.compile_file("../research/" .. ref_ns:gsub("[.]", "/") .. ".clu"))()
+        end
+    end
     clue._ns_._aliases_ = aliases
 end
 

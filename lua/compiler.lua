@@ -150,3 +150,15 @@ end
 function clue.compiler.compile(ns, source)
     return clue.compiler.translate(ns, clue.reader.read(source))
 end
+
+function clue.compiler.read_file(path)
+    local file = io.open(path, "rb")
+    if not file then error("Cannot read file " .. path) end
+    local content = file:read("*a")
+    file:close()
+    return content
+end
+
+function clue.compiler.compile_file(filename)
+    return clue.compiler.compile(nil, clue.compiler.read_file(filename))
+end

@@ -1,0 +1,3 @@
+(ns lib.other (:require lua))
+
+(def hello (fn [] (lua/print 9999)))
