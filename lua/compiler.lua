@@ -84,6 +84,15 @@ clue.compiler.special_forms = {
     end,
     ["%"] = function(ns, locals, ...)
         return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " % ", ...) .. ")"
+    end,
+    ["."] = function(ns, locals, ...)
+        local args = "(";
+        for i = 3, select("#", ...) do
+            if i > 3 then args = args .. ", " end
+            args = args .. clue.compiler.translate_expr(ns, locals, select(i, ...))
+        end
+        args = args .. ")"
+        return clue.compiler.translate_expr(ns, locals, select(1, ...)) .. "[\"" .. select(2, ...).name .. "\"]" .. args
     end
 }
 

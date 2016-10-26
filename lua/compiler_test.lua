@@ -125,7 +125,12 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile(nil, "(% 1 2)"), "(1 % 2)")
                     t.assert_equals(clue.compiler.compile(nil, "(% 1 2 3)"), "(1 % 2 % 3)")
                 end
-            }
+            },
+            ["dot operator"] = function()
+                t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance method)"), "clue.namespaces[\"ns\"][\"instance\"][\"method\"]()")
+                t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance method 1)"), "clue.namespaces[\"ns\"][\"instance\"][\"method\"](1)")
+                t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance method 1 2 3)"), "clue.namespaces[\"ns\"][\"instance\"][\"method\"](1, 2, 3)")
+            end
         }
     }
 })
