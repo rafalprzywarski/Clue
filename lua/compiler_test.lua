@@ -146,7 +146,13 @@ t.describe("clue.compiler", {
                 ["without else"] = function()
                     t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return clue.nil_; end end)()")
                 end
-            }
+            },
+            ["do statement"] = function()
+                ns = {name = "ns"}
+                t.assert_equals(clue.compiler.compile(ns, "(do)"), clue.compiler.compile(ns, "nil"))
+                t.assert_equals(clue.compiler.compile(ns, "(do (f1))"), clue.compiler.compile(ns, "(f1)"))
+                t.assert_equals(clue.compiler.compile(ns, "(do (f1) (f2) (f3))"), "(function() clue.namespaces[\"ns\"][\"f1\"](); clue.namespaces[\"ns\"][\"f2\"](); return clue.namespaces[\"ns\"][\"f3\"](); end)()")
+            end
         },
         ["should inline lua symbols"] = {
             ["used directly"] = function()

@@ -110,6 +110,20 @@ clue.compiler.special_forms = {
         return "(function() if (" .. clue.compiler.translate_expr(ns, locals, cond) .. ") then " ..
             "return " .. clue.compiler.translate_expr(ns, locals, then_) .. "; else " ..
             "return " .. clue.compiler.translate_expr(ns, locals, else_) .. "; end end)()"
+    end,
+    ["do"] = function(ns, locals, ...)
+        if select("#", ...) == 0 then
+            return clue.compiler.translate_expr(ns, locals, clue.nil_)
+        end
+        if select("#", ...) == 1 then
+            return clue.compiler.translate_expr(ns, locals, select(1, ...))
+        end
+        local translated = {}
+        for i = 1, select("#", ...) do
+            table.insert(translated, clue.compiler.translate_expr(ns, locals, select(i, ...)))
+        end
+        translated[#translated] = "return " .. translated[#translated]
+        return "(function() " .. table.concat(translated, "; ") .. "; end)()"
     end
 }
 
