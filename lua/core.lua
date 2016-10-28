@@ -110,3 +110,23 @@ clue.namespaces["clue.core"]["%"] = function(...)
     end
     return s
 end
+
+clue.namespaces["clue.core"]["="] = function(...)
+    local x = select(1, ...)
+    for i=2,select("#", ...) do
+        if x ~= select(i, ...) then
+            return false
+        end
+    end
+    return true
+end
+
+clue.namespaces["clue.core"]["not="] = function(...)
+    local x = select(1, ...)
+    for i=2,select("#", ...) do
+        if x ~= select(i, ...) then
+            return true
+        end
+    end
+    return false
+end
