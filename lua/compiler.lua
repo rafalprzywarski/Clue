@@ -85,14 +85,23 @@ clue.compiler.special_forms = {
     ["%"] = function(ns, locals, ...)
         return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " % ", ...) .. ")"
     end,
-    ["."] = function(ns, locals, ...)
-        local args = "(";
-        for i = 3, select("#", ...) do
-            if i > 3 then args = args .. ", " end
-            args = args .. clue.compiler.translate_expr(ns, locals, select(i, ...))
+    ["."] = function(ns, locals, instance, call)
+        local name, args, op
+        if call.type == "list" then
+            name = call.value[1].name
+            args = "("
+            op = ":"
+            for i = 2,#call.value do
+                if i > 2 then args = args .. ", " end
+                args = args .. clue.compiler.translate_expr(ns, locals, call.value[i])
+            end
+            args = args .. ")"
+        else
+            name = call.name
+            args = ""
+            op = "."
         end
-        args = args .. ")"
-        return clue.compiler.translate_expr(ns, locals, select(1, ...)) .. "[\"" .. select(2, ...).name .. "\"]" .. args
+        return clue.compiler.translate_expr(ns, locals, instance) .. op .. name .. args
     end
 }
 
