@@ -17,6 +17,9 @@ t.describe("clue.compiler", {
                 ns = {name = "user.ns"}
                 t.assert_equals(clue.compiler.compile(ns, "(hi (there))"), "clue.namespaces[\"user.ns\"][\"hi\"](clue.namespaces[\"user.ns\"][\"there\"]())")
             end,
+            ["strings"] = function()
+                t.assert_equals(clue.compiler.compile(nil, "\"Sonia\""), "\"Sonia\"")
+            end,
             ["symbols into vars"] = function()
                 ns = {name = "user.ns"}
                 t.assert_equals(clue.compiler.compile(ns, "an-example"), "clue.namespaces[\"user.ns\"][\"an-example\"]")

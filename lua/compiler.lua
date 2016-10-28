@@ -117,6 +117,9 @@ function clue.compiler.translate_vector(ns, locals, vector)
 end
 
 function clue.compiler.translate_expr(ns, locals, expr)
+    if (type(expr)) == "string" then
+        return "\"" .. expr .. "\""
+    end
     if type(expr) ~= "table" then
         return tostring(expr)
     end
