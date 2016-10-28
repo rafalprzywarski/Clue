@@ -138,6 +138,14 @@ t.describe("clue.compiler", {
                 ["for member access"] = function()
                     t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance member)"), "clue.namespaces[\"ns\"][\"instance\"].member")
                 end
+            },
+            ["if statement"] = {
+                ["with else"] = function()
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then else)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return clue.namespaces[\"ns\"][\"else\"]; end end)()")
+                end,
+                ["without else"] = function()
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return clue.nil_; end end)()")
+                end
             }
         },
         ["should inline lua symbols"] = {
