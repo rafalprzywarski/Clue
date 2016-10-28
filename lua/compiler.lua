@@ -135,13 +135,19 @@ function clue.compiler.translate_expr(ns, locals, expr)
     if expr.type == "list" then
         return clue.compiler.translate_call(ns, locals, unpack(expr.value))
     elseif expr.type == "symbol" then
+        local resolved_ns
         if not expr.ns then
             if locals[expr.name] then
                 return expr.name
             end
-            return "clue.namespaces[\"" .. ns.name .. "\"][\"" .. expr.name .. "\"]"
+            resolved_ns = ns.name
+        else
+            resolved_ns = (ns.aliases or {})[expr.ns] or expr.ns
         end
-        return "clue.namespaces[\"" .. ((ns.aliases or {})[expr.ns] or expr.ns) .. "\"][\"" .. expr.name .. "\"]"
+        if resolved_ns == "lua" then
+            return expr.name
+        end
+        return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
     elseif expr.type == "vector" then
         return clue.compiler.translate_vector(ns, locals, expr.value)
     else

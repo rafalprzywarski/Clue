@@ -139,6 +139,17 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance member)"), "clue.namespaces[\"ns\"][\"instance\"].member")
                 end
             }
+        },
+        ["should inline lua symbols"] = {
+            ["used directly"] = function()
+                t.assert_equals(clue.compiler.compile({name="ns"}, "lua/some"), "some")
+            end,
+            ["aliased"] = function()
+                t.assert_equals(clue.compiler.compile(nil, "(ns user (:require [lua :as L])) L/some"), "clue.ns(\"user\", {[\"L\"] = \"lua\"});\n" .. "some")
+            end,
+            ["but not lua aliases"] = function()
+                t.assert_equals(clue.compiler.compile(nil, "(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", {[\"lua\"] = \"other\"});\n" .. "clue.namespaces[\"other\"][\"some\"]")
+            end
         }
     }
 })
