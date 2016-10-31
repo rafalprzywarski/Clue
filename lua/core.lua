@@ -67,30 +67,37 @@ function clue.vector(...)
     return setmetatable(v, v.mt)
 end
 
-function clue.cons(x, seq)
+function clue.cons(x, coll)
     local c = {type="cons"}
     function c:first()
         return x
     end
     function c:rest()
-        return seq
+        return coll
     end
     function c:next()
-        return seq
+        return clue.seq(coll)
     end
     return c
+end
+
+function clue.seq(coll)
+    if coll and coll:first() then
+        return coll
+    end
+    return nil
 end
 
 function clue.lazy_seq(f)
     local s = {type="lazy_seq"}
     function s:first()
-        return f():first()
+        return (f() or clue.vector()):first()
     end
     function s:rest()
-        return f():rest()
+        return (f() or clue.vector()):rest()
     end
     function s:next()
-        return f():next()
+        return (f() or clue.vector()):next()
     end
     return s
 end
@@ -228,6 +235,7 @@ clue.namespaces["clue.core"]["assoc"] = function(map, k, v)
 end
 
 clue.namespaces["clue.core"]["cons"] = clue.cons
+clue.namespaces["clue.core"]["seq"] = clue.seq
 clue.namespaces["clue.core"]["first"] = function(seq) return seq:first() end
 clue.namespaces["clue.core"]["rest"] = function(seq) return seq:rest() end
 clue.namespaces["clue.core"]["next"] = function(seq) return seq:next() end
