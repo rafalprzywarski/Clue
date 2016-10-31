@@ -25,11 +25,11 @@ t.describe("clue.compiler", {
                 t.assert_equals(clue.compiler.compile(ns, "an-example"), "clue.namespaces[\"user.ns\"][\"an-example\"]")
                 t.assert_equals(clue.compiler.compile(ns, "my.ns.example/an-example"), "clue.namespaces[\"my.ns.example\"][\"an-example\"]")
             end,
-            ["vectors into arrays"] = function()
+            ["vectors into clue.vector calls"] = function()
                 ns = {name = "user.ns"}
-                t.assert_equals(clue.compiler.compile(ns, "[]"), "{}")
-                t.assert_equals(clue.compiler.compile(ns, "[1 2 3 4]"), "{1, 2, 3, 4}")
-                t.assert_equals(clue.compiler.compile(ns, "[(hello) s/x]"), "{clue.namespaces[\"user.ns\"][\"hello\"](), clue.namespaces[\"s\"][\"x\"]}")
+                t.assert_equals(clue.compiler.compile(ns, "[]"), "clue.vector()")
+                t.assert_equals(clue.compiler.compile(ns, "[1 2 3 4]"), "clue.vector(1, 2, 3, 4)")
+                t.assert_equals(clue.compiler.compile(ns, "[(hello) s/x]"), "clue.vector(clue.namespaces[\"user.ns\"][\"hello\"](), clue.namespaces[\"s\"][\"x\"])")
             end,
             ["function definitions"] = {
                 ["with no parameters"] = function()
@@ -46,7 +46,7 @@ t.describe("clue.compiler", {
                     ns = {name = "user.ns"}
                     t.assert_equals(clue.compiler.compile(ns, "(fn [a] (a 1 2))"), "(function(a) return a(1, 2) end)")
                     t.assert_equals(clue.compiler.compile(ns, "(fn [f x] (f x y))"), "(function(f, x) return f(x, clue.namespaces[\"user.ns\"][\"y\"]) end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b c] (a b) [a b c])"), "(function(a, b, c) a(b); return {a, b, c} end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b c] (a b) [a b c])"), "(function(a, b, c) a(b); return clue.vector(a, b, c) end)")
                 end,
                 ["with parameters used in the body of a nested function"] = function()
                     ns = {name = "user.ns"}

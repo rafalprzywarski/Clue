@@ -144,7 +144,7 @@ function clue.compiler.translate_vector(ns, locals, vector)
     for _, v in ipairs(vector) do
         table.insert(translated, clue.compiler.translate_expr(ns, locals, v))
     end
-    return "{" .. table.concat(translated, ", ").. "}"
+    return "clue.vector(" .. table.concat(translated, ", ").. ")"
 end
 
 function clue.compiler.translate_expr(ns, locals, expr)
