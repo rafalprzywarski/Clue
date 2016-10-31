@@ -9,5 +9,4 @@ local function read_file(path)
 end
 
 loadstring(clue.compiler.compile(nil, read_file("clue/core.clu")))()
-
-print(clue.compiler.compile(nil, read_file(arg[1])))
+loadstring(clue.compiler.compile(nil, read_file(arg[1])))()

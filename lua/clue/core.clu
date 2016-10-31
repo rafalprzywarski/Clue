@@ -1,0 +1,15 @@
+(ns clue.core)
+
+(def dec (fn [n] (- n 1)))
+
+(def take (
+    fn [n coll]
+    (cons
+        (first coll)
+        (if (not= n 1) (lazy-seq (take (dec n) (rest coll)))))))
+
+(def map (fn [f coll]
+    (lazy-seq
+        (let [s (seq coll)]
+            (if s
+                (cons (f (first s)) (map f (rest s))))))))

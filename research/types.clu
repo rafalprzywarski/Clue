@@ -19,20 +19,6 @@
 
 (def fib (fn [a b] (lazy-seq (cons a (fib b (+ b a))))))
 
-(def dec (fn [n] (- n 1)))
-
-(def take (
-    fn [n coll]
-    (cons
-        (first coll)
-        (if (not= n 1) (lazy-seq (take (dec n) (rest coll)))))))
-
-(def map (fn [f coll]
-    (lazy-seq
-        (let [s (seq coll)]
-            (if s
-                (cons (f (first s)) (map f (rest s))))))))
-
 (lua/print (str-seq (cons "x" [])))
 
 (lua/print (str-seq [43 54 65 76]))
