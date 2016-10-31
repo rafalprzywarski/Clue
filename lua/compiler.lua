@@ -14,13 +14,30 @@ end
 
 clue.compiler.special_forms = {
     fn = function(ns, locals, params, ...)
-        local param_names = params:map(function(s) return s.name end)
+        local param_names = clue.vector()
+        local va_index = nil
+        for i=1,params.size do
+            if params[i].name == "&" then
+                va_index = i + 1
+                break
+            end
+            param_names:append(params[i].name)
+        end
         locals = clue.set_union(locals, clue.to_set(param_names))
+        if va_index then
+            locals[params[va_index].name] = true
+        end
         local translated = {}
+        if va_index then
+            table.insert(translated, "local " .. params[va_index].name .. " = clue.list(...)")
+        end
         for i = 1, select("#", ...) do
             table.insert(translated, clue.compiler.translate_expr(ns, locals, select(i, ...)))
         end
         translated[#translated] = "return " .. translated[#translated]
+        if va_index then
+            param_names:append("...")
+        end
         return "(function(" .. param_names:concat(", ") .. ") " .. table.concat(translated, "; ") .. " end)"
     end,
     def = function(ns, locals, sym, value)
@@ -28,7 +45,7 @@ clue.compiler.special_forms = {
     end,
     let = function(ns, locals, defs, ...)
         if select("#", ...) == 0 and defs.size == 0 then
-            return "clue.nil_"
+            return "nil"
         end
         local translated = {}
         local locals = clue.set_union(locals, {})
@@ -40,7 +57,7 @@ clue.compiler.special_forms = {
             table.insert(translated, clue.compiler.translate_expr(ns, locals, select(i, ...)))
         end
         if select("#", ...) == 0 then
-            table.insert(translated, "clue.nil_")
+            table.insert(translated, "nil")
         end
         translated[#translated] = "return " .. translated[#translated]
         return "(function() " .. table.concat(translated, "; ") .. " end)()"
@@ -124,6 +141,9 @@ clue.compiler.special_forms = {
         end
         translated[#translated] = "return " .. translated[#translated]
         return "(function() " .. table.concat(translated, "; ") .. "; end)()"
+    end,
+    ["lazy-seq"] = function(ns, locals, body)
+        return "clue.lazy_seq(" .. clue.compiler.translate_expr(ns, locals, clue.list(clue.symbol("fn"), clue.vector(), body)) .. ")"
     end
 }
 
@@ -163,7 +183,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
         return tostring(expr)
     end
     if expr.nil__ then
-        return "clue.nil_"
+        return "nil"
     end
     if expr.type == "list" then
         return clue.compiler.translate_call(ns, locals, expr:unpack())

@@ -23,6 +23,9 @@ function clue.list(...)
         end
         return m
     end
+    function l:concat(delimiter)
+        return table.concat(self.mt.__index, delimiter)
+    end
     return setmetatable(l, l.mt)
 end
 
@@ -39,7 +42,57 @@ function clue.vector(...)
     function v:concat(delimiter)
         return table.concat(self.mt.__index, delimiter)
     end
+    function v:first()
+        return self.mt.__index[1]
+    end
+    function v:next()
+        return self:subvec(2)
+    end
+    function v:rest()
+        local n = self:next()
+        if n == nil then
+            return clue.vector()
+        end
+        return n
+    end
+    function v:subvec(index)
+        if index > self.size then
+            return nil
+        end
+        if index == self.size then
+            return clue.cons(self.mt.__index[index])
+        end
+        return clue.cons(self.mt.__index[index], clue.lazy_seq(function() return self:subvec(index + 1) end))
+    end
     return setmetatable(v, v.mt)
+end
+
+function clue.cons(x, seq)
+    local c = {type="cons"}
+    function c:first()
+        return x
+    end
+    function c:rest()
+        return seq
+    end
+    function c:next()
+        return seq
+    end
+    return c
+end
+
+function clue.lazy_seq(f)
+    local s = {type="lazy_seq"}
+    function s:first()
+        return f():first()
+    end
+    function s:rest()
+        return f():rest()
+    end
+    function s:next()
+        return f():next()
+    end
+    return s
 end
 
 function clue.map(...)
@@ -173,3 +226,8 @@ end
 clue.namespaces["clue.core"]["assoc"] = function(map, k, v)
     return map:assoc(k, v)
 end
+
+clue.namespaces["clue.core"]["cons"] = clue.cons
+clue.namespaces["clue.core"]["first"] = function(seq) return seq:first() end
+clue.namespaces["clue.core"]["rest"] = function(seq) return seq:rest() end
+clue.namespaces["clue.core"]["next"] = function(seq) return seq:next() end

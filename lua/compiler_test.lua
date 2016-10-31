@@ -47,6 +47,11 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile(ns, "(fn [a] (f 1 2))"), "(function(a) return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)")
                     t.assert_equals(clue.compiler.compile(ns, "(fn [b c d] (f 1 2))"), "(function(b, c, d) return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)")
                 end,
+                ["with variable number of parameters"] = function()
+                    ns = {name = "user.ns"}
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [& args] nil)"), "(function(...) local args = clue.list(...); return nil end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b & args] (a b args))"), "(function(a, b, ...) local args = clue.list(...); return a(b, args) end)")
+                end,
                 ["with parameters used in the body"] = function()
                     ns = {name = "user.ns"}
                     t.assert_equals(clue.compiler.compile(ns, "(fn [a] (a 1 2))"), "(function(a) return a(1, 2) end)")
@@ -66,13 +71,13 @@ t.describe("clue.compiler", {
             ["let definitions"] = {
                 ["without constants"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(let [])"), "clue.nil_")
+                    t.assert_equals(clue.compiler.compile(ns, "(let [])"), "nil")
                     t.assert_equals(clue.compiler.compile(ns, "(let [] (f 1 2))"), "(function() return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(let [] (f) (f 1 2))"), "(function() clue.namespaces[\"user.ns\"][\"f\"](); return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)()")
                 end,
                 ["with constants"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(let [a (f)])"), "(function() local a = clue.namespaces[\"user.ns\"][\"f\"](); return clue.nil_ end)()")
+                    t.assert_equals(clue.compiler.compile(ns, "(let [a (f)])"), "(function() local a = clue.namespaces[\"user.ns\"][\"f\"](); return nil end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(let [a f b 2] (a b))"), "(function() local a = clue.namespaces[\"user.ns\"][\"f\"]; local b = 2; return a(b) end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(let [a 1 b 2] (a) (b))"), "(function() local a = 1; local b = 2; a(); return b() end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(fn [a] (let [b a] (b a)))"), "(function(a) return (function() local b = a; return b(a) end)() end)")
@@ -149,7 +154,7 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then else)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return clue.namespaces[\"ns\"][\"else\"]; end end)()")
                 end,
                 ["without else"] = function()
-                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return clue.nil_; end end)()")
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return nil; end end)()")
                 end
             },
             ["do statement"] = function()
