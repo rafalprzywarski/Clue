@@ -147,6 +147,14 @@ function clue.compiler.translate_vector(ns, locals, vector)
     return "clue.vector(" .. table.concat(translated, ", ").. ")"
 end
 
+function clue.compiler.translate_map(ns, locals, map)
+    local translated = {}
+    map:each(function(k, v)
+        table.insert(translated, clue.compiler.translate_expr(ns, locals, k) .. ", " .. clue.compiler.translate_expr(ns, locals, v))
+    end)
+    return "clue.map(" .. table.concat(translated, ", ").. ")"
+end
+
 function clue.compiler.translate_expr(ns, locals, expr)
     if (type(expr)) == "string" then
         return "\"" .. expr .. "\""
@@ -175,6 +183,8 @@ function clue.compiler.translate_expr(ns, locals, expr)
         return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
     elseif expr.type == "vector" then
         return clue.compiler.translate_vector(ns, locals, expr)
+    elseif expr.type == "map" then
+        return clue.compiler.translate_map(ns, locals, expr)
     else
         error("unexpected expression type")
     end

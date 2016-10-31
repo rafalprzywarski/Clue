@@ -37,9 +37,23 @@ function clue.vector(...)
         return m
     end
     function v:concat(delimiter)
-        return table.concat(self.mt.__index, delimiter) 
+        return table.concat(self.mt.__index, delimiter)
     end
     return setmetatable(v, v.mt)
+end
+
+function clue.map(...)
+    local values = {}
+    for i=1,select("#", ...),2 do
+        values[select(i, ...)] = select(i + 1, ...)
+    end
+    local m = {type="map", mt={__index = values}}
+    function m:each(f)
+        for k,v in pairs(self.mt.__index) do
+            f(k, v)
+        end
+    end
+    return setmetatable(m, m.mt)
 end
 
 function clue.to_set(a)

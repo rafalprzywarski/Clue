@@ -21,7 +21,7 @@ function clue.reader.is_space(c)
 end
 
 function clue.reader.is_delimiter(c)
-    return c == "(" or c == ")" or c == "[" or c == "]"
+    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}"
 end
 
 function clue.reader.skip_space(s)
@@ -124,6 +124,12 @@ function clue.reader.read_expression(source)
     end
     if t.type == "delimiter" and t.value == "[" then
         return clue.reader.read_sequence(source, clue.vector)
+    end
+    if t.type == "delimiter" and t.value == "}" then
+        return nil
+    end
+    if t.type == "delimiter" and t.value == "{" then
+        return clue.reader.read_sequence(source, clue.map)
     end
     error("unexpected token: " .. t.value)
 end

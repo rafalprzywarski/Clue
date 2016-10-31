@@ -31,6 +31,11 @@ t.describe("clue.compiler", {
                 t.assert_equals(clue.compiler.compile(ns, "[1 2 3 4]"), "clue.vector(1, 2, 3, 4)")
                 t.assert_equals(clue.compiler.compile(ns, "[(hello) s/x]"), "clue.vector(clue.namespaces[\"user.ns\"][\"hello\"](), clue.namespaces[\"s\"][\"x\"])")
             end,
+            ["maps into clue.map calls"] = function()
+                ns = {name = "user.ns"}
+                t.assert_equals(clue.compiler.compile(ns, "{}"), "clue.map()")
+                t.assert_equals_any(clue.compiler.compile(ns, "{3 4 1 2}"), "clue.map(1, 2, 3, 4)", "clue.map(3, 4, 1, 2)a")
+            end,
             ["function definitions"] = {
                 ["with no parameters"] = function()
                     ns = {name = "user.ns"}

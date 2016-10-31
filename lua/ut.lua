@@ -72,6 +72,15 @@ function M.assert_equals(actual, expected)
     end
 end
 
+function M.assert_equals_any(actual, ...)
+    for i=1,select("#", ...) do
+        if equals(actual, select(i, ...)) then
+            return
+        end
+    end
+    M.fail(to_string(actual) .. " expected to equal any of " .. to_string({...}))
+end
+
 function M.assert_true(actual)
     M.assert_equals(actual, true)
 end

@@ -55,6 +55,15 @@ t.describe("clue.reader", {
                     t.assert_equals(clue.reader.read("[() (1) (2 3)]"), {clue.vector(clue.list(), clue.list(1), clue.list(2, 3))})
                 end
             },
+            ["a map"] = {
+                ["empty"] = function()
+                    t.assert_equals(clue.reader.read("{}"), {clue.map()})
+                end,
+                ["of strings and numbers"] = function()
+                    t.assert_equals(clue.reader.read("{1 2}"), {clue.map(1, 2)})
+                    t.assert_equals(clue.reader.read("{1 2 \"x\" \"y\" 3 [1 2]}"), {clue.map(1, 2, "x", "y", 3, clue.vector(1, 2))})
+                end
+            },
             ["lists"] = function()
                 t.assert_equals(clue.reader.read("(1) (2 3) (4)"), {clue.list(1), clue.list(2, 3), clue.list(4)})
             end,
