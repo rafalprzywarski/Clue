@@ -13,25 +13,39 @@ function clue.symbol(ns, name)
 end
 
 function clue.list(...)
-    return {type = "list", value = {...}}
+    local l = {type="list", mt={__index = {...}}, size=select("#", ...)}
+    function l:unpack() return unpack(self.mt.__index) end
+    function l:append(e) self.size = self.size + 1; self.mt.__index[self.size] = e; return self; end
+    function l:map(f)
+        local m = clue.list()
+        for i=1,self.size do
+            m:append(f(self[i]))
+        end
+        return m
+    end
+    return setmetatable(l, l.mt)
 end
 
 function clue.vector(...)
-    return {type = "vector", value = {...}}
-end
-
-function clue.map_array(f, a)
-    local m = {}
-    for _, v in ipairs(a) do
-        table.insert(m, f(v))
+    local v = {type="vector", mt={__index = {...}}, size=select("#", ...)}
+    function v:append(e) self.size = self.size + 1; self.mt.__index[self.size] = e; return self; end
+    function v:map(f)
+        local m = clue.vector()
+        for i=1,self.size do
+            m:append(f(self[i]))
+        end
+        return m
     end
-    return m
+    function v:concat(delimiter)
+        return table.concat(self.mt.__index, delimiter) 
+    end
+    return setmetatable(v, v.mt)
 end
 
 function clue.to_set(a)
     local s = {}
-    for _, v in ipairs(a) do
-        s[v] = true
+    for i=1,a.size do
+        s[a[i]] = true
     end
     return s
 end

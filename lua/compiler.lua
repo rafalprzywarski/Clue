@@ -14,27 +14,27 @@ end
 
 clue.compiler.special_forms = {
     fn = function(ns, locals, params, ...)
-        local param_names = clue.map_array(function(s) return s.name end, params.value)
+        local param_names = params:map(function(s) return s.name end)
         locals = clue.set_union(locals, clue.to_set(param_names))
         local translated = {}
         for i = 1, select("#", ...) do
             table.insert(translated, clue.compiler.translate_expr(ns, locals, select(i, ...)))
         end
         translated[#translated] = "return " .. translated[#translated]
-        return "(function(" .. table.concat(param_names, ", ") .. ") " .. table.concat(translated, "; ") .. " end)"
+        return "(function(" .. param_names:concat(", ") .. ") " .. table.concat(translated, "; ") .. " end)"
     end,
     def = function(ns, locals, sym, value)
         return "clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value)
     end,
     let = function(ns, locals, defs, ...)
-        if select("#", ...) == 0 and #defs.value == 0 then
+        if select("#", ...) == 0 and defs.size == 0 then
             return "clue.nil_"
         end
         local translated = {}
         local locals = clue.set_union(locals, {})
-        for i = 1, #defs.value, 2 do
-            table.insert(translated, "local " .. defs.value[i].name .. " = " .. clue.compiler.translate_expr(ns, locals, defs.value[i + 1]))
-            locals[defs.value[i].name] = true
+        for i = 1, defs.size, 2 do
+            table.insert(translated, "local " .. defs[i].name .. " = " .. clue.compiler.translate_expr(ns, locals, defs[i + 1]))
+            locals[defs[i].name] = true
         end
         for i = 1, select("#", ...) do
             table.insert(translated, clue.compiler.translate_expr(ns, locals, select(i, ...)))
@@ -50,14 +50,14 @@ clue.compiler.special_forms = {
         local aliases = {}
         if requires then
             local reqs = {}
-            for i=2,#requires.value do
+            for i=2,requires.size do
                 local req_ns, req_alias
-                if requires.value[i].type == 'vector' then
-                    req_ns = requires.value[i].value[1].name
-                    req_alias = requires.value[i].value[3].name
+                if requires[i].type == 'vector' then
+                    req_ns = requires[i][1].name
+                    req_alias = requires[i][3].name
                     aliases[req_alias] = req_ns
                 else
-                    req_ns = requires.value[i].name
+                    req_ns = requires[i].name
                     req_alias = req_ns
                 end
                 table.insert(reqs, "[\"" .. req_alias .. "\"" .. "] = " .. "\"" .. req_ns .. "\"")
@@ -88,12 +88,12 @@ clue.compiler.special_forms = {
     ["."] = function(ns, locals, instance, call)
         local name, args, op
         if call.type == "list" then
-            name = call.value[1].name
+            name = call[1].name
             args = "("
             op = ":"
-            for i = 2,#call.value do
+            for i = 2,call.size do
                 if i > 2 then args = args .. ", " end
-                args = args .. clue.compiler.translate_expr(ns, locals, call.value[i])
+                args = args .. clue.compiler.translate_expr(ns, locals, call[i])
             end
             args = args .. ")"
         else
@@ -141,8 +141,8 @@ end
 
 function clue.compiler.translate_vector(ns, locals, vector)
     local translated = {}
-    for _, v in ipairs(vector) do
-        table.insert(translated, clue.compiler.translate_expr(ns, locals, v))
+    for i=1,vector.size do
+        table.insert(translated, clue.compiler.translate_expr(ns, locals, vector[i]))
     end
     return "clue.vector(" .. table.concat(translated, ", ").. ")"
 end
@@ -158,7 +158,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
         return "clue.nil_"
     end
     if expr.type == "list" then
-        return clue.compiler.translate_call(ns, locals, unpack(expr.value))
+        return clue.compiler.translate_call(ns, locals, expr:unpack())
     elseif expr.type == "symbol" then
         local resolved_ns
         if not expr.ns then
@@ -174,7 +174,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
         end
         return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
     elseif expr.type == "vector" then
-        return clue.compiler.translate_vector(ns, locals, expr.value)
+        return clue.compiler.translate_vector(ns, locals, expr)
     else
         error("unexpected expression type")
     end
