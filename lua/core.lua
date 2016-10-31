@@ -48,10 +48,21 @@ function clue.map(...)
         values[select(i, ...)] = select(i + 1, ...)
     end
     local m = {type="map", mt={__index = values}}
+    function m.mt.__call(t, k)
+        return t[k]
+    end
     function m:each(f)
         for k,v in pairs(self.mt.__index) do
             f(k, v)
         end
+    end
+    function m:assoc(k,v)
+        local n = clue.map()
+        for k,v in pairs(self.mt.__index) do
+            n[k] = v
+        end
+        n[k] = v
+        return n
     end
     return setmetatable(m, m.mt)
 end
@@ -157,4 +168,8 @@ clue.namespaces["clue.core"]["not="] = function(...)
         end
     end
     return false
+end
+
+clue.namespaces["clue.core"]["assoc"] = function(map, k, v)
+    return map:assoc(k, v)
 end
