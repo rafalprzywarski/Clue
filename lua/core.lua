@@ -203,7 +203,7 @@ function clue.ns(name, aliases)
     clue._ns_._aliases_ = aliases
 end
 
- function clue.pr_str(value)
+function clue.pr_str(value)
     local vtype = type(value)
     if vtype == "string" then
         return "\"" .. value:gsub("\\", "\\\\"):gsub("\n", "\\n"):gsub("\t", "\\t") .. "\""
