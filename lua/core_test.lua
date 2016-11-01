@@ -41,6 +41,20 @@ t.describe("clue.core", {
             t.assert_equals(clue.namespaces["clue.core"]["="]("abc", "bce"), false)
             t.assert_equals(clue.namespaces["clue.core"]["="]("abc", "abc"), true)
         end,
+        ["symbols"] = function()
+            t.assert_true(clue.namespaces["clue.core"]["="](clue.symbol("sym"), clue.symbol("sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.symbol("sym"), clue.symbol("X")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.symbol("sym"), clue.symbol("sym"), clue.symbol("X")))
+            t.assert_true(clue.namespaces["clue.core"]["="](clue.symbol("ns", "sym"), clue.symbol("ns", "sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.symbol("ns", "sym"), clue.symbol("X", "sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.symbol("ns", "sym"), clue.symbol("sym")))
+        end,
+        ["symbols against other types (false)"] = function()
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.symbol("sym"), clue.list()))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.list(), clue.symbol("sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.symbol("sym"), "sym"))
+            t.assert_false(clue.namespaces["clue.core"]["="]("sym", clue.symbol("sym")))
+        end,
         ["sequences"] = function()
             t.assert_equals(clue.namespaces["clue.core"]["="](clue.list(), clue.list()), true)
             t.assert_equals(clue.namespaces["clue.core"]["="](clue.list(1), clue.list(1)), true)

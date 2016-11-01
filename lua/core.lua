@@ -269,7 +269,14 @@ function clue.equals(...)
             if type(x) ~= "table" or type(y) ~= "table" then
                 return false
             end
-            if x.type == nil or y.type == nil then
+            if x.type == "symbol" or y.type == "symbol" then
+                if x.type ~= y.type then
+                    return false
+                end
+                if x.name ~= y.name or x.ns ~= y.ns then
+                    return false
+                end
+            elseif x.type == nil or y.type == nil then
                 if x.type ~= y.type then
                     return false
                 end
