@@ -146,6 +146,22 @@ function clue.map(...)
         n[k] = v
         return n
     end
+    function m:equals(other)
+        if type(other) ~= "table" or other.type ~= "map" then
+            return false
+        end
+        for k,v in pairs(self.mt.__index) do
+            if not clue.equals(other.mt.__index[k], v) then
+                return false
+            end
+        end
+        for k,v in pairs(other.mt.__index) do
+            if not clue.equals(self.mt.__index[k], v) then
+                return false
+            end
+        end
+        return true
+    end
     return setmetatable(m, m.mt)
 end
 
@@ -220,6 +236,40 @@ end
     return tostring(value)
 end
 
+function clue.equals(...)
+    local function seq_equals(s1, s2)
+        s1 = clue.seq(s1)
+        s2 = clue.seq(s2)
+        while s1 and s2 do
+            if not clue.equals(s1:first(), s2:first()) then
+                return false
+            end
+            s1 = s1:next()
+            s2 = s2:next()
+        end
+        return s1 == s2
+    end
+    local x = select(1, ...)
+    for i=2,select("#", ...) do
+        local y = select(i, ...)
+        if x ~= y then
+            if type(x) ~= "table" or type(y) ~= "table" then
+                return false
+            end
+            if x.type ~= "map" then
+                if y.type == "map" or not seq_equals(x, y) then
+                    return false
+                end
+            else
+                if not x:equals(y) then
+                    return false
+                end
+            end
+        end
+    end
+    return true
+end
+
 clue.ns("clue.core")
 
 clue.namespaces["clue.core"]["+"] = function(...)
@@ -265,24 +315,10 @@ clue.namespaces["clue.core"]["%"] = function(...)
     return s
 end
 
-clue.namespaces["clue.core"]["="] = function(...)
-    local x = select(1, ...)
-    for i=2,select("#", ...) do
-        if x ~= select(i, ...) then
-            return false
-        end
-    end
-    return true
-end
+clue.namespaces["clue.core"]["="] = clue.equals
 
 clue.namespaces["clue.core"]["not="] = function(...)
-    local x = select(1, ...)
-    for i=2,select("#", ...) do
-        if x ~= select(i, ...) then
-            return true
-        end
-    end
-    return false
+    return not clue.namespaces["clue.core"]["="](...)
 end
 
 clue.namespaces["clue.core"]["assoc"] = function(map, k, v)
