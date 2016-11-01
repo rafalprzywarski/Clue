@@ -26,6 +26,28 @@ function clue.list(...)
     function l:concat(delimiter)
         return table.concat(self.mt.__index, delimiter)
     end
+    function l:first()
+        return self.mt.__index[1]
+    end
+    function l:next()
+        return self:sublist(2)
+    end
+    function l:rest()
+        local n = self:next()
+        if n == nil then
+            return clue.cons()
+        end
+        return n
+    end
+    function l:sublist(index)
+        if index > self.size then
+            return nil
+        end
+        if index == self.size then
+            return clue.cons(self.mt.__index[index])
+        end
+        return clue.cons(self.mt.__index[index], clue.lazy_seq(function() return self:sublist(index + 1) end))
+    end
     return setmetatable(l, l.mt)
 end
 
@@ -165,6 +187,39 @@ function clue.ns(name, aliases)
     clue._ns_._aliases_ = aliases
 end
 
+ function clue.pr_str(value)
+    local vtype = type(value)
+    if vtype == "string" then
+        return "\"" .. value:gsub("\\", "\\\\"):gsub("\n", "\\n"):gsub("\t", "\\t") .. "\""
+    end
+    if vtype == "table" then
+        local function pr_str_seq(op, s, cp)
+            local t = {}
+            while s do
+                table.insert(t, clue.pr_str(s:first()))
+                s = s:next()
+            end
+            return op .. table.concat(t, " ") .. cp
+        end
+        if value.type == "symbol" then
+            if value.ns then
+                return value.ns .. "/" .. value.name
+            end
+            return value.name
+        end
+        if value.type == "map" then
+            local t = {}
+            value:each(function(k,v) table.insert(t, clue.pr_str(k) .. " " .. clue.pr_str(v)) end)
+            return "{" .. table.concat(t, ", ") .. "}"
+        end
+        if value.type == "vector" then
+            return pr_str_seq("[", clue.seq(value), "]")
+        end
+        return pr_str_seq("(", clue.seq(value), ")")
+    end
+    return tostring(value)
+end
+
 clue.ns("clue.core")
 
 clue.namespaces["clue.core"]["+"] = function(...)
@@ -239,3 +294,4 @@ clue.namespaces["clue.core"]["seq"] = clue.seq
 clue.namespaces["clue.core"]["first"] = function(seq) return seq:first() end
 clue.namespaces["clue.core"]["rest"] = function(seq) return seq:rest() end
 clue.namespaces["clue.core"]["next"] = function(seq) return seq:next() end
+clue.namespaces["clue.core"]["pr-str"] = clue.pr_str
