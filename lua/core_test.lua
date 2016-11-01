@@ -179,6 +179,15 @@ t.describe("clue.core", {
         end,
         ["mixed structures"] = function()
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.vector(clue.list(clue.map(1, 2), "x"), nil, clue.symbol("N", "s"))), "[({1 2} \"x\") nil N/s]")
+        end,
+        ["tables"] = function()
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"]({}), "(lua-table)")
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"]({x = 9}), "(lua-table \"x\" 9)")
+            t.assert_equals_any(clue.namespaces["clue.core"]["pr-str"]({[1] = 2, [3] = 4, [5] = 6}),
+                "(lua-table 1 2 3 4 5 6)", "(lua-table 1 2 5 6 3 4)",
+                "(lua-table 3 4 1 2 5 6)", "(lua-table 3 4 5 6 1 2)",
+                "(lua-table 5 6 1 2 3 4)", "(lua-table 5 6 3 4 1 2)")
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"]({x = clue.vector(1, 2)}), "(lua-table \"x\" [1 2])")
         end
     }
 })

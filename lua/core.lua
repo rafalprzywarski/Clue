@@ -217,6 +217,14 @@ function clue.pr_str(value)
             end
             return op .. table.concat(t, " ") .. cp
         end
+        if value.type == nil then
+            local t = { "lua-table" }
+            for k,v in pairs(value) do
+                table.insert(t, clue.pr_str(k))
+                table.insert(t, clue.pr_str(v))
+            end
+            return "(" .. table.concat(t, " ").. ")"
+        end
         if value.type == "symbol" then
             if value.ns then
                 return value.ns .. "/" .. value.name
