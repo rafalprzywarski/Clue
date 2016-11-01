@@ -249,6 +249,19 @@ function clue.equals(...)
         end
         return s1 == s2
     end
+    local function table_equals(t1, t2)
+        for k,v in pairs(t1) do
+            if not clue.equals(t2[k], v) then
+                return false
+            end
+        end
+        for k,v in pairs(t2) do
+            if not clue.equals(t1[k], v) then
+                return false
+            end
+        end
+        return true
+    end
     local x = select(1, ...)
     for i=2,select("#", ...) do
         local y = select(i, ...)
@@ -256,7 +269,14 @@ function clue.equals(...)
             if type(x) ~= "table" or type(y) ~= "table" then
                 return false
             end
-            if x.type ~= "map" then
+            if x.type == nil or y.type == nil then
+                if x.type ~= y.type then
+                    return false
+                end
+                if not table_equals(x, y) then
+                    return false
+                end
+            elseif x.type ~= "map" then
                 if y.type == "map" or not seq_equals(x, y) then
                     return false
                 end

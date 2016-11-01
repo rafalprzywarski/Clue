@@ -84,6 +84,27 @@ t.describe("clue.core", {
             t.assert_false(clue.namespaces["clue.core"]["="](clue.map(), 10))
             t.assert_false(clue.namespaces["clue.core"]["="](clue.map(), clue.list()))
             t.assert_false(clue.namespaces["clue.core"]["="](clue.list(), clue.map()))
+        end,
+        ["tables"] = function()
+            t.assert_true(clue.namespaces["clue.core"]["="]({}, {}))
+            t.assert_true(clue.namespaces["clue.core"]["="]({a = 1, b = 2}, {a = 1, b = 2}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({a = 1, b = 1}, {a = 1, b = 2}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({a = 1}, {a = 1, b = 2}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({a = 1}, {a = 1, b = 2}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({a = 1, b = 2}, {a = 1}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({a = 1, b = 2}, {a = 1, b = 2}, {a = 1}))
+            t.assert_true(clue.namespaces["clue.core"]["="]({a = clue.list(1, 2)}, {a = clue.list(1, 2)}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({a = clue.list(1, 2)}, {a = clue.list(1, 1)}))
+        end,
+        ["tables against other type (false)"] = function()
+            t.assert_false(clue.namespaces["clue.core"]["="]({}, clue.list()))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.list(), {}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({}, clue.list(1, 2)))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.list(1, 2), {}))
+            t.assert_false(clue.namespaces["clue.core"]["="]("x", {}))
+            t.assert_false(clue.namespaces["clue.core"]["="]({}, "x"))
+            t.assert_false(clue.namespaces["clue.core"]["="]({}, nil))
+            t.assert_false(clue.namespaces["clue.core"]["="](nil, {}))
         end
     },
     ["not= should check inequality"] = function()
