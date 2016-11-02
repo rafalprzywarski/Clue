@@ -138,10 +138,10 @@ function clue.reader.read_expression(source)
 end
 
 function clue.reader.read(source)
-    local es = {}
+    local es = clue.list()
     local e, source = clue.reader.read_expression(source)
     while e ~= nil do
-        table.insert(es, e)
+        es:append(e)
         e, source = clue.reader.read_expression(source)
     end
     return es

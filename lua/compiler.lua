@@ -213,10 +213,12 @@ end
 
 function clue.compiler.translate(ns, exprs)
     local translated = {}
-    for _, expr in ipairs(exprs) do
-        local t, new_ns = clue.compiler.translate_expr(ns, {}, expr)
+    local expr = clue.seq(exprs)
+    while expr do
+        local t, new_ns = clue.compiler.translate_expr(ns, {}, expr:first())
         if new_ns then ns = new_ns end
     	table.insert(translated, t)
+        expr = expr:next()
     end
     return table.concat(translated, ";\n")
 end
