@@ -121,16 +121,13 @@ clue.compiler.special_forms = {
         return clue.compiler.translate_expr(ns, locals, instance) .. op .. name .. args
     end,
     ["if"] = function(ns, locals, cond, then_, else_)
-        if else_ == nil then
-            else_ = clue.nil_
-        end
         return "(function() if (" .. clue.compiler.translate_expr(ns, locals, cond) .. ") then " ..
             "return " .. clue.compiler.translate_expr(ns, locals, then_) .. "; else " ..
             "return " .. clue.compiler.translate_expr(ns, locals, else_) .. "; end end)()"
     end,
     ["do"] = function(ns, locals, ...)
         if select("#", ...) == 0 then
-            return clue.compiler.translate_expr(ns, locals, clue.nil_)
+            return "nil"
         end
         if select("#", ...) == 1 then
             return clue.compiler.translate_expr(ns, locals, select(1, ...))
@@ -182,9 +179,6 @@ function clue.compiler.translate_expr(ns, locals, expr)
     end
     if type(expr) ~= "table" then
         return tostring(expr)
-    end
-    if expr == clue.nil_ then
-        return "nil"
     end
     if etype == "list" then
         return clue.compiler.translate_call(ns, locals, expr:unpack())

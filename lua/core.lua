@@ -2,8 +2,6 @@ clue = clue or {}
 clue.namespaces = clue.namespaces or {}
 clue.namespaces["lua"] = setmetatable({}, {__index = _G})
 
-clue.nil_ = { type = "nil" }
-
 function clue.symbol(ns, name)
     if name == nil then
         name = ns
@@ -26,7 +24,7 @@ end
 
 function clue.list(...)
     local l = {clue_type__="list", mt={__index = {...}}, size=select("#", ...)}
-    function l:unpack() return unpack(self.mt.__index) end
+    function l:unpack() return unpack(self.mt.__index, 1, self.size) end
     function l:append(e) self.size = self.size + 1; self.mt.__index[self.size] = e; return self; end
     function l:map(f)
         local m = clue.list()
@@ -37,6 +35,9 @@ function clue.list(...)
     end
     function l:concat(delimiter)
         return table.concat(self.mt.__index, delimiter)
+    end
+    function l:empty()
+        return self.size == 0
     end
     function l:first()
         return self.mt.__index[1]
@@ -76,6 +77,9 @@ function clue.vector(...)
     function v:concat(delimiter)
         return table.concat(self.mt.__index, delimiter)
     end
+    function v:empty()
+        return self.size == 0
+    end
     function v:first()
         return self.mt.__index[1]
     end
@@ -103,6 +107,9 @@ end
 
 function clue.cons(x, coll)
     local c = {clue_type__="cons"}
+    function c:empty()
+        return false
+    end
     function c:first()
         return x
     end
@@ -116,10 +123,10 @@ function clue.cons(x, coll)
 end
 
 function clue.seq(coll)
-    if coll and coll:first() then
-        return coll
+    if not coll or coll:empty() then
+        return nil
     end
-    return nil
+    return coll
 end
 
 function clue.lazy_seq(f)
@@ -132,6 +139,9 @@ function clue.lazy_seq(f)
     end
     function s:next()
         return (f() or clue.vector()):next()
+    end
+    function s:empty()
+        return (f() or clue.vector()):empty()
     end
     return s
 end

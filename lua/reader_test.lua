@@ -9,8 +9,8 @@ t.describe("clue.reader", {
                 ct.assert_equals(clue.reader.read(""), clue.list())
             end,
             ["nil"] = function()
-                ct.assert_equals(clue.reader.read("nil"), clue.list(clue.nil_))
-                ct.assert_equals(clue.reader.read("1 nil nil"), clue.list(1, clue.nil_, clue.nil_))
+                ct.assert_equals(clue.reader.read("nil"), clue.list(nil))
+                ct.assert_equals(clue.reader.read("1 nil nil"), clue.list(1, nil, nil))
             end,
             ["boolean constants"] = function()
                 ct.assert_equals(clue.reader.read("true false"), clue.list(true, false))
@@ -41,6 +41,10 @@ t.describe("clue.reader", {
                 end,
                 ["of vectors"] = function()
                     ct.assert_equals(clue.reader.read("([] [1] [2 3])"), clue.list(clue.list(clue.vector(), clue.vector(1), clue.vector(2, 3))))
+                end,
+                ["with nil"] = function()
+                    ct.assert_equals(clue.reader.read("(nil)"), clue.list(clue.list(nil)))
+                    ct.assert_equals(clue.reader.read("(nil 1 nil nil)"), clue.list(clue.list(nil, 1, nil, nil)))
                 end
             },
             ["a vector"] = {
@@ -54,6 +58,10 @@ t.describe("clue.reader", {
                 end,
                 ["of lists"] = function()
                     ct.assert_equals(clue.reader.read("[() (1) (2 3)]"), clue.list(clue.vector(clue.list(), clue.list(1), clue.list(2, 3))))
+                end,
+                ["with nil"] = function()
+                    ct.assert_equals(clue.reader.read("[nil]"), clue.list(clue.list(nil)))
+                    ct.assert_equals(clue.reader.read("[nil 1 nil nil]"), clue.list(clue.list(nil, 1, nil, nil)))
                 end
             },
             ["a map"] = {

@@ -150,12 +150,14 @@ t.describe("clue.core", {
         end,
         ["vectors"] = function()
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.vector()), "[]")
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.vector(nil)), "[nil]")
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.vector(1)), "[1]")
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.vector(2, 3, 4)), "[2 3 4]")
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.vector(2, 3, nil, 4, nil)), "[2 3 nil 4 nil]")
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.vector(clue.vector(2, 3), 4)), "[[2 3] 4]")
         end,
         ["sequences"] = function()
-            t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.cons()), "()")
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.cons()), "(nil)")
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.cons(1)), "(1)")
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.cons(2, clue.cons(3, clue.vector(4)))), "(2 3 4)")
         end,

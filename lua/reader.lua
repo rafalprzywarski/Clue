@@ -2,8 +2,8 @@ require 'core'
 
 clue = clue or {}
 clue.reader = clue.reader or {}
+clue.reader.nothing = clue.reader.nothing or {"nothing"}
 clue.reader.constants = {
-    ["nil"] = clue.nil_,
     ["true"] = true,
     ["false"] = false
 }
@@ -73,7 +73,7 @@ function clue.reader.read_token(source)
     local source = clue.reader.skip_space(source)
     local first = source:sub(1, 1)
     if first == "" then
-        return nil, source
+        return clue.reader.nothing, source
     end
     if clue.reader.is_delimiter(first) then
         return {type = "delimiter", value = first}, source:sub(2)
@@ -87,22 +87,22 @@ function clue.reader.read_token(source)
 end
 
 function clue.reader.read_sequence(source, create)
-    local l = {}
+    local l = clue.list()
     local e, nsource = clue.reader.read_expression(source)
-    while e ~= nil do
-        table.insert(l, e)
+    while e ~= clue.reader.nothing do
+        l:append(e)
         source = nsource
         e, nsource = clue.reader.read_expression(source)
     end
 
     local t, source = clue.reader.read_token(source) -- ) or ]
-    return create(unpack(l)), source
+    return create(l:unpack()), source
 end
 
 function clue.reader.read_expression(source)
     local t, source = clue.reader.read_token(source)
-    if t == nil then
-        return nil, source
+    if t == clue.reader.nothing then
+        return clue.reader.nothing, source
     end
     if t.type == "number" then
         return t.value, source
@@ -114,22 +114,25 @@ function clue.reader.read_expression(source)
         if clue.reader.constants[t.value] ~= nil then
             return clue.reader.constants[t.value], source
         end
+        if t.value == "nil" then
+            return nil, source
+        end
         return clue.reader.split_symbol(t), source
     end
     if t.type == "delimiter" and t.value == ")" then
-        return nil
+        return clue.reader.nothing
     end
     if t.type == "delimiter" and t.value == "(" then
         return clue.reader.read_sequence(source, clue.list)
     end
     if t.type == "delimiter" and t.value == "]" then
-        return nil
+        return clue.reader.nothing
     end
     if t.type == "delimiter" and t.value == "[" then
         return clue.reader.read_sequence(source, clue.vector)
     end
     if t.type == "delimiter" and t.value == "}" then
-        return nil
+        return clue.reader.nothing
     end
     if t.type == "delimiter" and t.value == "{" then
         return clue.reader.read_sequence(source, clue.map)
@@ -140,7 +143,7 @@ end
 function clue.reader.read(source)
     local es = clue.list()
     local e, source = clue.reader.read_expression(source)
-    while e ~= nil do
+    while e ~= clue.reader.nothing do
         es:append(e)
         e, source = clue.reader.read_expression(source)
     end
