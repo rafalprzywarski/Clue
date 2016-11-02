@@ -2,18 +2,30 @@ clue = clue or {}
 clue.namespaces = clue.namespaces or {}
 clue.namespaces["lua"] = setmetatable({}, {__index = _G})
 
-clue.nil_ = { nil__ = true }
+clue.nil_ = { type = "nil" }
 
 function clue.symbol(ns, name)
     if name == nil then
         name = ns
         ns = nil
     end
-    return {type = "symbol", ns = ns, name = name}
+    return {clue_type__ = "symbol", ns = ns, name = name}
+end
+
+function clue.type(s)
+    local stype = type(s)
+    if stype ~= "table" then
+        return stype
+    end
+    return s.clue_type__ or stype
+end
+
+function clue.is_symbol(s)
+    return clue.type(s) == "symbol"
 end
 
 function clue.list(...)
-    local l = {type="list", mt={__index = {...}}, size=select("#", ...)}
+    local l = {clue_type__="list", mt={__index = {...}}, size=select("#", ...)}
     function l:unpack() return unpack(self.mt.__index) end
     function l:append(e) self.size = self.size + 1; self.mt.__index[self.size] = e; return self; end
     function l:map(f)
@@ -52,7 +64,7 @@ function clue.list(...)
 end
 
 function clue.vector(...)
-    local v = {type="vector", mt={__index = {...}}, size=select("#", ...)}
+    local v = {clue_type__="vector", mt={__index = {...}}, size=select("#", ...)}
     function v:append(e) self.size = self.size + 1; self.mt.__index[self.size] = e; return self; end
     function v:map(f)
         local m = clue.vector()
@@ -90,7 +102,7 @@ function clue.vector(...)
 end
 
 function clue.cons(x, coll)
-    local c = {type="cons"}
+    local c = {clue_type__="cons"}
     function c:first()
         return x
     end
@@ -111,7 +123,7 @@ function clue.seq(coll)
 end
 
 function clue.lazy_seq(f)
-    local s = {type="lazy_seq"}
+    local s = {clue_type__="lazy_seq"}
     function s:first()
         return (f() or clue.vector()):first()
     end
@@ -129,7 +141,7 @@ function clue.map(...)
     for i=1,select("#", ...),2 do
         values[select(i, ...)] = select(i + 1, ...)
     end
-    local m = {type="map", mt={__index = values}}
+    local m = {clue_type__="map", mt={__index = values}}
     function m.mt.__call(t, k)
         return t[k]
     end
@@ -147,7 +159,7 @@ function clue.map(...)
         return n
     end
     function m:equals(other)
-        if type(other) ~= "table" or other.type ~= "map" then
+        if type(other) ~= "table" or clue.type(other) ~= "map" then
             return false
         end
         for k,v in pairs(self.mt.__index) do
@@ -217,7 +229,7 @@ function clue.pr_str(value)
             end
             return op .. table.concat(t, " ") .. cp
         end
-        if value.type == nil then
+        if clue.type(value) == "table" then
             local t = { "lua-table" }
             for k,v in pairs(value) do
                 table.insert(t, clue.pr_str(k))
@@ -225,18 +237,18 @@ function clue.pr_str(value)
             end
             return "(" .. table.concat(t, " ").. ")"
         end
-        if value.type == "symbol" then
+        if clue.type(value) == "symbol" then
             if value.ns then
                 return value.ns .. "/" .. value.name
             end
             return value.name
         end
-        if value.type == "map" then
+        if clue.type(value) == "map" then
             local t = {}
             value:each(function(k,v) table.insert(t, clue.pr_str(k) .. " " .. clue.pr_str(v)) end)
             return "{" .. table.concat(t, ", ") .. "}"
         end
-        if value.type == "vector" then
+        if clue.type(value) == "vector" then
             return pr_str_seq("[", clue.seq(value), "]")
         end
         return pr_str_seq("(", clue.seq(value), ")")
@@ -277,22 +289,22 @@ function clue.equals(...)
             if type(x) ~= "table" or type(y) ~= "table" then
                 return false
             end
-            if x.type == "symbol" or y.type == "symbol" then
-                if x.type ~= y.type then
+            if clue.type(x) == "symbol" or clue.type(y) == "symbol" then
+                if clue.type(x) ~= clue.type(y) then
                     return false
                 end
                 if x.name ~= y.name or x.ns ~= y.ns then
                     return false
                 end
-            elseif x.type == nil or y.type == nil then
-                if x.type ~= y.type then
+            elseif clue.type(x) == "table" or clue.type(y) == "table" then
+                if clue.type(x) ~= clue.type(y) then
                     return false
                 end
                 if not table_equals(x, y) then
                     return false
                 end
-            elseif x.type ~= "map" then
-                if y.type == "map" or not seq_equals(x, y) then
+            elseif clue.type(x) ~= "map" then
+                if clue.type(y) == "map" or not seq_equals(x, y) then
                     return false
                 end
             else

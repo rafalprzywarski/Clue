@@ -69,7 +69,7 @@ clue.compiler.special_forms = {
             local reqs = {}
             for i=2,requires.size do
                 local req_ns, req_alias
-                if requires[i].type == 'vector' then
+                if clue.type(requires[i]) == 'vector' then
                     req_ns = requires[i][1].name
                     req_alias = requires[i][3].name
                     aliases[req_alias] = req_ns
@@ -104,7 +104,7 @@ clue.compiler.special_forms = {
     end,
     ["."] = function(ns, locals, instance, call)
         local name, args, op
-        if call.type == "list" then
+        if clue.type(call) == "list" then
             name = call[1].name
             args = "("
             op = ":"
@@ -148,7 +148,7 @@ clue.compiler.special_forms = {
 }
 
 function clue.compiler.translate_call(ns, locals, fn, ...)
-    if fn.type == "symbol" and fn.ns == nil and clue.compiler.special_forms[fn.name] then
+    if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.special_forms[fn.name] then
         return clue.compiler.special_forms[fn.name](ns, locals, ...)
     end
     local s = clue.compiler.translate_expr(ns, locals, fn) .. "(";
@@ -176,18 +176,19 @@ function clue.compiler.translate_map(ns, locals, map)
 end
 
 function clue.compiler.translate_expr(ns, locals, expr)
+    local etype = clue.type(expr)
     if (type(expr)) == "string" then
         return "\"" .. expr .. "\""
     end
     if type(expr) ~= "table" then
         return tostring(expr)
     end
-    if expr.nil__ then
+    if expr == clue.nil_ then
         return "nil"
     end
-    if expr.type == "list" then
+    if etype == "list" then
         return clue.compiler.translate_call(ns, locals, expr:unpack())
-    elseif expr.type == "symbol" then
+    elseif etype == "symbol" then
         local resolved_ns
         if not expr.ns then
             if locals[expr.name] then
@@ -201,9 +202,9 @@ function clue.compiler.translate_expr(ns, locals, expr)
             return expr.name
         end
         return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
-    elseif expr.type == "vector" then
+    elseif etype == "vector" then
         return clue.compiler.translate_vector(ns, locals, expr)
-    elseif expr.type == "map" then
+    elseif etype == "map" then
         return clue.compiler.translate_map(ns, locals, expr)
     else
         error("unexpected expression type")

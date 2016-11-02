@@ -16,6 +16,10 @@ function clue.reader.string(value)
     return {type = "string", value = value}
 end
 
+function clue.reader.symbol(value)
+    return {type = "symbol", value = value}
+end
+
 function clue.reader.is_space(c)
     return c == " " or c == "," or c == "\t" or c == "\r" or c == "\n"
 end
@@ -48,21 +52,21 @@ end
 function clue.reader.read_symbol(s)
     for i = 2, s:len() do
         if clue.reader.is_space(s:sub(i, i)) or clue.reader.is_delimiter(s:sub(i, i)) then
-            return clue.symbol(s:sub(1, i - 1)), s:sub(i)
+            return clue.reader.symbol(s:sub(1, i - 1)), s:sub(i)
         end
     end
-    return clue.symbol(s), ""
+    return clue.reader.symbol(s), ""
 end
 
 function clue.reader.split_symbol(s)
-    if s.name == "/" then
-        return s
+    if s.value == "/" then
+        return clue.symbol(s.value)
     end
-    local slash = s.name:find("/")
+    local slash = s.value:find("/")
     if not slash then
-        return s
+        return clue.symbol(s.value)
     end
-    return clue.symbol(s.name:sub(1, slash - 1), s.name:sub(slash + 1))
+    return clue.symbol(s.value:sub(1, slash - 1), s.value:sub(slash + 1))
 end
 
 function clue.reader.read_token(source)
@@ -78,8 +82,7 @@ function clue.reader.read_token(source)
     elseif tonumber(first) then
         return clue.reader.read_number(source)
     else
-        symbol, source = clue.reader.read_symbol(source)
-        return clue.reader.split_symbol(symbol), source
+        return clue.reader.read_symbol(source)
     end
 end
 
@@ -108,10 +111,10 @@ function clue.reader.read_expression(source)
         return t.value, source
     end
     if t.type == "symbol" then
-        if t.ns == nil and clue.reader.constants[t.name] ~= nil then
-            return clue.reader.constants[t.name], source
+        if clue.reader.constants[t.value] ~= nil then
+            return clue.reader.constants[t.value], source
         end
-        return t, source
+        return clue.reader.split_symbol(t), source
     end
     if t.type == "delimiter" and t.value == ")" then
         return nil
