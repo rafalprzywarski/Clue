@@ -1,4 +1,5 @@
 local t = require("ut")
+local ct = require("clue_ut")
 require("compiler")
 
 
@@ -190,6 +191,61 @@ t.describe("clue.core", {
                 "(lua-table 3 4 1 2 5 6)", "(lua-table 3 4 5 6 1 2)",
                 "(lua-table 5 6 1 2 3 4)", "(lua-table 5 6 3 4 1 2)")
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"]({x = clue.vector(1, 2)}), "(lua-table \"x\" [1 2])")
+        end
+    },
+    ["lazy-seq should"] = {
+        ["be an empty sequence when a given function returns nil"] = function()
+            local seq = clue.lazy_seq(function() return nil end)
+            ct.assert_equals(seq:first(), nil)
+            ct.assert_equals(seq:next(), nil)
+            t.assert_true(seq:empty())
+        end,
+        ["forward the methods to the sequence returned by a given function"] = function()
+            local seq = function() return clue.lazy_seq(function() return {
+                first = function() return 1 end,
+                next = function() return 2 end,
+                empty = function() return 3 end
+            } end) end
+            ct.assert_equals(seq():first(), 1)
+            ct.assert_equals(seq():next(), 2)
+            ct.assert_equals(seq():empty(), 3)
+        end,
+        ["not evaluate a given function before it is needed"] = function()
+            local called = false
+            clue.lazy_seq(function() called = true; return nil end)
+            t.assert_false(called)
+        end,
+        ["evaluate a given function once"] = function()
+            local called = false
+            local n = 1
+            local call = function() called = true; n = n + 1; print("called " .. n) end
+            local seq = function() return clue.lazy_seq(function() called = true; return nil end) end
+            local s = seq()
+            s:first()
+            called = false
+
+            s:first()
+            s:next()
+            s:empty()
+            t.assert_false(called)
+
+            local s = seq()
+            s:next()
+            called = false
+
+            s:first()
+            s:next()
+            s:empty()
+            t.assert_false(called)
+
+            local s = seq()
+            s:empty()
+            called = false
+
+            s:first()
+            s:next()
+            s:empty()
+            t.assert_false(called)
         end
     }
 })

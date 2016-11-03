@@ -45,13 +45,6 @@ function clue.list(...)
     function l:next()
         return self:sublist(2)
     end
-    function l:rest()
-        local n = self:next()
-        if n == nil then
-            return clue.cons()
-        end
-        return n
-    end
     function l:sublist(index)
         if index > self.size then
             return nil
@@ -86,13 +79,6 @@ function clue.vector(...)
     function v:next()
         return self:subvec(2)
     end
-    function v:rest()
-        local n = self:next()
-        if n == nil then
-            return clue.vector()
-        end
-        return n
-    end
     function v:subvec(index)
         if index > self.size then
             return nil
@@ -113,9 +99,6 @@ function clue.cons(x, coll)
     function c:first()
         return x
     end
-    function c:rest()
-        return coll
-    end
     function c:next()
         return clue.seq(coll)
     end
@@ -131,17 +114,23 @@ end
 
 function clue.lazy_seq(f)
     local s = {clue_type__="lazy_seq"}
-    function s:first()
-        return (f() or clue.vector()):first()
+    function s:seq()
+        local seq_ = self.seq_
+        if seq_ then
+            return seq_[1]
+        end
+        local seq = f() or clue.list()
+        self.seq_ = {seq}
+        return seq
     end
-    function s:rest()
-        return (f() or clue.vector()):rest()
+    function s:first()
+        return self:seq():first()
     end
     function s:next()
-        return (f() or clue.vector()):next()
+        return self:seq():next()
     end
     function s:empty()
-        return (f() or clue.vector()):empty()
+        return self:seq():empty()
     end
     return s
 end
@@ -327,6 +316,17 @@ function clue.equals(...)
     return true
 end
 
+function clue.rest(s)
+    s = clue.seq(s)
+    if s then
+        local n = s:next()
+        if n then
+            return n
+        end
+    end
+    return clue.list()
+end
+
 clue.ns("clue.core")
 
 clue.namespaces["clue.core"]["+"] = function(...)
@@ -385,6 +385,6 @@ end
 clue.namespaces["clue.core"]["cons"] = clue.cons
 clue.namespaces["clue.core"]["seq"] = clue.seq
 clue.namespaces["clue.core"]["first"] = function(seq) return seq:first() end
-clue.namespaces["clue.core"]["rest"] = function(seq) return seq:rest() end
+clue.namespaces["clue.core"]["rest"] = clue.rest
 clue.namespaces["clue.core"]["next"] = function(seq) return seq:next() end
 clue.namespaces["clue.core"]["pr-str"] = clue.pr_str
