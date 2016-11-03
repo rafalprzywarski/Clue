@@ -3,6 +3,7 @@
 (def dec (fn [n] (- n 1)))
 (def inc (fn [n] (+ n 1)))
 (def zero? (fn [n] (= n 0)))
+(def not (fn [x] (if x false true)))
 
 (def take (
     fn [n coll]
