@@ -15,7 +15,18 @@ function clue.keyword(ns, name)
         name = ns
         ns = nil
     end
-    return {clue_type__ = "keyword", ns = ns, name = name}
+    local sym = {clue_type__ = "keyword", ns = ns, name = name}
+    function sym:equals(other)
+        return clue.type(other) == "keyword" and self.ns == other.ns and self.name == other.name
+    end
+    function sym:to_string()
+        local ns = self.ns
+        if ns then
+            return ":" .. ns .. "/" .. self.name
+        end
+        return ":" .. self.name
+    end
+    return sym
 end
 
 function clue.type(s)
@@ -251,10 +262,7 @@ function clue.pr_str(value)
             return value.name
         end
         if clue.type(value) == "keyword" then
-            if value.ns then
-                return ":" .. value.ns .. "/" .. value.name
-            end
-            return ":" .. value.name
+            return value:to_string()
         end
         if clue.type(value) == "map" then
             local t = {}
@@ -309,11 +317,12 @@ function clue.equals(...)
                 if x.name ~= y.name or x.ns ~= y.ns then
                     return false
                 end
-            elseif clue.type(x) == "keyword" or clue.type(y) == "keyword" then
-                if clue.type(x) ~= clue.type(y) then
+            elseif clue.type(x) == "keyword" then
+                if not x:equals(y) then
                     return false
                 end
-                if x.name ~= y.name or x.ns ~= y.ns then
+            elseif clue.type(y) == "keyword" then
+                if not y:equals(x) then
                     return false
                 end
             elseif clue.type(x) == "table" or clue.type(y) == "table" then
