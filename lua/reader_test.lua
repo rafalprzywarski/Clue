@@ -89,6 +89,13 @@ t.describe("clue.reader", {
                 ct.assert_equals(clue.reader.read("/"), clue.list(clue.symbol("/")))
                 ct.assert_equals(clue.reader.read("%"), clue.list(clue.symbol("%")))
             end
-        }
+        },
+        ["should ignore comments"] = function()
+            ct.assert_equals(clue.reader.read(";"), clue.list())
+            ct.assert_equals(clue.reader.read(";nil"), clue.list())
+            ct.assert_equals(clue.reader.read("nil;"), clue.list(nil))
+            ct.assert_equals(clue.reader.read("; comment\n1 2"), clue.list(1, 2))
+            ct.assert_equals(clue.reader.read("; ; comment\n1 2\n3 ;4"), clue.list(1, 2, 3))
+        end
     }
 })

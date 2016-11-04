@@ -8,6 +8,8 @@ clue.reader.constants = {
     ["false"] = false
 }
 
+clue.reader.COMMENT = ";"
+
 function clue.reader.number(value)
     return {type = "number", value = value}
 end
@@ -28,11 +30,32 @@ function clue.reader.is_delimiter(c)
     return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}"
 end
 
+function clue.reader.skip_comment(s)
+    if s:sub(1, 1) == clue.reader.COMMENT then
+        for i = 1, s:len() do
+            if s:sub(i, i) == "\n" then
+                return s:sub(i + 1)
+            end
+        end
+        return ""
+    end
+    return s
+end
+
 function clue.reader.skip_space(s)
     for i = 1, s:len() do
         if not clue.reader.is_space(s:sub(i, i)) then return s:sub(i) end
     end
     return ""
+end
+
+function clue.reader.skip_space_and_comments(s)
+    local skipped = clue.reader.skip_space(clue.reader.skip_comment(s))
+    while skipped ~= s and skipped ~= "" do
+        s = skipped
+        skipped = clue.reader.skip_space(clue.reader.skip_comment(s))
+    end
+    return skipped
 end
 
 function clue.reader.read_string(s)
@@ -51,7 +74,7 @@ end
 
 function clue.reader.read_symbol(s)
     for i = 2, s:len() do
-        if clue.reader.is_space(s:sub(i, i)) or clue.reader.is_delimiter(s:sub(i, i)) then
+        if clue.reader.is_space(s:sub(i, i)) or clue.reader.is_delimiter(s:sub(i, i)) or s:sub(i, i) == clue.reader.COMMENT then
             return clue.reader.symbol(s:sub(1, i - 1)), s:sub(i)
         end
     end
@@ -70,7 +93,7 @@ function clue.reader.split_symbol(s)
 end
 
 function clue.reader.read_token(source)
-    local source = clue.reader.skip_space(source)
+    local source = clue.reader.skip_space_and_comments(source)
     local first = source:sub(1, 1)
     if first == "" then
         return clue.reader.nothing, source
