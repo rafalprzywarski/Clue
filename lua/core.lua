@@ -28,11 +28,16 @@ function clue.keyword(ns, name)
         return interned
     end
     local sym = {clue_type__ = "keyword", ns = ns, name = name}
+    local mt = {}
+    setmetatable(sym, mt)
     function sym:equals(other)
         return clue.type(other) == "keyword" and self.ns == other.ns and self.name == other.name
     end
     function sym:to_string()
         return to_string(self.ns, self.name)
+    end
+    function mt.__call(s, m)
+        return m[s]
     end
     clue.keywords[norm] = sym
     return sym

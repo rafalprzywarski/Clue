@@ -267,17 +267,23 @@ t.describe("clue.core", {
             t.assert_false(called)
         end
     },
-    ["keywords should be interned"] = function()
-        local ns_k1a = clue.keyword("ns", "k1")
-        local ns_k1b = clue.keyword("ns", "k1")
-        local ns_k2 = clue.keyword("ns", "k2")
-        local k1a = clue.keyword("k1")
-        local k1b = clue.keyword("k1")
-        local k2 = clue.keyword("k2")
+    ["keywords"] = {
+        ["should be interned"] = function()
+            local ns_k1a = clue.keyword("ns", "k1")
+            local ns_k1b = clue.keyword("ns", "k1")
+            local ns_k2 = clue.keyword("ns", "k2")
+            local k1a = clue.keyword("k1")
+            local k1b = clue.keyword("k1")
+            local k2 = clue.keyword("k2")
 
-        t.assert_true(ns_k1a == ns_k1b)
-        t.assert_false(ns_k1a == ns_k2)
-        t.assert_true(k1a == k1b)
-        t.assert_false(k1a == k2)
-    end
+            t.assert_true(ns_k1a == ns_k1b)
+            t.assert_false(ns_k1a == ns_k2)
+            t.assert_true(k1a == k1b)
+            t.assert_false(k1a == k2)
+        end,
+        ["should key maps when called"] = function()
+            ct.assert_equals(clue.keyword("key")(clue.map(clue.keyword("key"), 20)), 20)
+            ct.assert_equals(clue.keyword("key")(clue.map(clue.keyword("other"), 20)), nil)
+        end
+    }
 })
