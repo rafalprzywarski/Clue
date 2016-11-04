@@ -266,5 +266,18 @@ t.describe("clue.core", {
             s:empty()
             t.assert_false(called)
         end
-    }
+    },
+    ["keywords should be interned"] = function()
+        local ns_k1a = clue.keyword("ns", "k1")
+        local ns_k1b = clue.keyword("ns", "k1")
+        local ns_k2 = clue.keyword("ns", "k2")
+        local k1a = clue.keyword("k1")
+        local k1b = clue.keyword("k1")
+        local k2 = clue.keyword("k2")
+
+        t.assert_true(ns_k1a == ns_k1b)
+        t.assert_false(ns_k1a == ns_k2)
+        t.assert_true(k1a == k1b)
+        t.assert_false(k1a == k2)
+    end
 })

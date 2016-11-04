@@ -1,6 +1,7 @@
 clue = clue or {}
 clue.namespaces = clue.namespaces or {}
 clue.namespaces["lua"] = setmetatable({}, {__index = _G})
+clue.keywords = clue.keywords or {}
 
 function clue.symbol(ns, name)
     if name == nil then
@@ -11,21 +12,29 @@ function clue.symbol(ns, name)
 end
 
 function clue.keyword(ns, name)
+    local function to_string(ns, name)
+        if ns then
+            return ":" .. ns .. "/" .. name
+        end
+        return ":" .. name
+    end
     if name == nil then
         name = ns
         ns = nil
+    end
+    local norm = to_string(ns, name)
+    local interned = clue.keywords[norm]
+    if interned then
+        return interned
     end
     local sym = {clue_type__ = "keyword", ns = ns, name = name}
     function sym:equals(other)
         return clue.type(other) == "keyword" and self.ns == other.ns and self.name == other.name
     end
     function sym:to_string()
-        local ns = self.ns
-        if ns then
-            return ":" .. ns .. "/" .. self.name
-        end
-        return ":" .. self.name
+        return to_string(self.ns, self.name)
     end
+    clue.keywords[norm] = sym
     return sym
 end
 
