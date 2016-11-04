@@ -10,6 +10,14 @@ function clue.symbol(ns, name)
     return {clue_type__ = "symbol", ns = ns, name = name}
 end
 
+function clue.keyword(ns, name)
+    if name == nil then
+        name = ns
+        ns = nil
+    end
+    return {clue_type__ = "keyword", ns = ns, name = name}
+end
+
 function clue.type(s)
     local stype = type(s)
     if stype ~= "table" then
@@ -242,6 +250,12 @@ function clue.pr_str(value)
             end
             return value.name
         end
+        if clue.type(value) == "keyword" then
+            if value.ns then
+                return ":" .. value.ns .. "/" .. value.name
+            end
+            return ":" .. value.name
+        end
         if clue.type(value) == "map" then
             local t = {}
             value:each(function(k,v) table.insert(t, clue.pr_str(k) .. " " .. clue.pr_str(v)) end)
@@ -289,6 +303,13 @@ function clue.equals(...)
                 return false
             end
             if clue.type(x) == "symbol" or clue.type(y) == "symbol" then
+                if clue.type(x) ~= clue.type(y) then
+                    return false
+                end
+                if x.name ~= y.name or x.ns ~= y.ns then
+                    return false
+                end
+            elseif clue.type(x) == "keyword" or clue.type(y) == "keyword" then
                 if clue.type(x) ~= clue.type(y) then
                     return false
                 end

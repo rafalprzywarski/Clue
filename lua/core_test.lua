@@ -56,6 +56,21 @@ t.describe("clue.core", {
             t.assert_false(clue.namespaces["clue.core"]["="](clue.symbol("sym"), "sym"))
             t.assert_false(clue.namespaces["clue.core"]["="]("sym", clue.symbol("sym")))
         end,
+        ["keywords"] = function()
+            t.assert_true(clue.namespaces["clue.core"]["="](clue.keyword("sym"), clue.keyword("sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.keyword("sym"), clue.keyword("X")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.keyword("sym"), clue.keyword("sym"), clue.keyword("X")))
+            t.assert_true(clue.namespaces["clue.core"]["="](clue.keyword("ns", "sym"), clue.keyword("ns", "sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.keyword("ns", "sym"), clue.keyword("X", "sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.keyword("ns", "sym"), clue.keyword("sym")))
+        end,
+        ["keywords against other types (false)"] = function()
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.keyword("sym"), clue.list()))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.keyword("sym"), clue.symbol("sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.list(), clue.keyword("sym")))
+            t.assert_false(clue.namespaces["clue.core"]["="](clue.keyword("sym"), "sym"))
+            t.assert_false(clue.namespaces["clue.core"]["="]("sym", clue.keyword("sym")))
+        end,
         ["sequences"] = function()
             t.assert_equals(clue.namespaces["clue.core"]["="](clue.list(), clue.list()), true)
             t.assert_equals(clue.namespaces["clue.core"]["="](clue.list(1), clue.list(1)), true)
@@ -144,6 +159,10 @@ t.describe("clue.core", {
         ["symbols"] = function()
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.symbol("hello")), "hello")
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.symbol("some.ns", "hello")), "some.ns/hello")
+        end,
+        ["keywords"] = function()
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.keyword("hello")), ":hello")
+            t.assert_equals(clue.namespaces["clue.core"]["pr-str"](clue.keyword("some.ns", "hello")), ":some.ns/hello")
         end,
         ["strings"] = function()
             t.assert_equals(clue.namespaces["clue.core"]["pr-str"]("test"), "\"test\"")
