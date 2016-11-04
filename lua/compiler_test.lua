@@ -25,6 +25,10 @@ t.describe("clue.compiler", {
                 t.assert_equals(clue.compiler.compile(ns, "an-example"), "clue.namespaces[\"user.ns\"][\"an-example\"]")
                 t.assert_equals(clue.compiler.compile(ns, "my.ns.example/an-example"), "clue.namespaces[\"my.ns.example\"][\"an-example\"]")
             end,
+            ["keywords"] = function()
+                t.assert_equals(clue.compiler.compile(nil, ":an-example"), "clue.keyword(\"an-example\")")
+                t.assert_equals(clue.compiler.compile(nil, ":ns/example"), "clue.keyword(\"ns\", \"example\")")
+            end,
             ["vectors into clue.vector calls"] = function()
                 ns = {name = "user.ns"}
                 t.assert_equals(clue.compiler.compile(ns, "[]"), "clue.vector()")
