@@ -22,6 +22,10 @@ function clue.reader.symbol(value)
     return {type = "symbol", value = value}
 end
 
+function clue.reader.keyword(value)
+    return {type = "keyword", value = value}
+end
+
 function clue.reader.is_space(c)
     return c == " " or c == "," or c == "\t" or c == "\r" or c == "\n"
 end
@@ -81,15 +85,29 @@ function clue.reader.read_symbol(s)
     return clue.reader.symbol(s), ""
 end
 
-function clue.reader.split_symbol(s)
-    if s.value == "/" then
-        return clue.symbol(s.value)
+function clue.reader.read_keyword(s)
+    local sym
+    sym, s = clue.reader.read_symbol(s:sub(2))
+    return clue.reader.keyword(sym.value), s
+end
+
+function clue.reader.split_by_slash(s)
+    if s == "/" then
+        return s
     end
-    local slash = s.value:find("/")
+    local slash = s:find("/")
     if not slash then
-        return clue.symbol(s.value)
+        return s
     end
-    return clue.symbol(s.value:sub(1, slash - 1), s.value:sub(slash + 1))
+    return s:sub(1, slash - 1), s:sub(slash + 1)
+end
+
+function clue.reader.split_symbol(s)
+    return clue.symbol(clue.reader.split_by_slash(s.value))
+end
+
+function clue.reader.split_keyword(s)
+    return clue.keyword(clue.reader.split_by_slash(s.value))
 end
 
 function clue.reader.read_token(source)
@@ -102,6 +120,8 @@ function clue.reader.read_token(source)
         return {type = "delimiter", value = first}, source:sub(2)
     elseif first == "\"" then
         return clue.reader.read_string(source)
+    elseif first == ":" then
+        return clue.reader.read_keyword(source)
     elseif tonumber(first) then
         return clue.reader.read_number(source)
     else
@@ -141,6 +161,9 @@ function clue.reader.read_expression(source)
             return nil, source
         end
         return clue.reader.split_symbol(t), source
+    end
+    if t.type == "keyword" then
+        return clue.reader.split_keyword(t), source
     end
     if t.type == "delimiter" and t.value == ")" then
         return clue.reader.nothing
