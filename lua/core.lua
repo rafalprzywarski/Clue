@@ -185,9 +185,9 @@ function clue.map(...)
     function m:assoc(k,v)
         local n = clue.map()
         for k,v in pairs(self.mt.__index) do
-            n[k] = v
+            n.mt.__index[k] = v
         end
-        n[k] = v
+        n.mt.__index[k] = v
         return n
     end
     function m:equals(other)
