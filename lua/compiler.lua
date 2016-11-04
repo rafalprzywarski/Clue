@@ -138,15 +138,21 @@ clue.compiler.special_forms = {
         end
         translated[#translated] = "return " .. translated[#translated]
         return "(function() " .. table.concat(translated, "; ") .. "; end)()"
-    end,
-    ["lazy-seq"] = function(ns, locals, body)
-        return "clue.lazy_seq(" .. clue.compiler.translate_expr(ns, locals, clue.list(clue.symbol("fn"), clue.vector(), body)) .. ")"
+    end
+}
+
+clue.compiler.macros = {
+    ["lazy-seq"] = function(body)
+        return clue.list(clue.symbol("lua", "clue.lazy_seq"), clue.list(clue.symbol("fn"), clue.vector(), body))
     end
 }
 
 function clue.compiler.translate_call(ns, locals, fn, ...)
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.special_forms[fn.name] then
         return clue.compiler.special_forms[fn.name](ns, locals, ...)
+    end
+    if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.macros[fn.name] then
+        return clue.compiler.translate_expr(ns, locals, clue.compiler.macros[fn.name](...))
     end
     local s = clue.compiler.translate_expr(ns, locals, fn) .. "(";
     for i = 1, select("#", ...) do
@@ -172,6 +178,24 @@ function clue.compiler.translate_map(ns, locals, map)
     return "clue.map(" .. table.concat(translated, ", ").. ")"
 end
 
+function clue.compiler.resolve_ns(ns, locals, sym)
+    if not sym.ns then
+        if locals[sym.name] then
+            return nil
+        end
+        return ns.name
+    end
+    local resolved_ns = ns.aliases and ns.aliases[sym.ns] or sym.ns
+    if resolved_ns == "lua" then
+        return nil
+    end
+    return resolved_ns
+end
+
+function clue.compiler.resolve_symbol(ns, locals, sym)
+    return clue.symbol(clue.compiler.resolve_ns(sym), sym.name)
+end
+
 function clue.compiler.translate_expr(ns, locals, expr)
     local etype = clue.type(expr)
     if (type(expr)) == "string" then
@@ -183,16 +207,8 @@ function clue.compiler.translate_expr(ns, locals, expr)
     if etype == "list" then
         return clue.compiler.translate_call(ns, locals, expr:unpack())
     elseif etype == "symbol" then
-        local resolved_ns
-        if not expr.ns then
-            if locals[expr.name] then
-                return expr.name
-            end
-            resolved_ns = ns.name
-        else
-            resolved_ns = (ns.aliases or {})[expr.ns] or expr.ns
-        end
-        if resolved_ns == "lua" then
+        local resolved_ns = clue.compiler.resolve_ns(ns, locals, expr)
+        if not resolved_ns then
             return expr.name
         end
         return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
