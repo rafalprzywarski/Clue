@@ -147,23 +147,30 @@ end
 
 function clue.lazy_seq(f)
     local s = {clue_type__="lazy_seq"}
-    function s:seq()
-        local seq_ = self.seq_
-        if seq_ then
-            return seq_[1]
+    function s:eval()
+        self.seq = f() or clue.list()
+        self.eval = nil
+        function self:first()
+            return self.seq:first()
         end
-        local seq = f() or clue.list()
-        self.seq_ = {seq}
-        return seq
+        function self:next()
+            return self.seq:next()
+        end
+        function self:empty()
+            return self.seq:empty()
+        end
     end
     function s:first()
-        return self:seq():first()
+        self:eval()
+        return self.seq:first()
     end
     function s:next()
-        return self:seq():next()
+        self:eval()
+        return self.seq:next()
     end
     function s:empty()
-        return self:seq():empty()
+        self:eval()
+        return self.seq:empty()
     end
     return s
 end
