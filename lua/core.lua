@@ -1,7 +1,8 @@
 clue = clue or {}
 clue.namespaces = clue.namespaces or {}
 clue.namespaces["lua"] = setmetatable({}, {__index = _G})
-clue.keywords = clue.keywords or {}
+
+require 'keyword'
 
 function clue.symbol(ns, name)
     if name == nil then
@@ -11,44 +12,12 @@ function clue.symbol(ns, name)
     return {clue_type__ = "symbol", ns = ns, name = name}
 end
 
-function clue.keyword(ns, name)
-    local function to_string(ns, name)
-        if ns then
-            return ":" .. ns .. "/" .. name
-        end
-        return ":" .. name
-    end
-    if name == nil then
-        name = ns
-        ns = nil
-    end
-    local norm = to_string(ns, name)
-    local interned = clue.keywords[norm]
-    if interned then
-        return interned
-    end
-    local sym = {clue_type__ = "keyword", ns = ns, name = name}
-    local mt = {}
-    setmetatable(sym, mt)
-    function sym:equals(other)
-        return clue.type(other) == "keyword" and self.ns == other.ns and self.name == other.name
-    end
-    function sym:to_string()
-        return to_string(self.ns, self.name)
-    end
-    function mt.__call(s, m)
-        return m[s]
-    end
-    clue.keywords[norm] = sym
-    return sym
-end
-
 function clue.type(s)
     local stype = type(s)
     if stype ~= "table" then
         return stype
     end
-    return s.clue_type__ or stype
+    return s.clue_type__ or getmetatable(s) or stype
 end
 
 function clue.is_symbol(s)
@@ -282,7 +251,7 @@ function clue.pr_str(value)
             end
             return value.name
         end
-        if clue.type(value) == "keyword" then
+        if clue.type(value) == clue.Keyword then
             return value:to_string()
         end
         if clue.type(value) == "map" then
@@ -338,11 +307,11 @@ function clue.equals(...)
                 if x.name ~= y.name or x.ns ~= y.ns then
                     return false
                 end
-            elseif clue.type(x) == "keyword" then
+            elseif clue.type(x) == clue.Keyword then
                 if not x:equals(y) then
                     return false
                 end
-            elseif clue.type(y) == "keyword" then
+            elseif clue.type(y) == clue.Keyword then
                 if not y:equals(x) then
                     return false
                 end

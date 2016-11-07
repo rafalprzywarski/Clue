@@ -212,7 +212,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
             return expr.name
         end
         return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
-    elseif etype == "keyword" then
+    elseif etype == clue.Keyword then
         if expr.ns then
             return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")"
         end
