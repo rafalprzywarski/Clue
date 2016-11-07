@@ -3,14 +3,7 @@ clue.namespaces = clue.namespaces or {}
 clue.namespaces["lua"] = setmetatable({}, {__index = _G})
 
 require 'keyword'
-
-function clue.symbol(ns, name)
-    if name == nil then
-        name = ns
-        ns = nil
-    end
-    return {clue_type__ = "symbol", ns = ns, name = name}
-end
+require 'symbol'
 
 function clue.type(s)
     local stype = type(s)
@@ -18,10 +11,6 @@ function clue.type(s)
         return stype
     end
     return s.clue_type__ or getmetatable(s) or stype
-end
-
-function clue.is_symbol(s)
-    return clue.type(s) == "symbol"
 end
 
 function clue.list(...)
@@ -245,11 +234,8 @@ function clue.pr_str(value)
             end
             return "(" .. table.concat(t, " ").. ")"
         end
-        if clue.type(value) == "symbol" then
-            if value.ns then
-                return value.ns .. "/" .. value.name
-            end
-            return value.name
+        if clue.type(value) == clue.Symbol then
+            return value:to_string()
         end
         if clue.type(value) == clue.Keyword then
             return value:to_string()
@@ -300,11 +286,12 @@ function clue.equals(...)
             if type(x) ~= "table" or type(y) ~= "table" then
                 return false
             end
-            if clue.type(x) == "symbol" or clue.type(y) == "symbol" then
-                if clue.type(x) ~= clue.type(y) then
+            if clue.type(x) == clue.Symbol then
+                if not x:equals(y) then
                     return false
                 end
-                if x.name ~= y.name or x.ns ~= y.ns then
+            elseif clue.type(y) == clue.Symbol then
+                if not y:equals(x) then
                     return false
                 end
             elseif clue.type(x) == clue.Keyword then

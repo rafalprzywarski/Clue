@@ -206,7 +206,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
     end
     if etype == "list" then
         return clue.compiler.translate_call(ns, locals, expr:unpack())
-    elseif etype == "symbol" then
+    elseif etype == clue.Symbol then
         local resolved_ns = clue.compiler.resolve_ns(ns, locals, expr)
         if not resolved_ns then
             return expr.name
