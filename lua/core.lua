@@ -212,12 +212,20 @@ function clue.ns(name, aliases)
     clue._ns_._aliases_ = aliases
 end
 
+function clue.has_tostring(value)
+    local mt = getmetatable(value)
+    return mt and mt.__tostring
+end
+
 function clue.pr_str(value)
     local vtype = type(value)
     if vtype == "string" then
         return "\"" .. value:gsub("\\", "\\\\"):gsub("\n", "\\n"):gsub("\t", "\\t") .. "\""
     end
     if vtype == "table" then
+        if clue.has_tostring(value) then
+            return tostring(value)
+        end
         local function pr_str_seq(op, s, cp)
             local t = {}
             while s do
@@ -233,12 +241,6 @@ function clue.pr_str(value)
                 table.insert(t, clue.pr_str(v))
             end
             return "(" .. table.concat(t, " ").. ")"
-        end
-        if clue.type(value) == clue.Symbol then
-            return value:to_string()
-        end
-        if clue.type(value) == clue.Keyword then
-            return tostring(value)
         end
         if clue.type(value) == "map" then
             local t = {}
@@ -289,14 +291,8 @@ function clue.equals(...)
             if clue.type(x) == clue.Keyword or clue.type(y) == clue.Keyword then
                 return false
             end
-            if clue.type(x) == clue.Symbol then
-                if not x:equals(y) then
-                    return false
-                end
-            elseif clue.type(y) == clue.Symbol then
-                if not y:equals(x) then
-                    return false
-                end
+            if clue.type(x) == clue.Symbol or clue.type(y) == clue.Symbol then
+                return false
             elseif clue.type(x) == clue.Keyword then
                 return false
             elseif clue.type(y) == clue.Keyword then

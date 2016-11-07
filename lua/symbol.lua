@@ -7,11 +7,11 @@ function clue.Symbol:init(ns, name)
     self.name = name
 end
 
-function clue.Symbol:equals(other)
-    return clue.type(self) == clue.type(other) and self.ns == other.ns and self.name == other.name
+function clue.Symbol:__eq(other)
+    return self.ns == other.ns and self.name == other.name
 end
 
-function clue.Symbol:to_string()
+function clue.Symbol:__tostring()
     local ns = self.ns
     if ns then
         return ns .. "/" .. self.name
