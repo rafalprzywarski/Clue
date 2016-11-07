@@ -238,7 +238,7 @@ function clue.pr_str(value)
             return value:to_string()
         end
         if clue.type(value) == clue.Keyword then
-            return value:to_string()
+            return tostring(value)
         end
         if clue.type(value) == "map" then
             local t = {}
@@ -286,6 +286,9 @@ function clue.equals(...)
             if type(x) ~= "table" or type(y) ~= "table" then
                 return false
             end
+            if clue.type(x) == clue.Keyword or clue.type(y) == clue.Keyword then
+                return false
+            end
             if clue.type(x) == clue.Symbol then
                 if not x:equals(y) then
                     return false
@@ -295,13 +298,9 @@ function clue.equals(...)
                     return false
                 end
             elseif clue.type(x) == clue.Keyword then
-                if not x:equals(y) then
-                    return false
-                end
+                return false
             elseif clue.type(y) == clue.Keyword then
-                if not y:equals(x) then
-                    return false
-                end
+                return false
             elseif clue.type(x) == "table" or clue.type(y) == "table" then
                 if clue.type(x) ~= clue.type(y) then
                     return false

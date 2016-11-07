@@ -7,11 +7,11 @@ function clue.Keyword:init(ns, name)
     self.name = name
 end
 
-function clue.Keyword:equals(other)
-    return clue.type(self) == clue.type(other) and self.ns == other.ns and self.name == other.name
+function clue.Keyword:__eq(other)
+    return self.ns == other.ns and self.name == other.name
 end
 
-function clue.Keyword:to_string()
+function clue.Keyword:__tostring()
     return clue.Keyword.normalize(self.ns, self.name)
 end
 
