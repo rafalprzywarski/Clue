@@ -69,7 +69,7 @@ clue.compiler.special_forms = {
             local reqs = {}
             for i=2,requires.size do
                 local req_ns, req_alias
-                if clue.type(requires[i]) == 'vector' then
+                if clue.type(requires[i]) == clue.Vector then
                     req_ns = requires[i][1].name
                     req_alias = requires[i][3].name
                     aliases[req_alias] = req_ns
@@ -217,7 +217,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
             return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")"
         end
         return "clue.keyword(\"" .. expr.name .. "\")"
-    elseif etype == "vector" then
+    elseif etype == clue.Vector then
         return clue.compiler.translate_vector(ns, locals, expr)
     elseif etype == "map" then
         return clue.compiler.translate_map(ns, locals, expr)

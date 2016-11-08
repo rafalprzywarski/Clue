@@ -4,6 +4,7 @@ clue.namespaces["lua"] = setmetatable({}, {__index = _G})
 
 require 'keyword'
 require 'symbol'
+require 'vector'
 
 function clue.type(s)
     local stype = type(s)
@@ -46,40 +47,6 @@ function clue.list(...)
         return clue.cons(self.mt.__index[index], clue.lazy_seq(function() return self:sublist(index + 1) end))
     end
     return setmetatable(l, l.mt)
-end
-
-function clue.vector(...)
-    local v = {clue_type__="vector", mt={__index = {...}}, size=select("#", ...)}
-    function v:append(e) self.size = self.size + 1; self.mt.__index[self.size] = e; return self; end
-    function v:map(f)
-        local m = clue.vector()
-        for i=1,self.size do
-            m:append(f(self[i]))
-        end
-        return m
-    end
-    function v:concat(delimiter)
-        return table.concat(self.mt.__index, delimiter)
-    end
-    function v:empty()
-        return self.size == 0
-    end
-    function v:first()
-        return self.mt.__index[1]
-    end
-    function v:next()
-        return self:subvec(2)
-    end
-    function v:subvec(index)
-        if index > self.size then
-            return nil
-        end
-        if index == self.size then
-            return clue.cons(self.mt.__index[index])
-        end
-        return clue.cons(self.mt.__index[index], clue.lazy_seq(function() return self:subvec(index + 1) end))
-    end
-    return setmetatable(v, v.mt)
 end
 
 function clue.cons(x, coll)
@@ -247,7 +214,7 @@ function clue.pr_str(value)
             value:each(function(k,v) table.insert(t, clue.pr_str(k) .. " " .. clue.pr_str(v)) end)
             return "{" .. table.concat(t, ", ") .. "}"
         end
-        if clue.type(value) == "vector" then
+        if clue.type(value) == clue.Vector then
             return pr_str_seq("[", clue.seq(value), "]")
         end
         return pr_str_seq("(", clue.seq(value), ")")
