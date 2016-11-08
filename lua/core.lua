@@ -5,6 +5,7 @@ clue.namespaces["lua"] = setmetatable({}, {__index = _G})
 require 'keyword'
 require 'symbol'
 require 'vector'
+require 'list'
 
 function clue.type(s)
     local stype = type(s)
@@ -12,41 +13,6 @@ function clue.type(s)
         return stype
     end
     return s.clue_type__ or getmetatable(s) or stype
-end
-
-function clue.list(...)
-    local l = {clue_type__="list", mt={__index = {...}}, size=select("#", ...)}
-    function l:unpack() return unpack(self.mt.__index, 1, self.size) end
-    function l:append(e) self.size = self.size + 1; self.mt.__index[self.size] = e; return self; end
-    function l:map(f)
-        local m = clue.list()
-        for i=1,self.size do
-            m:append(f(self[i]))
-        end
-        return m
-    end
-    function l:concat(delimiter)
-        return table.concat(self.mt.__index, delimiter)
-    end
-    function l:empty()
-        return self.size == 0
-    end
-    function l:first()
-        return self.mt.__index[1]
-    end
-    function l:next()
-        return self:sublist(2)
-    end
-    function l:sublist(index)
-        if index > self.size then
-            return nil
-        end
-        if index == self.size then
-            return clue.cons(self.mt.__index[index])
-        end
-        return clue.cons(self.mt.__index[index], clue.lazy_seq(function() return self:sublist(index + 1) end))
-    end
-    return setmetatable(l, l.mt)
 end
 
 function clue.cons(x, coll)

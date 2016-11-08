@@ -104,7 +104,7 @@ clue.compiler.special_forms = {
     end,
     ["."] = function(ns, locals, instance, call)
         local name, args, op
-        if clue.type(call) == "list" then
+        if clue.type(call) == clue.List then
             name = call[1].name
             args = "("
             op = ":"
@@ -204,7 +204,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
     if type(expr) ~= "table" then
         return tostring(expr)
     end
-    if etype == "list" then
+    if etype == clue.List then
         return clue.compiler.translate_call(ns, locals, expr:unpack())
     elseif etype == clue.Symbol then
         local resolved_ns = clue.compiler.resolve_ns(ns, locals, expr)
