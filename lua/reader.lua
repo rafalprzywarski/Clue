@@ -130,7 +130,7 @@ function clue.reader.read_token(source)
 end
 
 function clue.reader.read_sequence(source, create)
-    local l = clue.list()
+    local l = clue.vector()
     local e, nsource = clue.reader.read_expression(source)
     while e ~= clue.reader.nothing do
         l:append(e)

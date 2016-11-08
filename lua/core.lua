@@ -36,6 +36,16 @@ function clue.seq(coll)
     return coll
 end
 
+function clue.vec(coll)
+    local s = clue.seq(coll)
+    local v = clue.vector()
+    while s do
+        v:append(s:first())
+        s = s:next()
+    end
+    return v
+end
+
 function clue.lazy_seq(f)
     local s = {clue_type__="lazy_seq"}
     function s:eval()
@@ -319,6 +329,7 @@ end
 
 clue.namespaces["clue.core"]["cons"] = clue.cons
 clue.namespaces["clue.core"]["seq"] = clue.seq
+clue.namespaces["clue.core"]["vec"] = clue.vec
 clue.namespaces["clue.core"]["first"] = function(seq) return seq:first() end
 clue.namespaces["clue.core"]["rest"] = clue.rest
 clue.namespaces["clue.core"]["next"] = function(seq) return seq:next() end

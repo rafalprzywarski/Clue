@@ -9,10 +9,6 @@ function clue.List:init(...)
     end
 end
 
-function clue.List:unpack()
-    return unpack(self, 1, self.size)
-end
-
 function clue.List:append(e)
     self.size = self.size + 1
     self[self.size] = e

@@ -9,6 +9,10 @@ function clue.Vector:init(...)
     end
 end
 
+function clue.Vector:unpack()
+    return unpack(self, 1, self.size)
+end
+
 function clue.Vector:append(e)
     self.size = self.size + 1
     self[self.size] = e
