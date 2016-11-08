@@ -41,7 +41,7 @@ clue.compiler.special_forms = {
         return "(function(" .. param_names:concat(", ") .. ") " .. table.concat(translated, "; ") .. " end)"
     end,
     def = function(ns, locals, sym, value)
-        return "clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value)
+        return "(function() clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value) .. " end)()"
     end,
     let = function(ns, locals, defs, ...)
         if select("#", ...) == 0 and defs.size == 0 then

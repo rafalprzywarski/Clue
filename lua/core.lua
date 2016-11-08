@@ -33,6 +33,9 @@ function clue.seq(coll)
     if not coll or coll:empty() then
         return nil
     end
+    if clue.type(coll) == clue.Vector then
+        return coll:subvec(1)
+    end
     return coll
 end
 
@@ -135,7 +138,7 @@ end
 function clue.get_or_create_ns(name)
     n = clue.namespaces[name]
     if n then return n end
-    n = {_name_ = name, _aliases_ = {}}
+    n = {name = name, _aliases_ = {}}
     clue.namespaces[name] = n
     return n
 end
@@ -143,7 +146,7 @@ end
 function clue.ns(name, aliases)
     clue._ns_ = clue.get_or_create_ns(name)
     for n, v in pairs(clue.namespaces["clue.core"]) do
-        if n ~= "_name_" and n ~= "_aliases_" then
+        if n ~= "name" and n ~= "_aliases_" then
             clue._ns_[n] = v
         end
     end

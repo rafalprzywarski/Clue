@@ -69,8 +69,8 @@ t.describe("clue.compiler", {
             },
             ["variable definitions"] = function()
                 ns = {name = "user.ns"}
-                t.assert_equals(clue.compiler.compile(ns, "(def a 10)"), "clue.namespaces[\"user.ns\"][\"a\"] = 10")
-                t.assert_equals(clue.compiler.compile(ns, "(def ready? (fn [x] x))"), "clue.namespaces[\"user.ns\"][\"ready?\"] = (function(x) return x end)")
+                t.assert_equals(clue.compiler.compile(ns, "(def a 10)"), "(function() clue.namespaces[\"user.ns\"][\"a\"] = 10 end)()")
+                t.assert_equals(clue.compiler.compile(ns, "(def ready? (fn [x] x))"), "(function() clue.namespaces[\"user.ns\"][\"ready?\"] = (function(x) return x end) end)()")
             end,
             ["let definitions"] = {
                 ["without constants"] = function()
@@ -90,8 +90,8 @@ t.describe("clue.compiler", {
             },
             ["multiple expressions into multiple statements"] = function()
                 ns = {name = "some"}
-                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)"), "clue.namespaces[\"some\"][\"x\"] = 9;\nclue.namespaces[\"some\"][\"f1\"]()")
-                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)(f2)"), "clue.namespaces[\"some\"][\"x\"] = 9;\nclue.namespaces[\"some\"][\"f1\"]();\nclue.namespaces[\"some\"][\"f2\"]()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)"), "(function() clue.namespaces[\"some\"][\"x\"] = 9 end)();\nclue.namespaces[\"some\"][\"f1\"]()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)(f2)"), "(function() clue.namespaces[\"some\"][\"x\"] = 9 end)();\nclue.namespaces[\"some\"][\"f1\"]();\nclue.namespaces[\"some\"][\"f2\"]()")
             end,
             ["namespace definitions"] = {
                 ["without attributes"] = function()
