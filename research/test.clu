@@ -13,6 +13,6 @@
 (o/hello)
 
 (let [
-    a (. lua/io read)
-    b (. lua/io read)]
+    a ((. lua/io read))
+    b ((. lua/io read))]
     (lua/print (- (* a a) (* b b))))
