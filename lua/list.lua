@@ -3,20 +3,15 @@ require 'class'
 clue.class("List")
 
 function clue.List:init(...)
-    self.size = 0
-    for i=1,select("#", ...) do
-        self:append(select(i, ...))
-    end
+    self:init_n(select("#", ...), ...)
 end
 
-function clue.List:append(e)
-    self.size = self.size + 1
-    self[self.size] = e
-    return self
-end
-
-function clue.List:concat(delimiter)
-    return table.concat(self, delimiter)
+function clue.List:init_n(n, first, ...)
+    self.size = n
+    if n == 0 then return end
+    self.first_ = first
+    if n == 1 then return end
+    self.next_ = clue.List.new(...)
 end
 
 function clue.List:empty()
@@ -24,21 +19,11 @@ function clue.List:empty()
 end
 
 function clue.List:first()
-    return self[1]
+    return self.first_
 end
 
 function clue.List:next()
-    return self:sublist(2)
-end
-
-function clue.List:sublist(index)
-    if index > self.size then
-        return nil
-    end
-    if index == self.size then
-        return clue.cons(self[index])
-    end
-    return clue.cons(self[index], clue.lazy_seq(function() return self:sublist(index + 1) end))
+    return self.next_
 end
 
 clue.list = clue.List.new

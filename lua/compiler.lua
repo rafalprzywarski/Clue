@@ -67,17 +67,20 @@ clue.compiler.special_forms = {
         local aliases = {}
         if requires then
             local reqs = {}
-            for i=2,requires.size do
+            requires = clue.seq(requires):next()
+            while requires do
+                local req = requires:first()
                 local req_ns, req_alias
-                if clue.type(requires[i]) == clue.Vector then
-                    req_ns = requires[i][1].name
-                    req_alias = requires[i][3].name
+                if clue.type(req) == clue.Vector then
+                    req_ns = req[1].name
+                    req_alias = req[3].name
                     aliases[req_alias] = req_ns
                 else
-                    req_ns = requires[i].name
+                    req_ns = req.name
                     req_alias = req_ns
                 end
                 table.insert(reqs, "[\"" .. req_alias .. "\"" .. "] = " .. "\"" .. req_ns .. "\"")
+                requires = requires:next()
             end
             translated_reqs = ", " .. "{" .. table.concat(reqs, ", ") .. "}"
         end
@@ -105,14 +108,16 @@ clue.compiler.special_forms = {
     ["."] = function(ns, locals, instance, call)
         local name, args, op
         if clue.type(call) == clue.List then
-            name = call[1].name
+            name = call:first().name
             args = "("
             op = ":"
-            for i = 2,call.size do
-                if i > 2 then args = args .. ", " end
-                args = args .. clue.compiler.translate_expr(ns, locals, call[i])
+            call = call:next()
+            local translated = {}
+            while call do
+                table.insert(translated, clue.compiler.translate_expr(ns, locals, call:first()))
+                call = call:next()
             end
-            args = args .. ")"
+            args = "(" .. table.concat(translated, ", ") .. ")"
         else
             name = call.name
             args = ""

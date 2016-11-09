@@ -187,7 +187,7 @@ function clue.reader.read_expression(source)
 end
 
 function clue.reader.read(source)
-    local es = clue.list()
+    local es = clue.vector()
     local e, source = clue.reader.read_expression(source)
     while e ~= clue.reader.nothing do
         es:append(e)
