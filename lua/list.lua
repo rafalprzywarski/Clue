@@ -26,4 +26,12 @@ function clue.List:next()
     return self.next_
 end
 
+function clue.List:cons(e)
+    local l = clue.List.new()
+    l.size = self.size + 1
+    l.first_ = e
+    l.next_ = self
+    return l
+end
+
 clue.list = clue.List.new

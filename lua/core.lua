@@ -233,6 +233,13 @@ function clue.rest(s)
     return clue.list()
 end
 
+function clue.conj(coll, x)
+    if coll and coll.cons then
+        return coll:cons(x)
+    end
+    return clue.cons(x, coll)
+end
+
 clue.ns("clue.core")
 
 clue.namespaces["clue.core"]["+"] = function(...)
@@ -289,6 +296,9 @@ clue.namespaces["clue.core"]["assoc"] = function(map, k, v)
 end
 
 clue.namespaces["clue.core"]["cons"] = clue.cons
+clue.namespaces["clue.core"]["conj"] = clue.conj
+clue.namespaces["clue.core"]["list"] = clue.list
+clue.namespaces["clue.core"]["vector"] = clue.vector
 clue.namespaces["clue.core"]["seq"] = clue.seq
 clue.namespaces["clue.core"]["vec"] = clue.vec
 clue.namespaces["clue.core"]["first"] = function(seq) return seq:first() end

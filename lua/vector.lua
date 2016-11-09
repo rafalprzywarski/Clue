@@ -19,6 +19,12 @@ function clue.Vector:append(e)
     return self
 end
 
+function clue.Vector:cons(e)
+    local v = clue.Vector.new(self:unpack())
+    v:append(e)
+    return v
+end
+
 function clue.Vector:concat(delimiter)
     return table.concat(self, delimiter)
 end
