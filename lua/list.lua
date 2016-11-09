@@ -41,6 +41,4 @@ function clue.List:sublist(index)
     return clue.cons(self[index], clue.lazy_seq(function() return self:sublist(index + 1) end))
 end
 
-function clue.list(...)
-    return clue.List.new(...)
-end
+clue.list = clue.List.new

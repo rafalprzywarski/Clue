@@ -45,6 +45,4 @@ function clue.Vector:subvec(index)
     return clue.cons(self[index], clue.lazy_seq(function() return self:subvec(index + 1) end))
 end
 
-function clue.vector(...)
-    return clue.Vector.new(...)
-end
+clue.vector = clue.Vector.new

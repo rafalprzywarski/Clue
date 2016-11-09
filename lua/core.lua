@@ -6,6 +6,7 @@ require 'keyword'
 require 'symbol'
 require 'vector'
 require 'list'
+require 'cons'
 
 function clue.type(s)
     local stype = type(s)
@@ -13,20 +14,6 @@ function clue.type(s)
         return stype
     end
     return s.clue_type__ or getmetatable(s) or stype
-end
-
-function clue.cons(x, coll)
-    local c = {clue_type__="cons"}
-    function c:empty()
-        return false
-    end
-    function c:first()
-        return x
-    end
-    function c:next()
-        return clue.seq(coll)
-    end
-    return c
 end
 
 function clue.seq(coll)
