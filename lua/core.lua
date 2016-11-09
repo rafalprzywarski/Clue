@@ -7,6 +7,7 @@ require 'symbol'
 require 'vector'
 require 'list'
 require 'cons'
+require 'lazy_seq'
 
 function clue.type(s)
     local stype = type(s)
@@ -34,36 +35,6 @@ function clue.vec(coll)
         s = s:next()
     end
     return v
-end
-
-function clue.lazy_seq(f)
-    local s = {clue_type__="lazy_seq"}
-    function s:eval()
-        self.seq = f() or clue.list()
-        self.eval = nil
-        function self:first()
-            return self.seq:first()
-        end
-        function self:next()
-            return self.seq:next()
-        end
-        function self:empty()
-            return self.seq:empty()
-        end
-    end
-    function s:first()
-        self:eval()
-        return self.seq:first()
-    end
-    function s:next()
-        self:eval()
-        return self.seq:next()
-    end
-    function s:empty()
-        self:eval()
-        return self.seq:empty()
-    end
-    return s
 end
 
 function clue.map(...)
