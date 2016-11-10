@@ -38,7 +38,14 @@ clue.compiler.special_forms = {
         if va_index then
             param_names:append("...")
         end
-        return "(function(" .. param_names:concat(", ") .. ") " .. table.concat(translated, "; ") .. " end)"
+        local body = table.concat(translated, "; ")
+        if va_index then
+            return "(function(" .. param_names:concat(", ") .. ") " .. body .. " end)"
+        end
+        if params.size == 0 then
+            return "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then " .. body .. " end clue.argCountError(select(\"#\", ...)); end)"
+        end
+        return "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == " .. params.size .. " then return (function(" .. param_names:concat(", ") .. ") " .. body .. " end)(...) end clue.argCountError(arg_count_); end)"
     end,
     def = function(ns, locals, sym, value)
         return "(function() clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value) .. " end)()"

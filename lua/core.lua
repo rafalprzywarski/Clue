@@ -9,6 +9,10 @@ require 'list'
 require 'cons'
 require 'lazy_seq'
 
+function clue.argCountError(n)
+    error("Wrong number of args (" .. n .. ")")
+end
+
 function clue.type(s)
     local stype = type(s)
     if stype ~= "table" then
