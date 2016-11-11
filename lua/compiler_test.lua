@@ -43,13 +43,13 @@ t.describe("clue.compiler", {
             ["function definitions"] = {
                 ["with no parameters"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1 2))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end clue.argCountError(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1) (g 2) (h 3))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then clue.namespaces[\"user.ns\"][\"f\"](1); clue.namespaces[\"user.ns\"][\"g\"](2); return clue.namespaces[\"user.ns\"][\"h\"](3) end clue.argCountError(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1 2))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1) (g 2) (h 3))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then clue.namespaces[\"user.ns\"][\"f\"](1); clue.namespaces[\"user.ns\"][\"g\"](2); return clue.namespaces[\"user.ns\"][\"h\"](3) end clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with declared parameters"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (f 1 2))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)(...) end clue.argCountError(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [b c d] (f 1 2) (g 2) (h 3))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(b, c, d) clue.namespaces[\"user.ns\"][\"f\"](1, 2); clue.namespaces[\"user.ns\"][\"g\"](2); return clue.namespaces[\"user.ns\"][\"h\"](3) end)(...) end clue.argCountError(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (f 1 2))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)(...) end clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [b c d] (f 1 2) (g 2) (h 3))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(b, c, d) clue.namespaces[\"user.ns\"][\"f\"](1, 2); clue.namespaces[\"user.ns\"][\"g\"](2); return clue.namespaces[\"user.ns\"][\"h\"](3) end)(...) end clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with variable number of parameters"] = function()
                     ns = {name = "user.ns"}
@@ -58,18 +58,18 @@ t.describe("clue.compiler", {
                 end,
                 ["with parameters used in the body"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (a 1 2))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return a(1, 2) end)(...) end clue.argCountError(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [f x] (f x y))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(f, x) return f(x, clue.namespaces[\"user.ns\"][\"y\"]) end)(...) end clue.argCountError(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b c] (a b) [a b c])"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(a, b, c) a(b); return clue.vector(a, b, c) end)(...) end clue.argCountError(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (a 1 2))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return a(1, 2) end)(...) end clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [f x] (f x y))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(f, x) return f(x, clue.namespaces[\"user.ns\"][\"y\"]) end)(...) end clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b c] (a b) [a b c])"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(a, b, c) a(b); return clue.vector(a, b, c) end)(...) end clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with parameters used in the body of a nested function"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b] (fn [c d] (a b c d)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(a, b) return (function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(c, d) return a(b, c, d) end)(...) end clue.argCountError(arg_count_); end) end)(...) end clue.argCountError(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b] (fn [c d] (a b c d)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(a, b) return (function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(c, d) return a(b, c, d) end)(...) end clue.arg_count_error(arg_count_); end) end)(...) end clue.arg_count_error(arg_count_); end)")
                 end,
                 ["overloaded by the number of parameters"] = {
                     ["- no signatures"] = function()
                         ns = {name = "user.ns"}
-                        t.assert_equals(clue.compiler.compile(ns, "(fn)"), "(function(...) local arg_count_ = select(\"#\", ...); clue.argCountError(arg_count_); end)")
+                        t.assert_equals(clue.compiler.compile(ns, "(fn)"), "(function(...) local arg_count_ = select(\"#\", ...); clue.arg_count_error(arg_count_); end)")
                     end,
                     ["- one signature"] = function()
                         ns = {name = "user.ns"}
@@ -77,7 +77,7 @@ t.describe("clue.compiler", {
                     end,
                     ["- many signatures"] = function()
                         ns = {name = "user.ns"}
-                        t.assert_equals(clue.compiler.compile(ns, "(fn ([] 10) ([x] x) ([y z] (y z)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then return 10 end; if arg_count_ == 1 then return (function(x) return x end)(...) end; if arg_count_ == 2 then return (function(y, z) return y(z) end)(...) end clue.argCountError(arg_count_); end)")
+                        t.assert_equals(clue.compiler.compile(ns, "(fn ([] 10) ([x] x) ([y z] (y z)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then return 10 end; if arg_count_ == 1 then return (function(x) return x end)(...) end; if arg_count_ == 2 then return (function(y, z) return y(z) end)(...) end clue.arg_count_error(arg_count_); end)")
                     end,
                     ["- many signatures with variable number of parameters"] = function()
                         ns = {name = "user.ns"}
@@ -105,7 +105,7 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile(ns, "(let [a (f)])"), "(function() local a = clue.namespaces[\"user.ns\"][\"f\"](); return nil end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(let [a f b 2] (a b))"), "(function() local a = clue.namespaces[\"user.ns\"][\"f\"]; local b = 2; return a(b) end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(let [a 1 b 2] (a) (b))"), "(function() local a = 1; local b = 2; a(); return b() end)()")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (let [b a] (b a)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return (function() local b = a; return b(a) end)() end)(...) end clue.argCountError(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (let [b a] (b a)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return (function() local b = a; return b(a) end)() end)(...) end clue.arg_count_error(arg_count_); end)")
                     t.assert_equals(clue.compiler.compile(ns, "(let [a a a a a b b a] (b a)"), "(function() local a = clue.namespaces[\"user.ns\"][\"a\"]; local a = a; local a = clue.namespaces[\"user.ns\"][\"b\"]; local b = a; return b(a) end)()")
                 end
             },

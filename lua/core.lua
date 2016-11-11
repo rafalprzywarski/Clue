@@ -9,7 +9,7 @@ require 'list'
 require 'cons'
 require 'lazy_seq'
 
-function clue.argCountError(n)
+function clue.arg_count_error(n)
     error("Wrong number of args (" .. n .. ")")
 end
 
