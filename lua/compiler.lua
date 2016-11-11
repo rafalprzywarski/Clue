@@ -83,15 +83,13 @@ function clue.compiler.translate_fn(ns, locals, ...)
     else
         va_body = "return " .. va_body .. "(...)"
     end
-    return "(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " " .. va_body .. " end)"
+    table.insert(bodies, va_body)
+    return "(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " end)"
 end
 
 clue.compiler.special_forms = {
     fn = function(ns, locals, ...)
-        if select("#", ...) == 0 then
-            return "(function(...) local arg_count_ = select(\"#\", ...); clue.arg_count_error(arg_count_); end)"
-        end
-        if clue.type(select(1, ...)) == clue.Vector then
+        if select("#", ...) > 0 and clue.type(select(1, ...)) == clue.Vector then
             return clue.compiler.translate_fn(ns, locals, clue.list(...))
         end
         return clue.compiler.translate_fn(ns, locals, ...)
