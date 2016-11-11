@@ -12,40 +12,89 @@ function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, .
     return table.concat(translated, delimiter)
 end
 
-clue.compiler.special_forms = {
-    fn = function(ns, locals, params, ...)
+function clue.compiler.translate_fn(ns, locals, ...)
+    local function parse_params(params)
         local param_names = clue.vector()
-        local va_index = nil
+        local va_name = nil
         for i=1,params.size do
             if params[i].name == "&" then
-                va_index = i + 1
+                va_name = params[i + 1].name
+                param_names:append("...")
                 break
             end
             param_names:append(params[i].name)
         end
+        return param_names, va_name
+    end
+    local function add_locals(locals, param_names, va_name)
         locals = clue.set_union(locals, clue.to_set(param_names))
-        if va_index then
-            locals[params[va_index].name] = true
+        if va_name then
+            locals[va_name] = true
         end
+        return locals
+    end
+    local function partial_body(ns, locals, va_name, exprs)
         local translated = {}
-        if va_index then
-            table.insert(translated, "local " .. params[va_index].name .. " = clue.list(...)")
+        if va_name then
+            table.insert(translated, "local " .. va_name .. " = clue.list(...)")
         end
-        for i = 1, select("#", ...) do
-            table.insert(translated, clue.compiler.translate_expr(ns, locals, select(i, ...)))
+        exprs = clue.seq(exprs)
+        while exprs do
+            table.insert(translated, clue.compiler.translate_expr(ns, locals, exprs:first()))
+            exprs = exprs:next()
         end
         translated[#translated] = "return " .. translated[#translated]
-        if va_index then
-            param_names:append("...")
+        return table.concat(translated, "; ")
+    end
+    local function function_wrap(param_names, body)
+        return "(function(" .. param_names:concat(", ") .. ") " .. body .. " end)"
+    end
+    local function translate_body(ns, locals, params, exprs)
+        local param_names, va_name = parse_params(params)
+        locals = add_locals(locals, param_names, va_name)
+        local body = partial_body(ns, locals, va_name, exprs)
+        if param_names.size > 0 then
+            body = function_wrap(param_names, body)
         end
-        local body = table.concat(translated, "; ")
-        if va_index then
-            return "(function(" .. param_names:concat(", ") .. ") " .. body .. " end)"
+        if va_name then
+            return body, true
         end
-        if params.size == 0 then
-            return "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then " .. body .. " end clue.argCountError(select(\"#\", ...)); end)"
+        if params.size > 0 then
+            body = "return " .. body .. "(...)"
         end
-        return "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == " .. params.size .. " then return (function(" .. param_names:concat(", ") .. ") " .. body .. " end)(...) end clue.argCountError(arg_count_); end)"
+        return "if arg_count_ == " .. param_names.size .. " then " .. body .. " end", false
+    end
+    local bodies = {}
+    local va_body
+    for i = 1, select("#", ...) do
+        local params_and_exprs = select(i, ...)
+        local body, va = translate_body(ns, locals, params_and_exprs:first(), params_and_exprs:next())
+        if va then
+            va_body = body
+        else
+            table.insert(bodies, body)
+        end
+    end
+    if #bodies == 0 and va_body then
+        return va_body
+    end
+    if not va_body then
+        va_body = "clue.argCountError(arg_count_);"
+    else
+        va_body = "return " .. va_body .. "(...)"
+    end
+    return "(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " " .. va_body .. " end)"
+end
+
+clue.compiler.special_forms = {
+    fn = function(ns, locals, ...)
+        if select("#", ...) == 0 then
+            return "(function(...) local arg_count_ = select(\"#\", ...); clue.argCountError(arg_count_); end)"
+        end
+        if clue.type(select(1, ...)) == clue.Vector then
+            return clue.compiler.translate_fn(ns, locals, clue.list(...))
+        end
+        return clue.compiler.translate_fn(ns, locals, ...)
     end,
     def = function(ns, locals, sym, value)
         return "(function() clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value) .. " end)()"
