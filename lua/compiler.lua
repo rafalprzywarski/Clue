@@ -86,13 +86,13 @@ function clue.compiler.translate_fn(ns, locals, ...)
         end
     end
     if #bodies == 0 and va_n == 0 then
-        return va_body
+        return "clue.fn" .. va_body
     end
     if va_body then
         table.insert(bodies, va_body)
     end
     table.insert(bodies, "clue.arg_count_error(arg_count_);")
-    return "(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " end)"
+    return "clue.fn(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " end)"
 end
 
 clue.compiler.special_forms = {

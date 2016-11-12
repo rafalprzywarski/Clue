@@ -9,6 +9,7 @@ require 'list'
 require 'cons'
 require 'lazy_seq'
 require 'map'
+require 'fn'
 
 function clue.arg_count_error(n)
     error("Wrong number of args (" .. n .. ")")
@@ -154,6 +155,9 @@ function clue.equals(...)
         local y = select(i, ...)
         if x ~= y then
             if type(x) ~= "table" or type(y) ~= "table" then
+                return false
+            end
+            if clue.type(x) == clue.Fn or clue.type(y) == clue.Fn then
                 return false
             end
             if clue.type(x) == clue.Keyword or clue.type(y) == clue.Keyword then
