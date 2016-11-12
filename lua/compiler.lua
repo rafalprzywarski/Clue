@@ -56,34 +56,42 @@ function clue.compiler.translate_fn(ns, locals, ...)
         if param_names.size > 0 then
             body = function_wrap(param_names, body)
         end
-        if va_name then
-            return body, true
-        end
-        if params.size > 0 then
+        if param_names.size > 0 and not va_name or param_names.size > 1 then
             body = "return " .. body .. "(...)"
         end
-        return "if arg_count_ == " .. param_names.size .. " then " .. body .. " end", false
+        local cond, va_n
+        if va_name then
+            va_n = param_names.size - 1
+            if param_names.size > 1 then
+                cond = ">= " .. (param_names.size - 1)
+            end
+        else
+            cond = "== " .. param_names.size
+        end
+        if cond then
+            body = "if arg_count_ " .. cond .. " then " .. body .. " end"
+        end
+        return body, va_n
     end
     local bodies = {}
-    local va_body
+    local va_body, va_n
     for i = 1, select("#", ...) do
         local params_and_exprs = select(i, ...)
-        local body, va = translate_body(ns, locals, params_and_exprs:first(), params_and_exprs:next())
-        if va then
+        local body, n = translate_body(ns, locals, params_and_exprs:first(), params_and_exprs:next())
+        if n then
             va_body = body
+            va_n = n
         else
             table.insert(bodies, body)
         end
     end
-    if #bodies == 0 and va_body then
+    if #bodies == 0 and va_n == 0 then
         return va_body
     end
-    if not va_body then
-        va_body = "clue.arg_count_error(arg_count_);"
-    else
-        va_body = "return " .. va_body .. "(...)"
+    if va_body then
+        table.insert(bodies, va_body)
     end
-    table.insert(bodies, va_body)
+    table.insert(bodies, "clue.arg_count_error(arg_count_);")
     return "(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " end)"
 end
 

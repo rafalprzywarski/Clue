@@ -54,7 +54,7 @@ t.describe("clue.compiler", {
                 ["with variable number of parameters"] = function()
                     ns = {name = "user.ns"}
                     t.assert_equals(clue.compiler.compile(ns, "(fn [& args] args)"), "(function(...) local args = clue.list(...); return args end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b & args] (a b args) (b a))"), "(function(a, b, ...) local args = clue.list(...); a(b, args); return b(a) end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a b & args] (a b args) (b a))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ >= 2 then return (function(a, b, ...) local args = clue.list(...); a(b, args); return b(a) end)(...) end; clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with parameters used in the body"] = function()
                     ns = {name = "user.ns"}
@@ -73,7 +73,7 @@ t.describe("clue.compiler", {
                     end,
                     ["- one signature"] = function()
                         ns = {name = "user.ns"}
-                        t.assert_equals(clue.compiler.compile(ns, "(fn ([a b & args] (a b args) (b a)))"), "(function(a, b, ...) local args = clue.list(...); a(b, args); return b(a) end)")
+                        t.assert_equals(clue.compiler.compile(ns, "(fn ([a b & args] (a b args) (b a)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ >= 2 then return (function(a, b, ...) local args = clue.list(...); a(b, args); return b(a) end)(...) end; clue.arg_count_error(arg_count_); end)")
                     end,
                     ["- many signatures"] = function()
                         ns = {name = "user.ns"}
@@ -81,10 +81,8 @@ t.describe("clue.compiler", {
                     end,
                     ["- many signatures with variable number of parameters"] = function()
                         ns = {name = "user.ns"}
-                        t.assert_equals(clue.compiler.compile(ns, "(fn ([& xs] xs) ([x] x) ([y z] (y z)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(x) return x end)(...) end; if arg_count_ == 2 then return (function(y, z) return y(z) end)(...) end; return (function(...) local xs = clue.list(...); return xs end)(...) end)")
-                        -- optimised
-                        -- t.assert_equals(clue.compiler.compile(ns, "(fn ([& xs] xs) ([x] x) ([y z] (y z)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(x) return x end)(...) end; if arg_count_ == 2 then return (function(y, z) return y(z) end)(...) end; local xs = clue.list(...); return xs end)")
-                        t.assert_equals(clue.compiler.compile(ns, "(fn ([x & xs] xs) ([x] x) ([y z] (y z)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(x) return x end)(...) end; if arg_count_ == 2 then return (function(y, z) return y(z) end)(...) end; return (function(x, ...) local xs = clue.list(...); return xs end)(...) end)")
+                        t.assert_equals(clue.compiler.compile(ns, "(fn ([a b & xs] xs) ([x] x) ([y z] (y z)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(x) return x end)(...) end; if arg_count_ == 2 then return (function(y, z) return y(z) end)(...) end; if arg_count_ >= 2 then return (function(a, b, ...) local xs = clue.list(...); return xs end)(...) end; clue.arg_count_error(arg_count_); end)")
+                        t.assert_equals(clue.compiler.compile(ns, "(fn ([x y z & xs] xs) ([x] x) ([y z] (y z)))"), "(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(x) return x end)(...) end; if arg_count_ == 2 then return (function(y, z) return y(z) end)(...) end; if arg_count_ >= 3 then return (function(x, y, z, ...) local xs = clue.list(...); return xs end)(...) end; clue.arg_count_error(arg_count_); end)")
                     end
                 }
             },

@@ -1,10 +1,9 @@
-* overloaded functions
 * proper Map class
-* :: keywords
-* protocols
+* meta
 * ' and quote
 * bindings
 * ~ and unquote
 * ~@ and unquote-splicing
 * syntax-quote `
 * defmacro
+* protocols
