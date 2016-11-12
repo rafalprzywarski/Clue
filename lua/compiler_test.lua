@@ -86,6 +86,25 @@ t.describe("clue.compiler", {
                     end
                 }
             },
+            ["metadata"] = {
+                ["in vectors"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "^:yes [1 2 3]"), "clue.vector(1, 2, 3):with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                end,
+                ["in keywords"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "^:yes :ok"), "clue.keyword(\"ok\"):with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                    t.assert_equals(clue.compiler.compile(nil, "^:yes :ss/ok"), "clue.keyword(\"ss\", \"ok\"):with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                end,
+                ["in maps"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "^:yes {1 2}"), "clue.map(1, 2):with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                end,
+                ["in fn"] = function()
+                    t.assert_equals(clue.compiler.compile(nil, "^:yes (fn [& xs] nil)"), clue.compiler.compile(nil, "(fn [& xs] nil)") .. ":with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                end,
+                ["but not function calls"] = function()
+                    ns = {name = "user.ns"}
+                    t.assert_equals(clue.compiler.compile(ns, "^:no (print 1 2)"), clue.compiler.compile(ns, "(print 1 2)"))
+                end
+            },
             ["variable definitions"] = function()
                 ns = {name = "user.ns"}
                 t.assert_equals(clue.compiler.compile(ns, "(def a 10)"), "(function() clue.namespaces[\"user.ns\"][\"a\"] = 10 end)()")

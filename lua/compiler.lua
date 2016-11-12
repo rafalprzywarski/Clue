@@ -214,8 +214,11 @@ clue.compiler.macros = {
     end
 }
 
-function clue.compiler.translate_call(ns, locals, fn, ...)
+function clue.compiler.translate_call(ns, locals, meta, fn, ...)
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.special_forms[fn.name] then
+        if fn.name == "fn" then
+            return clue.compiler.special_forms[fn.name](ns, locals, ...) .. clue.compiler.translate_meta(meta)
+        end
         return clue.compiler.special_forms[fn.name](ns, locals, ...)
     end
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.macros[fn.name] then
@@ -229,12 +232,19 @@ function clue.compiler.translate_call(ns, locals, fn, ...)
     return s .. ")"
 end
 
+function clue.compiler.translate_meta(meta)
+    if not meta then
+        return ""
+    end
+    return ":with_meta(" .. clue.compiler.translate_map(nil, nil, meta) .. ")"
+end
+
 function clue.compiler.translate_vector(ns, locals, vector)
     local translated = {}
     for i=1,vector.size do
         table.insert(translated, clue.compiler.translate_expr(ns, locals, vector[i]))
     end
-    return "clue.vector(" .. table.concat(translated, ", ").. ")"
+    return "clue.vector(" .. table.concat(translated, ", ").. ")" .. clue.compiler.translate_meta(vector.meta)
 end
 
 function clue.compiler.translate_map(ns, locals, map)
@@ -242,7 +252,7 @@ function clue.compiler.translate_map(ns, locals, map)
     map:each(function(k, v)
         table.insert(translated, clue.compiler.translate_expr(ns, locals, k) .. ", " .. clue.compiler.translate_expr(ns, locals, v))
     end)
-    return "clue.map(" .. table.concat(translated, ", ").. ")"
+    return "clue.map(" .. table.concat(translated, ", ").. ")" .. clue.compiler.translate_meta(map.meta)
 end
 
 function clue.compiler.resolve_ns(ns, locals, sym)
@@ -272,7 +282,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
         return tostring(expr)
     end
     if etype == clue.List then
-        return clue.compiler.translate_call(ns, locals, clue.vec(expr):unpack())
+        return clue.compiler.translate_call(ns, locals, expr.meta, clue.vec(expr):unpack())
     elseif etype == clue.Symbol then
         local resolved_ns = clue.compiler.resolve_ns(ns, locals, expr)
         if not resolved_ns then
@@ -281,9 +291,9 @@ function clue.compiler.translate_expr(ns, locals, expr)
         return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
     elseif etype == clue.Keyword then
         if expr.ns then
-            return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")"
+            return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
         end
-        return "clue.keyword(\"" .. expr.name .. "\")"
+        return "clue.keyword(\"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
     elseif etype == clue.Vector then
         return clue.compiler.translate_vector(ns, locals, expr)
     elseif etype == clue.Map then
