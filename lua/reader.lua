@@ -31,7 +31,7 @@ function clue.reader.is_space(c)
 end
 
 function clue.reader.is_delimiter(c)
-    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}"
+    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}" or c == "^"
 end
 
 function clue.reader.skip_comment(s)
@@ -182,6 +182,15 @@ function clue.reader.read_expression(source)
     end
     if t.type == "delimiter" and t.value == "{" then
         return clue.reader.read_sequence(source, clue.map)
+    end
+    if t.type == "delimiter" and t.value == "^" then
+        local meta, source = clue.reader.read_expression(source)
+        local value, source = clue.reader.read_expression(source)
+        if clue.type(meta) == clue.Keyword then
+            meta = clue.map(meta, true)
+        end
+        value.meta = meta:merge(value.meta)
+        return value, source
     end
     error("unexpected token: " .. t.value)
 end

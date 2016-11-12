@@ -33,6 +33,19 @@ function clue.Map:assoc(k,v)
     return n
 end
 
+function clue.Map:merge(other)
+    local n = clue.map()
+    for k,v in pairs(self.values) do
+        n.values[k] = v
+    end
+    if other then
+        for k,v in pairs(other.values) do
+            n.values[k] = v
+        end
+    end
+    return n
+end
+
 function clue.Map:equals(other)
     if clue.type(other) ~= clue.Map then
         return false

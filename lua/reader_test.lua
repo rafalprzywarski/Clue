@@ -102,6 +102,23 @@ t.describe("clue.reader", {
             ct.assert_equals(clue.reader.read("nil;"), clue.list(nil))
             ct.assert_equals(clue.reader.read("; comment\n1 2"), clue.list(1, 2))
             ct.assert_equals(clue.reader.read("; ; comment\n1 2\n3 ;4"), clue.list(1, 2, 3))
+        end,
+        ["should attach metadata to values"] = {
+            ["- map"] = function()
+                local form = clue.reader.read("^{:yes 22} [1 2 3]")
+                ct.assert_equals(form, clue.list(clue.vector(1, 2, 3)))
+                ct.assert_equals(form:first().meta, clue.map(clue.keyword("yes"), 22))
+            end,
+            ["- keyword"] = function()
+                local form = clue.reader.read("^:some [1 2 3]")
+                ct.assert_equals(form, clue.list(clue.vector(1, 2, 3)))
+                ct.assert_equals(form:first().meta, clue.map(clue.keyword("some"), true))
+            end
+        },
+        ["should merge a sequence of metadata"] = function()
+            local form = clue.reader.read("^{:some 22} ^:more ^:and_more ^{:more false} [1 2 3]")
+            ct.assert_equals(form, clue.list(clue.vector(1, 2, 3)))
+            ct.assert_equals(form:first().meta, clue.map(clue.keyword("some"), 22, clue.keyword("more"), false, clue.keyword("and_more"), true))
         end
     }
 })
