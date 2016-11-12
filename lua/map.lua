@@ -50,4 +50,11 @@ function clue.Map:equals(other)
     return true
 end
 
+function clue.Map:with_meta(m)
+    local wm = clue.Map.new()
+    wm.values = self.values
+    wm.meta = m
+    return wm
+end
+
 clue.map = clue.Map.new

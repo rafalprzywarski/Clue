@@ -19,4 +19,10 @@ function clue.Cons:next()
     return self.next_
 end
 
+function clue.Cons:with_meta(m)
+    local wm = clue.Cons.new(self.first_, self.next_)
+    wm.meta = m
+    return wm
+end
+
 clue.cons = clue.Cons.new

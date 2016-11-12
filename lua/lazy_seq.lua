@@ -28,6 +28,12 @@ function clue.UnrealizedLazySeq:empty()
     return self.seq:empty()
 end
 
+function clue.UnrealizedLazySeq:with_meta(m)
+    local wm = clue.UnrealizedLazySeq.new(self.fn)
+    wm.meta = m
+    return wm
+end
+
 function clue.RealizedLazySeq:first()
     return self.seq:first()
 end
@@ -38,6 +44,13 @@ end
 
 function clue.RealizedLazySeq:empty()
     return self.seq:empty()
+end
+
+function clue.RealizedLazySeq:with_meta(m)
+    local wm = clue.RealizedLazySeq.new()
+    wm.seq = self.seq
+    wm.meta = m
+    return wm
 end
 
 clue.lazy_seq = clue.UnrealizedLazySeq.new

@@ -1,5 +1,8 @@
 (ns clue.core)
 
+(def with-meta (fn [obj m] (. obj (with_meta m))))
+(def meta (fn [obj] (. obj meta)))
+
 (def dec (fn [n] (- n 1)))
 (def inc (fn [n] (+ n 1)))
 (def zero? (fn [n] (= n 0)))

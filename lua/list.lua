@@ -34,4 +34,13 @@ function clue.List:cons(e)
     return l
 end
 
+function clue.List:with_meta(m)
+    local wm = clue.List.new()
+    wm.size = n
+    wm.first_ = self.first_
+    wm.next_ = self.next_
+    wm.meta = m
+    return wm
+end
+
 clue.list = clue.List.new

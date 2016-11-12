@@ -19,6 +19,12 @@ function clue.Symbol:__tostring()
     return self.name
 end
 
+function clue.Symbol:with_meta(m)
+    local wm = clue.Symbol.new(self.ns, self.name)
+    wm.meta = m
+    return wm
+end
+
 function clue.symbol(ns, name)
     if name == nil then
         name = ns
