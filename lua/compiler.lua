@@ -286,7 +286,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
         return "clue.keyword(\"" .. expr.name .. "\")"
     elseif etype == clue.Vector then
         return clue.compiler.translate_vector(ns, locals, expr)
-    elseif etype == "map" then
+    elseif etype == clue.Map then
         return clue.compiler.translate_map(ns, locals, expr)
     else
         error("unexpected expression type")

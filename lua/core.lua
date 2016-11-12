@@ -8,6 +8,7 @@ require 'vector'
 require 'list'
 require 'cons'
 require 'lazy_seq'
+require 'map'
 
 function clue.arg_count_error(n)
     error("Wrong number of args (" .. n .. ")")
@@ -39,47 +40,6 @@ function clue.vec(coll)
         s = s:next()
     end
     return v
-end
-
-function clue.map(...)
-    local values = {}
-    for i=1,select("#", ...),2 do
-        values[select(i, ...)] = select(i + 1, ...)
-    end
-    local m = {clue_type__="map", mt={__index = values}}
-    function m.mt.__call(t, k)
-        return t[k]
-    end
-    function m:each(f)
-        for k,v in pairs(self.mt.__index) do
-            f(k, v)
-        end
-    end
-    function m:assoc(k,v)
-        local n = clue.map()
-        for k,v in pairs(self.mt.__index) do
-            n.mt.__index[k] = v
-        end
-        n.mt.__index[k] = v
-        return n
-    end
-    function m:equals(other)
-        if type(other) ~= "table" or clue.type(other) ~= "map" then
-            return false
-        end
-        for k,v in pairs(self.mt.__index) do
-            if not clue.equals(other.mt.__index[k], v) then
-                return false
-            end
-        end
-        for k,v in pairs(other.mt.__index) do
-            if not clue.equals(self.mt.__index[k], v) then
-                return false
-            end
-        end
-        return true
-    end
-    return setmetatable(m, m.mt)
 end
 
 function clue.to_set(a)
@@ -150,7 +110,7 @@ function clue.pr_str(value)
             end
             return "(" .. table.concat(t, " ").. ")"
         end
-        if clue.type(value) == "map" then
+        if clue.type(value) == clue.Map then
             local t = {}
             value:each(function(k,v) table.insert(t, clue.pr_str(k) .. " " .. clue.pr_str(v)) end)
             return "{" .. table.concat(t, ", ") .. "}"
@@ -212,8 +172,8 @@ function clue.equals(...)
                 if not table_equals(x, y) then
                     return false
                 end
-            elseif clue.type(x) ~= "map" then
-                if clue.type(y) == "map" or not seq_equals(x, y) then
+            elseif clue.type(x) ~= clue.Map then
+                if clue.type(y) == clue.Map or not seq_equals(x, y) then
                     return false
                 end
             else

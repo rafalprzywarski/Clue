@@ -22,8 +22,8 @@ function clue.Keyword.normalize(ns, name)
     return ":" .. name
 end
 
-function clue.Keyword.__call(s, m)
-    return m[s]
+function clue.Keyword:__call(map)
+    return map:at(self)
 end
 
 function clue.Keyword.intern(ns, name)
