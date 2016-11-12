@@ -19,7 +19,7 @@ function clue.type(s)
     if stype ~= "table" then
         return stype
     end
-    return s.clue_type__ or getmetatable(s) or stype
+    return getmetatable(s) or stype
 end
 
 function clue.seq(coll)
