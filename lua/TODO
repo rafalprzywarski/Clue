@@ -1,4 +1,3 @@
-* refactor clue.compiler.translate_call to take a list (or a vector) instead of ...
 * vars
 * meta for vars
 * ' and quote

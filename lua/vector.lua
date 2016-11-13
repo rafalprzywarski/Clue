@@ -41,6 +41,10 @@ function clue.Vector:next()
     return self:subvec(2)
 end
 
+function clue.Vector:at(index)
+    return self[index + 1]
+end
+
 function clue.Vector:subvec(index)
     if index > self.size then
         return nil

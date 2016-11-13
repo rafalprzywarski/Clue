@@ -285,5 +285,25 @@ t.describe("clue.core", {
             ct.assert_equals(clue.keyword("key")(clue.map(clue.keyword("key"), 20)), 20)
             ct.assert_equals(clue.keyword("key")(clue.map(clue.keyword("other"), 20)), nil)
         end
+    },
+    ["clue.nth"] = {
+        ["should return nth element of"] = {
+            ["a list"] = function()
+                ct.assert_equals(clue.nth(clue.list(1, nil, 3), -1, "nf"), "nf")
+                ct.assert_equals(clue.nth(clue.list(1, nil, 3), 0, "nf"), 1)
+                ct.assert_equals(clue.nth(clue.list(1, nil, 3), 1, "nf"), nil)
+                ct.assert_equals(clue.nth(clue.list(1, nil, 3), 2, "nf"), 3)
+                ct.assert_equals(clue.nth(clue.list(1, nil, 3), 3, "nf"), "nf")
+                ct.assert_equals(clue.nth(clue.list(1, nil, 3), 4, "nf"), "nf")
+            end,
+            ["a vector"] = function()
+                ct.assert_equals(clue.nth(clue.vector(1, nil, 3), -1, "nf"), "nf")
+                ct.assert_equals(clue.nth(clue.vector(1, nil, 3), 0, "nf"), 1)
+                ct.assert_equals(clue.nth(clue.vector(1, nil, 3), 1, "nf"), nil)
+                ct.assert_equals(clue.nth(clue.vector(1, nil, 3), 2, "nf"), 3)
+                ct.assert_equals(clue.nth(clue.vector(1, nil, 3), 3, "nf"), "nf")
+                ct.assert_equals(clue.nth(clue.vector(1, nil, 3), 4, "nf"), "nf")
+            end
+        }
     }
 })

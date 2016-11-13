@@ -33,6 +33,47 @@ function clue.seq(coll)
     return coll
 end
 
+function clue.first(s)
+    s = clue.seq(s)
+    if not s then
+        return nil
+    end
+    return s:first()
+end
+
+function clue.next(s)
+    s = clue.seq(s)
+    if not s then
+        return nil
+    end
+    return s:next()
+end
+
+function clue.second(s)
+    return clue.first(clue.next(s))
+end
+
+function clue.nth(coll, index, not_found)
+    if not coll or coll:empty() or index < 0 then
+        return not_found
+    end
+    if clue.type(coll) == clue.Vector then
+        if coll.size <= index then
+            return not_found
+        end
+        return coll:at(index)
+    end
+    local s = clue.seq(coll)
+    while index > 0 and s do
+        index = index - 1
+        s = s:next()
+    end
+    if not s then
+        return not_found
+    end
+    return s:first()
+end
+
 function clue.vec(coll)
     local s = clue.seq(coll)
     local v = clue.vector()
