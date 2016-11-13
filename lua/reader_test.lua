@@ -123,6 +123,18 @@ t.describe("clue.reader", {
         ["should convert ' to quote"] = function()
             ct.assert_equals(clue.reader.read("\'a"), clue.list(clue.list(clue.symbol("quote"), clue.symbol("a"))))
             ct.assert_equals(clue.reader.read("\'(x y)"), clue.list(clue.list(clue.symbol("quote"), clue.list(clue.symbol("x"), clue.symbol("y")))))
+        end,
+        ["should convert ` to syntax-quote"] = function()
+            ct.assert_equals(clue.reader.read("`a"), clue.list(clue.list(clue.symbol("syntax-quote"), clue.symbol("a"))))
+            ct.assert_equals(clue.reader.read("`(x y)"), clue.list(clue.list(clue.symbol("syntax-quote"), clue.list(clue.symbol("x"), clue.symbol("y")))))
+        end,
+        ["should convert ~ to unquote"] = function()
+            ct.assert_equals(clue.reader.read("~a"), clue.list(clue.list(clue.symbol("unquote"), clue.symbol("a"))))
+            ct.assert_equals(clue.reader.read("~(x y)"), clue.list(clue.list(clue.symbol("unquote"), clue.list(clue.symbol("x"), clue.symbol("y")))))
+        end,
+        ["should convert ~@ to unquote-splicing"] = function()
+            ct.assert_equals(clue.reader.read("~@a"), clue.list(clue.list(clue.symbol("unquote-splicing"), clue.symbol("a"))))
+            ct.assert_equals(clue.reader.read("~@(x y)"), clue.list(clue.list(clue.symbol("unquote-splicing"), clue.list(clue.symbol("x"), clue.symbol("y")))))
         end
     }
 })

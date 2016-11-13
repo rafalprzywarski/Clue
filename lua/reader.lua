@@ -10,6 +10,9 @@ clue.reader.constants = {
 
 clue.reader.COMMENT = ";"
 clue.reader.QUOTE = clue.symbol("quote")
+clue.reader.SYNTAX_QUOTE = clue.symbol("syntax-quote")
+clue.reader.UNQUOTE = clue.symbol("unquote")
+clue.reader.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
 
 function clue.reader.number(value)
     return {type = "number", value = value}
@@ -32,7 +35,7 @@ function clue.reader.is_space(c)
 end
 
 function clue.reader.is_delimiter(c)
-    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}" or c == "^" or c == "\'"
+    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}" or c == "^" or c == "\'" or c == "`" or c == "~"
 end
 
 function clue.reader.skip_comment(s)
@@ -118,7 +121,10 @@ function clue.reader.read_token(source)
         return clue.reader.nothing, source
     end
     if clue.reader.is_delimiter(first) then
-        return {type = "delimiter", value = first}, source:sub(2)
+        if first == "~" and source:sub(2, 2) == "@" then
+            first = "~@"
+        end
+        return {type = "delimiter", value = first}, source:sub(first:len() + 1)
     elseif first == "\"" then
         return clue.reader.read_string(source)
     elseif first == ":" then
@@ -196,6 +202,18 @@ function clue.reader.read_expression(source)
     if t.type == "delimiter" and t.value == "\'" then
         local expr, source = clue.reader.read_expression(source)
         return clue.list(clue.reader.QUOTE, expr), source
+    end
+    if t.type == "delimiter" and t.value == "`" then
+        local expr, source = clue.reader.read_expression(source)
+        return clue.list(clue.reader.SYNTAX_QUOTE, expr), source
+    end
+    if t.type == "delimiter" and t.value == "~" then
+        local expr, source = clue.reader.read_expression(source)
+        return clue.list(clue.reader.UNQUOTE, expr), source
+    end
+    if t.type == "delimiter" and t.value == "~@" then
+        local expr, source = clue.reader.read_expression(source)
+        return clue.list(clue.reader.UNQUOTE_SPLICING, expr), source
     end
     error("unexpected token: " .. t.value)
 end
