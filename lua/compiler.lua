@@ -4,6 +4,9 @@ require 'reader'
 clue = clue or {}
 clue.compiler = clue.compiler or {}
 
+clue.compiler.LIST = clue.symbol("lua", "clue.list")
+clue.compiler.SYMBOL = clue.symbol("lua", "clue.symbol")
+
 function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, exprs)
     local translated = {}
     exprs = clue.seq(exprs)
@@ -218,6 +221,57 @@ clue.compiler.special_forms = {
         end
         translated[#translated] = "return " .. translated[#translated]
         return "(function() " .. table.concat(translated, "; ") .. "; end)()"
+    end,
+    ["quote"] = function(ns, locals, meta, exprs)
+        local quote_expr
+        local function quote_list(l)
+            if not l then
+                return nil
+            end
+            local next = l:next()
+            if not next then
+                return clue.list(quote_expr(l:first()))
+            end
+            return quote_list(l:next()):cons(quote_expr(l:first()))
+        end
+        local function quote_vector(v)
+            local q = clue.vector()
+            for i=0,v.size - 1 do
+                q:append(quote_expr(v:at(i)))
+            end
+            return q
+        end
+        local function quote_symbol(s)
+            if not s.ns then
+                return clue.list(clue.compiler.SYMBOL, s.name)
+            end
+            return clue.list(clue.compiler.SYMBOL, s.ns, s.name)
+        end
+        local function quote_map(m)
+            local q = clue.map()
+            m:each(function(k, v) q = q:assoc(quote_expr(k), quote_expr(v)) end)
+            return q
+        end
+        quote_expr = function(expr)
+            local etype = clue.type(expr)
+            if clue.type(expr) == clue.List then
+                if expr:empty() then
+                    return clue.list(clue.compiler.LIST)
+                end
+                return quote_list(expr):cons(clue.compiler.LIST)
+            end
+            if clue.type(expr) == clue.Symbol then
+                return quote_symbol(expr)
+            end
+            if clue.type(expr) == clue.Vector then
+                return quote_vector(expr)
+            end
+            if clue.type(expr) == clue.Map then
+                return quote_map(expr)
+            end
+            return expr
+        end
+        return clue.compiler.translate_expr(ns, locals, quote_expr(exprs:first()))
     end
 }
 
@@ -289,9 +343,24 @@ function clue.compiler.resolve_symbol(ns, locals, sym)
     return clue.symbol(clue.compiler.resolve_ns(sym), sym.name)
 end
 
+function clue.compiler.translate_symbol(ns, locals, expr)
+    local resolved_ns = clue.compiler.resolve_ns(ns, locals, expr)
+    if not resolved_ns then
+        return expr.name
+    end
+    return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
+end
+
+function clue.compiler.translate_keyword(ns, locals, expr)
+    if expr.ns then
+        return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
+    end
+    return "clue.keyword(\"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
+end
+
 function clue.compiler.translate_expr(ns, locals, expr)
     local etype = clue.type(expr)
-    if (type(expr)) == "string" then
+    if etype == "string" then
         return "\"" .. expr .. "\""
     end
     if type(expr) ~= "table" then
@@ -300,20 +369,15 @@ function clue.compiler.translate_expr(ns, locals, expr)
     if etype == clue.List then
         return clue.compiler.translate_call(ns, locals, expr.meta, expr)
     elseif etype == clue.Symbol then
-        local resolved_ns = clue.compiler.resolve_ns(ns, locals, expr)
-        if not resolved_ns then
-            return expr.name
-        end
-        return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
+        return clue.compiler.translate_symbol(ns, locals, expr)
     elseif etype == clue.Keyword then
-        if expr.ns then
-            return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
-        end
-        return "clue.keyword(\"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
+        return clue.compiler.translate_keyword(ns, locals, expr)
     elseif etype == clue.Vector then
         return clue.compiler.translate_vector(ns, locals, expr)
     elseif etype == clue.Map then
         return clue.compiler.translate_map(ns, locals, expr)
+    elseif etype == "table" then
+        return tostring(expr)
     else
         error("unexpected expression type")
     end

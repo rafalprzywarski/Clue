@@ -1,9 +1,8 @@
 * vars
 * meta for vars
-* ' and quote
 * bindings
+* syntax-quote `
 * ~ and unquote
 * ~@ and unquote-splicing
-* syntax-quote `
 * defmacro
 * protocols

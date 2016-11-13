@@ -216,6 +216,31 @@ t.describe("clue.compiler", {
             ["but not lua aliases"] = function()
                 t.assert_equals(clue.compiler.compile(nil, "(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", {[\"lua\"] = \"other\"});\n" .. "clue.namespaces[\"other\"][\"some\"]")
             end
-        }
+        },
+        ["quote should skip evaluation"] = {
+            ["of symbols"] = function()
+                t.assert_equals(clue.compiler.compile({name="ns"}, "'sym"), "clue.symbol(\"sym\")")
+                t.assert_equals(clue.compiler.compile({name="ns"}, "'ns/sym"), "clue.symbol(\"ns\", \"sym\")")
+            end,
+            ["of lists"] = function()
+                t.assert_equals(clue.compiler.compile({name="ns"}, "'()"), "clue.list()")
+                t.assert_equals(clue.compiler.compile({name="ns"}, "'(1 2 3)"), "clue.list(1, 2, 3)")
+            end,
+            ["inside lists"] = function()
+                t.assert_equals(clue.compiler.compile({name="ns"}, "'(1 (2 3) (4 (5 6) () 7))"), "clue.list(1, clue.list(2, 3), clue.list(4, clue.list(5, 6), clue.list(), 7))")
+            end,
+            ["inside vectors"] = function()
+                t.assert_equals(clue.compiler.compile({name="ns"}, "'[1 (2 3) [4 (5 6) 7]]"), "clue.vector(1, clue.list(2, 3), clue.vector(4, clue.list(5, 6), 7))")
+            end,
+            ["inside maps"] = function()
+                t.assert_equals_any(clue.compiler.compile({name="ns"}, "'{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
+            end
+        },
+        ["quote should forward simple values"] = function()
+            t.assert_equals(clue.compiler.compile({name="ns"}, "'nil"), "nil")
+            t.assert_equals(clue.compiler.compile({name="ns"}, "'10"), "10")
+            t.assert_equals(clue.compiler.compile({name="ns"}, "'\"abc\""), "\"abc\"")
+            t.assert_equals(clue.compiler.compile({name="ns"}, "':kkk"), "clue.keyword(\"kkk\")")
+        end
     }
 })
