@@ -100,17 +100,17 @@ function clue.compiler.translate_fn(ns, locals, exprs)
 end
 
 clue.compiler.special_forms = {
-    fn = function(ns, locals, fns)
+    fn = function(ns, locals, meta, fns)
         if fns.size > 0 and clue.type(fns:first()) == clue.Vector then
-            return clue.compiler.translate_fn(ns, locals, clue.list(fns))
+            fns = clue.list(fns)
         end
-        return clue.compiler.translate_fn(ns, locals, fns)
+        return clue.compiler.translate_fn(ns, locals, fns) .. clue.compiler.translate_meta(meta)
     end,
-    def = function(ns, locals, args)
+    def = function(ns, locals, meta, args)
         local sym, value = clue.first(args), clue.second(args)
         return "(function() clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value) .. " end)()"
     end,
-    let = function(ns, locals, args)
+    let = function(ns, locals, meta, args)
         local defs, exprs = clue.first(args), clue.next(args)
         if not exprs and defs.size == 0 then
             return "nil"
@@ -132,7 +132,7 @@ clue.compiler.special_forms = {
         translated[#translated] = "return " .. translated[#translated]
         return "(function() " .. table.concat(translated, "; ") .. " end)()"
     end,
-    ns = function(ns, locals, args)
+    ns = function(ns, locals, meta, args)
         local sym, requires = clue.first(args), clue.second(args)
         local translated_reqs = ""
         local aliases = {}
@@ -157,26 +157,26 @@ clue.compiler.special_forms = {
         end
         return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")", {name = sym.name, aliases = aliases}
     end,
-    ["+"] = function(ns, locals, args)
+    ["+"] = function(ns, locals, meta, args)
         return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " + ", args) .. ")"
     end,
-    ["-"] = function(ns, locals, args)
+    ["-"] = function(ns, locals, meta, args)
         local translated = clue.compiler.translate_and_concat_expressions(ns, locals, " - ", args)
         if args.size == 1 then
             translated = "-" .. translated
         end
         return "(" .. translated .. ")"
     end,
-    ["*"] = function(ns, locals, args)
+    ["*"] = function(ns, locals, meta, args)
         return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " * ", args) .. ")"
     end,
-    ["/"] = function(ns, locals, args)
+    ["/"] = function(ns, locals, meta, args)
         return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " / ", args) .. ")"
     end,
-    ["%"] = function(ns, locals, args)
+    ["%"] = function(ns, locals, meta, args)
         return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " % ", args) .. ")"
     end,
-    ["."] = function(ns, locals, dargs)
+    ["."] = function(ns, locals, meta, dargs)
         local instance, call = clue.first(dargs), clue.second(dargs)
         local name, args, op
         if clue.type(call) == clue.List then
@@ -197,13 +197,13 @@ clue.compiler.special_forms = {
         end
         return clue.compiler.translate_expr(ns, locals, instance) .. op .. name .. args
     end,
-    ["if"] = function(ns, locals, args)
+    ["if"] = function(ns, locals, meta, args)
         local cond, then_, else_ = clue.first(args), clue.second(args), clue.nth(args, 2)
         return "(function() if (" .. clue.compiler.translate_expr(ns, locals, cond) .. ") then " ..
             "return " .. clue.compiler.translate_expr(ns, locals, then_) .. "; else " ..
             "return " .. clue.compiler.translate_expr(ns, locals, else_) .. "; end end)()"
     end,
-    ["do"] = function(ns, locals, exprs)
+    ["do"] = function(ns, locals, meta, exprs)
         if exprs.size == 0 then
             return "nil"
         end
@@ -231,9 +231,9 @@ function clue.compiler.translate_call(ns, locals, meta, form)
     local fn, args = clue.first(form), (form:next() or clue.list())
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.special_forms[fn.name] then
         if fn.name == "fn" then
-            return clue.compiler.special_forms[fn.name](ns, locals, args) .. clue.compiler.translate_meta(meta)
+            return clue.compiler.special_forms[fn.name](ns, locals, meta, args)
         end
-        return clue.compiler.special_forms[fn.name](ns, locals, args)
+        return clue.compiler.special_forms[fn.name](ns, locals, meta, args)
     end
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.macros[fn.name] then
         return clue.compiler.translate_expr(ns, locals, clue.compiler.macros[fn.name](args))
