@@ -9,6 +9,7 @@ clue.reader.constants = {
 }
 
 clue.reader.COMMENT = ";"
+clue.reader.QUOTE = clue.symbol("quote")
 
 function clue.reader.number(value)
     return {type = "number", value = value}
@@ -31,7 +32,7 @@ function clue.reader.is_space(c)
 end
 
 function clue.reader.is_delimiter(c)
-    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}" or c == "^"
+    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}" or c == "^" or c == "\'"
 end
 
 function clue.reader.skip_comment(s)
@@ -191,6 +192,10 @@ function clue.reader.read_expression(source)
         end
         value.meta = meta:merge(value.meta)
         return value, source
+    end
+    if t.type == "delimiter" and t.value == "\'" then
+        local expr, source = clue.reader.read_expression(source)
+        return clue.list(clue.reader.QUOTE, expr), source
     end
     error("unexpected token: " .. t.value)
 end

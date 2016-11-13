@@ -119,6 +119,10 @@ t.describe("clue.reader", {
             local form = clue.reader.read("^{:some 22} ^:more ^:and_more ^{:more false} [1 2 3]")
             ct.assert_equals(form, clue.list(clue.vector(1, 2, 3)))
             ct.assert_equals(form:first().meta, clue.map(clue.keyword("some"), 22, clue.keyword("more"), false, clue.keyword("and_more"), true))
+        end,
+        ["should convert ' to quote"] = function()
+            ct.assert_equals(clue.reader.read("\'a"), clue.list(clue.list(clue.symbol("quote"), clue.symbol("a"))))
+            ct.assert_equals(clue.reader.read("\'(x y)"), clue.list(clue.list(clue.symbol("quote"), clue.list(clue.symbol("x"), clue.symbol("y")))))
         end
     }
 })
