@@ -3,6 +3,12 @@
 (def with-meta (fn [obj m] (. obj (with_meta m))))
 (def meta (fn [obj] (. obj meta)))
 
+(def type (fn [obj] (lua/clue.type obj)))
+(def instance? (fn [cls, obj] (= cls (type obj))))
+
+(def var? (fn [obj] (instance? lua/clue.Var obj)))
+(def var-get (fn [v] (. v (get))))
+
 (def dec (fn [n] (- n 1)))
 (def inc (fn [n] (+ n 1)))
 (def zero? (fn [n] (= n 0)))
