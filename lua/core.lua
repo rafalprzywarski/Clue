@@ -1,6 +1,6 @@
 clue = clue or {}
 clue.namespaces = clue.namespaces or {}
-clue.namespaces["lua"] = setmetatable({}, {__index = function(ns, name) return Var.new(_G[name]) end})
+clue.namespaces["lua"] = {}
 
 require 'keyword'
 require 'symbol'
