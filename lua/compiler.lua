@@ -111,7 +111,7 @@ clue.compiler.special_forms = {
     end,
     def = function(ns, locals, meta, args)
         local sym, value = clue.first(args), clue.second(args)
-        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ")"
+        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
     end,
     var = function(ns, locals, meta, args)
         local sym = clue.first(args)

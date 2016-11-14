@@ -107,8 +107,9 @@ t.describe("clue.compiler", {
             },
             ["variable definitions"] = function()
                 ns = {name = "user.ns"}
-                t.assert_equals(clue.compiler.compile(ns, "(def a 10)"), "clue.def(\"user.ns\", \"a\", 10)")
-                t.assert_equals(clue.compiler.compile(ns, "(def ready? (fn [& args] nil))"), "clue.def(\"user.ns\", \"ready?\", clue.fn(function(...) local args = clue.list(...); return nil end))")
+                t.assert_equals(clue.compiler.compile(ns, "(def a 10)"), "clue.def(\"user.ns\", \"a\", 10, nil)")
+                t.assert_equals(clue.compiler.compile(ns, "(def ready? (fn [& args] nil))"), "clue.def(\"user.ns\", \"ready?\", clue.fn(function(...) local args = clue.list(...); return nil end), nil)")
+                t.assert_equals(clue.compiler.compile(ns, "(def ^:dynamic a 10)"), "clue.def(\"user.ns\", \"a\", 10, clue.map(clue.keyword(\"dynamic\"), true))")
             end,
             ["variable access"] = function()
                 ns = {name = "user.ns"}
@@ -133,8 +134,8 @@ t.describe("clue.compiler", {
             },
             ["multiple expressions into multiple statements"] = function()
                 ns = {name = "some"}
-                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)"), "clue.def(\"some\", \"x\", 9);\nclue.var(\"some\", \"f1\"):get()()")
-                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)(f2)"), "clue.def(\"some\", \"x\", 9);\nclue.var(\"some\", \"f1\"):get()();\nclue.var(\"some\", \"f2\"):get()()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)"), "clue.def(\"some\", \"x\", 9, nil);\nclue.var(\"some\", \"f1\"):get()()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)(f2)"), "clue.def(\"some\", \"x\", 9, nil);\nclue.var(\"some\", \"f1\"):get()();\nclue.var(\"some\", \"f2\"):get()()")
             end,
             ["namespace definitions"] = {
                 ["without attributes"] = function()
