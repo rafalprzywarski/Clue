@@ -1,6 +1,6 @@
 clue = clue or {}
 clue.namespaces = clue.namespaces or {}
-clue.namespaces["lua"] = setmetatable({}, {__index = _G})
+clue.namespaces["lua"] = setmetatable({}, {__index = function(ns, name) return Var.new(_G[name]) end})
 
 require 'keyword'
 require 'symbol'
@@ -10,6 +10,7 @@ require 'cons'
 require 'lazy_seq'
 require 'map'
 require 'fn'
+require 'var'
 
 function clue.arg_count_error(n)
     error("Wrong number of args (" .. n .. ")")
@@ -136,6 +137,9 @@ function clue.pr_str(value)
         if clue.has_tostring(value) then
             return tostring(value)
         end
+        if clue.type(value) == clue.Var then
+            return "#'" .. value.ns .. "/" .. value.name
+        end
         local function pr_str_seq(op, s, cp)
             local t = {}
             while s do
@@ -251,15 +255,15 @@ end
 
 clue.ns("clue.core")
 
-clue.namespaces["clue.core"]["+"] = function(...)
+clue.def("clue.core", "+", function(...)
     local s = 0
     for i=1,select("#", ...) do
         s = s + select(i, ...)
     end
     return s
-end
+end)
 
-clue.namespaces["clue.core"]["-"] = function(...)
+clue.def("clue.core", "-", function(...)
     if select("#", ...) == 1 then
         return -select(1, ...)
     end
@@ -268,49 +272,49 @@ clue.namespaces["clue.core"]["-"] = function(...)
         s = s - select(i, ...)
     end
     return s
-end
+end)
 
-clue.namespaces["clue.core"]["*"] = function(...)
+clue.def("clue.core", "*", function(...)
     local s = 1
     for i=1,select("#", ...) do
         s = s * select(i, ...)
     end
     return s
-end
+end)
 
-clue.namespaces["clue.core"]["/"] = function(...)
+clue.def("clue.core", "/", function(...)
     local s = select(1, ...)
     for i=2,select("#", ...) do
         s = s / select(i, ...)
     end
     return s
-end
+end)
 
-clue.namespaces["clue.core"]["%"] = function(...)
+clue.def("clue.core", "%", function(...)
     local s = select(1, ...)
     for i=2,select("#", ...) do
         s = s % select(i, ...)
     end
     return s
-end
+end)
 
-clue.namespaces["clue.core"]["="] = clue.equals
+clue.def("clue.core", "=", clue.equals)
 
-clue.namespaces["clue.core"]["not="] = function(...)
-    return not clue.namespaces["clue.core"]["="](...)
-end
+clue.def("clue.core", "not=", function(...)
+    return not clue.var("clue.core", "="):get()(...)
+end)
 
-clue.namespaces["clue.core"]["assoc"] = function(map, k, v)
+clue.def("clue.core", "assoc", function(map, k, v)
     return map:assoc(k, v)
-end
+end)
 
-clue.namespaces["clue.core"]["cons"] = clue.cons
-clue.namespaces["clue.core"]["conj"] = clue.conj
-clue.namespaces["clue.core"]["list"] = clue.list
-clue.namespaces["clue.core"]["vector"] = clue.vector
-clue.namespaces["clue.core"]["seq"] = clue.seq
-clue.namespaces["clue.core"]["vec"] = clue.vec
-clue.namespaces["clue.core"]["first"] = function(seq) return seq:first() end
-clue.namespaces["clue.core"]["rest"] = clue.rest
-clue.namespaces["clue.core"]["next"] = function(seq) return seq:next() end
-clue.namespaces["clue.core"]["pr-str"] = clue.pr_str
+clue.def("clue.core", "cons", clue.cons)
+clue.def("clue.core", "conj", clue.conj)
+clue.def("clue.core", "list", clue.list)
+clue.def("clue.core", "vector", clue.vector)
+clue.def("clue.core", "seq", clue.seq)
+clue.def("clue.core", "vec", clue.vec)
+clue.def("clue.core", "first", function(seq) return seq:first() end)
+clue.def("clue.core", "rest", clue.rest)
+clue.def("clue.core", "next", function(seq) return seq:next() end)
+clue.def("clue.core", "pr-str", clue.pr_str)

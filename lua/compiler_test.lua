@@ -6,24 +6,24 @@ t.describe("clue.compiler", {
         ["should translate"] = {
             ["lists into function calls"] = function()
                 ns = {name = "user.ns"}
-                t.assert_equals(clue.compiler.compile(ns, "(hi)"), "clue.namespaces[\"user.ns\"][\"hi\"]()")
-                t.assert_equals(clue.compiler.compile(ns, "(hi 1 2 3)"), "clue.namespaces[\"user.ns\"][\"hi\"](1, 2, 3)")
-                t.assert_equals(clue.compiler.compile(ns, "(my.ns/ff)"), "clue.namespaces[\"my.ns\"][\"ff\"]()")
-                t.assert_equals(clue.compiler.compile(ns, "(my.ns/ff 1 2 3)"), "clue.namespaces[\"my.ns\"][\"ff\"](1, 2, 3)")
-                t.assert_equals(clue.compiler.compile(ns, "(my.ns/ff x s/y)"), "clue.namespaces[\"my.ns\"][\"ff\"](clue.namespaces[\"user.ns\"][\"x\"], clue.namespaces[\"s\"][\"y\"])")
+                t.assert_equals(clue.compiler.compile(ns, "(hi)"), "clue.var(\"user.ns\", \"hi\"):get()()")
+                t.assert_equals(clue.compiler.compile(ns, "(hi 1 2 3)"), "clue.var(\"user.ns\", \"hi\"):get()(1, 2, 3)")
+                t.assert_equals(clue.compiler.compile(ns, "(my.ns/ff)"), "clue.var(\"my.ns\", \"ff\"):get()()")
+                t.assert_equals(clue.compiler.compile(ns, "(my.ns/ff 1 2 3)"), "clue.var(\"my.ns\", \"ff\"):get()(1, 2, 3)")
+                t.assert_equals(clue.compiler.compile(ns, "(my.ns/ff x s/y)"), "clue.var(\"my.ns\", \"ff\"):get()(clue.var(\"user.ns\", \"x\"):get(), clue.var(\"s\", \"y\"):get())")
                 t.assert_equals(clue.compiler.compile(ns, "((fn [] 10))"), clue.compiler.compile(ns, "(fn [] 10)") .. "()")
             end,
             ["nested list into nested function calls"] = function()
                 ns = {name = "user.ns"}
-                t.assert_equals(clue.compiler.compile(ns, "(hi (there))"), "clue.namespaces[\"user.ns\"][\"hi\"](clue.namespaces[\"user.ns\"][\"there\"]())")
+                t.assert_equals(clue.compiler.compile(ns, "(hi (there))"), "clue.var(\"user.ns\", \"hi\"):get()(clue.var(\"user.ns\", \"there\"):get()())")
             end,
             ["strings"] = function()
                 t.assert_equals(clue.compiler.compile(nil, "\"Sonia\""), "\"Sonia\"")
             end,
             ["symbols into vars"] = function()
                 ns = {name = "user.ns"}
-                t.assert_equals(clue.compiler.compile(ns, "an-example"), "clue.namespaces[\"user.ns\"][\"an-example\"]")
-                t.assert_equals(clue.compiler.compile(ns, "my.ns.example/an-example"), "clue.namespaces[\"my.ns.example\"][\"an-example\"]")
+                t.assert_equals(clue.compiler.compile(ns, "an-example"), "clue.var(\"user.ns\", \"an-example\"):get()")
+                t.assert_equals(clue.compiler.compile(ns, "my.ns.example/an-example"), "clue.var(\"my.ns.example\", \"an-example\"):get()")
             end,
             ["keywords"] = function()
                 t.assert_equals(clue.compiler.compile(nil, ":an-example"), "clue.keyword(\"an-example\")")
@@ -33,7 +33,7 @@ t.describe("clue.compiler", {
                 ns = {name = "user.ns"}
                 t.assert_equals(clue.compiler.compile(ns, "[]"), "clue.vector()")
                 t.assert_equals(clue.compiler.compile(ns, "[1 2 3 4]"), "clue.vector(1, 2, 3, 4)")
-                t.assert_equals(clue.compiler.compile(ns, "[(hello) s/x]"), "clue.vector(clue.namespaces[\"user.ns\"][\"hello\"](), clue.namespaces[\"s\"][\"x\"])")
+                t.assert_equals(clue.compiler.compile(ns, "[(hello) s/x]"), "clue.vector(clue.var(\"user.ns\", \"hello\"):get()(), clue.var(\"s\", \"x\"):get())")
             end,
             ["maps into clue.map calls"] = function()
                 ns = {name = "user.ns"}
@@ -43,13 +43,13 @@ t.describe("clue.compiler", {
             ["function definitions"] = {
                 ["with no parameters"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end; clue.arg_count_error(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1) (g 2) (h 3))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then clue.namespaces[\"user.ns\"][\"f\"](1); clue.namespaces[\"user.ns\"][\"g\"](2); return clue.namespaces[\"user.ns\"][\"h\"](3) end; clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then return clue.var(\"user.ns\", \"f\"):get()(1, 2) end; clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [] (f 1) (g 2) (h 3))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then clue.var(\"user.ns\", \"f\"):get()(1); clue.var(\"user.ns\", \"g\"):get()(2); return clue.var(\"user.ns\", \"h\"):get()(3) end; clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with declared parameters"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (f 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)(...) end; clue.arg_count_error(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [b c d] (f 1 2) (g 2) (h 3))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(b, c, d) clue.namespaces[\"user.ns\"][\"f\"](1, 2); clue.namespaces[\"user.ns\"][\"g\"](2); return clue.namespaces[\"user.ns\"][\"h\"](3) end)(...) end; clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [a] (f 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return clue.var(\"user.ns\", \"f\"):get()(1, 2) end)(...) end; clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [b c d] (f 1 2) (g 2) (h 3))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(b, c, d) clue.var(\"user.ns\", \"f\"):get()(1, 2); clue.var(\"user.ns\", \"g\"):get()(2); return clue.var(\"user.ns\", \"h\"):get()(3) end)(...) end; clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with variable number of parameters"] = function()
                     ns = {name = "user.ns"}
@@ -59,7 +59,7 @@ t.describe("clue.compiler", {
                 ["with parameters used in the body"] = function()
                     ns = {name = "user.ns"}
                     t.assert_equals(clue.compiler.compile(ns, "(fn [a] (a 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return a(1, 2) end)(...) end; clue.arg_count_error(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(fn [f x] (f x y))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(f, x) return f(x, clue.namespaces[\"user.ns\"][\"y\"]) end)(...) end; clue.arg_count_error(arg_count_); end)")
+                    t.assert_equals(clue.compiler.compile(ns, "(fn [f x] (f x y))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(f, x) return f(x, clue.var(\"user.ns\", \"y\"):get()) end)(...) end; clue.arg_count_error(arg_count_); end)")
                     t.assert_equals(clue.compiler.compile(ns, "(fn [a b c] (a b) [a b c])"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(a, b, c) a(b); return clue.vector(a, b, c) end)(...) end; clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with parameters used in the body of a nested function"] = function()
@@ -107,29 +107,34 @@ t.describe("clue.compiler", {
             },
             ["variable definitions"] = function()
                 ns = {name = "user.ns"}
-                t.assert_equals(clue.compiler.compile(ns, "(def a 10)"), "(function() clue.namespaces[\"user.ns\"][\"a\"] = 10 end)()")
-                t.assert_equals(clue.compiler.compile(ns, "(def ready? (fn [& args] nil))"), "(function() clue.namespaces[\"user.ns\"][\"ready?\"] = clue.fn(function(...) local args = clue.list(...); return nil end) end)()")
+                t.assert_equals(clue.compiler.compile(ns, "(def a 10)"), "clue.def(\"user.ns\", \"a\", 10)")
+                t.assert_equals(clue.compiler.compile(ns, "(def ready? (fn [& args] nil))"), "clue.def(\"user.ns\", \"ready?\", clue.fn(function(...) local args = clue.list(...); return nil end))")
+            end,
+            ["variable access"] = function()
+                ns = {name = "user.ns"}
+                t.assert_equals(clue.compiler.compile(ns, "(var some)"), "clue.var(\"user.ns\", \"some\")")
+                t.assert_equals(clue.compiler.compile(ns, "(var other/some)"), "clue.var(\"other\", \"some\")")
             end,
             ["let definitions"] = {
                 ["without constants"] = function()
                     ns = {name = "user.ns"}
                     t.assert_equals(clue.compiler.compile(ns, "(let [])"), "nil")
-                    t.assert_equals(clue.compiler.compile(ns, "(let [] (f 1 2))"), "(function() return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)()")
-                    t.assert_equals(clue.compiler.compile(ns, "(let [] (f) (f 1 2))"), "(function() clue.namespaces[\"user.ns\"][\"f\"](); return clue.namespaces[\"user.ns\"][\"f\"](1, 2) end)()")
+                    t.assert_equals(clue.compiler.compile(ns, "(let [] (f 1 2))"), "(function() return clue.var(\"user.ns\", \"f\"):get()(1, 2) end)()")
+                    t.assert_equals(clue.compiler.compile(ns, "(let [] (f) (f 1 2))"), "(function() clue.var(\"user.ns\", \"f\"):get()(); return clue.var(\"user.ns\", \"f\"):get()(1, 2) end)()")
                 end,
                 ["with constants"] = function()
                     ns = {name = "user.ns"}
-                    t.assert_equals(clue.compiler.compile(ns, "(let [a (f)])"), "(function() local a = clue.namespaces[\"user.ns\"][\"f\"](); return nil end)()")
-                    t.assert_equals(clue.compiler.compile(ns, "(let [a f b 2] (a b))"), "(function() local a = clue.namespaces[\"user.ns\"][\"f\"]; local b = 2; return a(b) end)()")
+                    t.assert_equals(clue.compiler.compile(ns, "(let [a (f)])"), "(function() local a = clue.var(\"user.ns\", \"f\"):get()(); return nil end)()")
+                    t.assert_equals(clue.compiler.compile(ns, "(let [a f b 2] (a b))"), "(function() local a = clue.var(\"user.ns\", \"f\"):get(); local b = 2; return a(b) end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(let [a 1 b 2] (a) (b))"), "(function() local a = 1; local b = 2; a(); return b() end)()")
                     t.assert_equals(clue.compiler.compile(ns, "(fn [a] (let [b a] (b a)))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return (function() local b = a; return b(a) end)() end)(...) end; clue.arg_count_error(arg_count_); end)")
-                    t.assert_equals(clue.compiler.compile(ns, "(let [a a a a a b b a] (b a)"), "(function() local a = clue.namespaces[\"user.ns\"][\"a\"]; local a = a; local a = clue.namespaces[\"user.ns\"][\"b\"]; local b = a; return b(a) end)()")
+                    t.assert_equals(clue.compiler.compile(ns, "(let [a a a a a b b a] (b a)"), "(function() local a = clue.var(\"user.ns\", \"a\"):get(); local a = a; local a = clue.var(\"user.ns\", \"b\"):get(); local b = a; return b(a) end)()")
                 end
             },
             ["multiple expressions into multiple statements"] = function()
                 ns = {name = "some"}
-                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)"), "(function() clue.namespaces[\"some\"][\"x\"] = 9 end)();\nclue.namespaces[\"some\"][\"f1\"]()")
-                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)(f2)"), "(function() clue.namespaces[\"some\"][\"x\"] = 9 end)();\nclue.namespaces[\"some\"][\"f1\"]();\nclue.namespaces[\"some\"][\"f2\"]()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)"), "clue.def(\"some\", \"x\", 9);\nclue.var(\"some\", \"f1\"):get()()")
+                t.assert_equals(clue.compiler.compile(ns, "(def x 9)(f1)(f2)"), "clue.def(\"some\", \"x\", 9);\nclue.var(\"some\", \"f1\"):get()();\nclue.var(\"some\", \"f2\"):get()()")
             end,
             ["namespace definitions"] = {
                 ["without attributes"] = function()
@@ -138,11 +143,11 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile(
                         ns,
                         "(ns user.core)(f1)(f2)"),
-                        "clue.ns(\"user.core\");\nclue.namespaces[\"user.core\"][\"f1\"]();\nclue.namespaces[\"user.core\"][\"f2\"]()")
+                        "clue.ns(\"user.core\");\nclue.var(\"user.core\", \"f1\"):get()();\nclue.var(\"user.core\", \"f2\"):get()()")
                     t.assert_equals(clue.compiler.compile(
                         ns,
                         "(f1 (ns other))(f2)"),
-                        "clue.namespaces[\"some\"][\"f1\"](clue.ns(\"other\"));\nclue.namespaces[\"some\"][\"f2\"]()")
+                        "clue.var(\"some\", \"f1\"):get()(clue.ns(\"other\"));\nclue.var(\"some\", \"f2\"):get()()")
                 end,
                 ["with require"] = function()
                     t.assert_equals(clue.compiler.compile(nil, "(ns user.core (:require org.some.xyz))"), "clue.ns(\"user.core\", {[\"org.some.xyz\"] = \"org.some.xyz\"})")
@@ -151,7 +156,7 @@ t.describe("clue.compiler", {
                     t.assert_equals(clue.compiler.compile(
                         nil, "(ns user.core (:require [org.some.xyz :as some])) (some/f1)"),
                         "clue.ns(\"user.core\", {[\"some\"] = \"org.some.xyz\"});\n" ..
-                        "clue.namespaces[\"org.some.xyz\"][\"f1\"]()")
+                        "clue.var(\"org.some.xyz\", \"f1\"):get()()")
                 end
             },
             ["operator"] = {
@@ -183,27 +188,27 @@ t.describe("clue.compiler", {
             },
             ["dot operator"] = {
                 ["for method calls"] = function()
-                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance (method))"), "clue.namespaces[\"ns\"][\"instance\"]:method()")
-                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance (method 1))"), "clue.namespaces[\"ns\"][\"instance\"]:method(1)")
-                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance (method 1 2 3))"), "clue.namespaces[\"ns\"][\"instance\"]:method(1, 2, 3)")
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance (method))"), "clue.var(\"ns\", \"instance\"):get():method()")
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance (method 1))"), "clue.var(\"ns\", \"instance\"):get():method(1)")
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance (method 1 2 3))"), "clue.var(\"ns\", \"instance\"):get():method(1, 2, 3)")
                 end,
                 ["for member access"] = function()
-                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance member)"), "clue.namespaces[\"ns\"][\"instance\"].member")
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(. instance member)"), "clue.var(\"ns\", \"instance\"):get().member")
                 end
             },
             ["if statement"] = {
                 ["with else"] = function()
-                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then else)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return clue.namespaces[\"ns\"][\"else\"]; end end)()")
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then else)"), "(function() if (clue.var(\"ns\", \"cond\"):get()) then return clue.var(\"ns\", \"then\"):get(); else return clue.var(\"ns\", \"else\"):get(); end end)()")
                 end,
                 ["without else"] = function()
-                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then)"), "(function() if (clue.namespaces[\"ns\"][\"cond\"]) then return clue.namespaces[\"ns\"][\"then\"]; else return nil; end end)()")
+                    t.assert_equals(clue.compiler.compile({name="ns"}, "(if cond then)"), "(function() if (clue.var(\"ns\", \"cond\"):get()) then return clue.var(\"ns\", \"then\"):get(); else return nil; end end)()")
                 end
             },
             ["do statement"] = function()
                 ns = {name = "ns"}
                 t.assert_equals(clue.compiler.compile(ns, "(do)"), clue.compiler.compile(ns, "nil"))
                 t.assert_equals(clue.compiler.compile(ns, "(do (f1))"), clue.compiler.compile(ns, "(f1)"))
-                t.assert_equals(clue.compiler.compile(ns, "(do (f1) (f2) (f3))"), "(function() clue.namespaces[\"ns\"][\"f1\"](); clue.namespaces[\"ns\"][\"f2\"](); return clue.namespaces[\"ns\"][\"f3\"](); end)()")
+                t.assert_equals(clue.compiler.compile(ns, "(do (f1) (f2) (f3))"), "(function() clue.var(\"ns\", \"f1\"):get()(); clue.var(\"ns\", \"f2\"):get()(); return clue.var(\"ns\", \"f3\"):get()(); end)()")
             end
         },
         ["should inline lua symbols"] = {
@@ -214,7 +219,7 @@ t.describe("clue.compiler", {
                 t.assert_equals(clue.compiler.compile(nil, "(ns user (:require [lua :as L])) L/some"), "clue.ns(\"user\", {[\"L\"] = \"lua\"});\n" .. "some")
             end,
             ["but not lua aliases"] = function()
-                t.assert_equals(clue.compiler.compile(nil, "(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", {[\"lua\"] = \"other\"});\n" .. "clue.namespaces[\"other\"][\"some\"]")
+                t.assert_equals(clue.compiler.compile(nil, "(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", {[\"lua\"] = \"other\"});\n" .. "clue.var(\"other\", \"some\"):get()")
             end
         },
         ["quote should skip evaluation"] = {

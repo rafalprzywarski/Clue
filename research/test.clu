@@ -3,9 +3,7 @@
 (def hello (fn [x y] (L/print 10 20 (+ x 9) y)))
 (def apply (fn [op a b] (op a b)))
 
-(hello 1)
 (hello 2 3)
-(hello 3 4 5)
 (L/print (apply + 3 9))
 (def number 1234)
 (L/print (. L/table concat [1 number (+ 3 11)]))

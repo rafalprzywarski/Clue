@@ -111,7 +111,12 @@ clue.compiler.special_forms = {
     end,
     def = function(ns, locals, meta, args)
         local sym, value = clue.first(args), clue.second(args)
-        return "(function() clue.namespaces[\"" .. ns.name .. "\"][\"" .. sym.name .. "\"] = " .. clue.compiler.translate_expr(ns, {}, value) .. " end)()"
+        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ")"
+    end,
+    var = function(ns, locals, meta, args)
+        local sym = clue.first(args)
+        sym = clue.compiler.resolve_symbol(ns, locals, sym)
+        return "clue.var(\"" .. sym.ns .. "\", \"" .. sym.name  .. "\")"
     end,
     let = function(ns, locals, meta, args)
         local defs, exprs = clue.first(args), clue.next(args)
@@ -340,7 +345,7 @@ function clue.compiler.resolve_ns(ns, locals, sym)
 end
 
 function clue.compiler.resolve_symbol(ns, locals, sym)
-    return clue.symbol(clue.compiler.resolve_ns(sym), sym.name)
+    return clue.symbol(clue.compiler.resolve_ns(ns, locals, sym), sym.name)
 end
 
 function clue.compiler.translate_symbol(ns, locals, expr)
@@ -348,7 +353,7 @@ function clue.compiler.translate_symbol(ns, locals, expr)
     if not resolved_ns then
         return expr.name
     end
-    return "clue.namespaces[\"" .. resolved_ns .. "\"][\"" .. expr.name .. "\"]"
+    return "clue.var(\"" .. resolved_ns .. "\", \"" .. expr.name .. "\"):get()"
 end
 
 function clue.compiler.translate_keyword(ns, locals, expr)
