@@ -26,12 +26,6 @@ function clue.Keyword:__call(map)
     return map:at(self)
 end
 
-function clue.Keyword:with_meta(m)
-    local wm = clue.Keyword.new(self.ns, self.name)
-    wm.meta = m
-    return wm
-end
-
 function clue.Keyword.intern(ns, name)
     local norm = clue.Keyword.normalize(ns, name)
     local interned = clue.Keyword.keywords[norm]
