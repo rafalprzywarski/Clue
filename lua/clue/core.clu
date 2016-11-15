@@ -1,5 +1,29 @@
 (ns clue.core)
 
+(def nil? (fn [x] (= x nil)))
+
+(def spread (fn
+    [args]
+    (if (nil? args)
+        nil
+        (if (nil? (next args))
+            (seq (first args))
+            (cons (first args) (spread (next args)))))))
+
+(def list* (fn
+    ([args] (seq args))
+    ([a args] (cons a args))
+    ([a b args] (cons a (cons b args)))
+    ([a b c args] (cons a (cons b (cons c args))))
+    ([a b c d & more] (cons a (cons b (cons c (cons d (spread more))))))))
+
+(def apply (fn
+    ([f args] ((. lua/clue apply_to) f (seq args)))
+    ([f x args] ((. lua/clue apply_to) f (list* x args)))
+    ([f x y args] ((. lua/clue apply_to) f (list* x y args)))
+    ([f x y z args] ((. lua/clue apply_to) f (list* x y z args)))
+    ([f a b c d & args] ((. lua/clue apply_to) f (cons a (cons b (cons c (cons d (spread args)))))))))
+
 (def with-meta (fn [obj m] (. obj (with_meta m))))
 (def meta (fn [obj] (. obj meta)))
 

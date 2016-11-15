@@ -25,3 +25,13 @@ function clue.Fn:with_meta(m)
 end
 
 clue.fn = clue.Fn.new
+
+function clue.apply_to(f, args)
+    local function unpack_seq(s)
+        if not s then
+            return
+        end
+        return s:first(), unpack_seq(s:next())
+    end
+    return f(unpack_seq(clue.seq(args)))
+end
