@@ -7,12 +7,15 @@ clue.compiler = clue.compiler or {}
 clue.compiler.LIST = clue.symbol("lua", "clue.list")
 clue.compiler.SYMBOL = clue.symbol("lua", "clue.symbol")
 
-function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, exprs)
+function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, exprs, opt)
     local translated = {}
     exprs = clue.seq(exprs)
     while exprs do
         table.insert(translated, clue.compiler.translate_expr(ns, locals, exprs:first()))
         exprs = exprs:next()
+    end
+    if opt == "return-last" then
+        translated[#translated] = "return " .. translated[#translated]
     end
     return table.concat(translated, delimiter)
 end
@@ -218,14 +221,7 @@ clue.compiler.special_forms = {
         if exprs.size == 1 then
             return clue.compiler.translate_expr(ns, locals, exprs:first())
         end
-        local translated = {}
-        exprs = clue.seq(exprs)
-        while exprs do
-            table.insert(translated, clue.compiler.translate_expr(ns, locals, exprs:first()))
-            exprs = exprs:next()
-        end
-        translated[#translated] = "return " .. translated[#translated]
-        return "(function() " .. table.concat(translated, "; ") .. "; end)()"
+        return "(function() " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", exprs, "return-last") .. "; end)()"
     end,
     ["quote"] = function(ns, locals, meta, exprs)
         local quote_expr
@@ -277,6 +273,16 @@ clue.compiler.special_forms = {
             return expr
         end
         return clue.compiler.translate_expr(ns, locals, quote_expr(exprs:first()))
+    end,
+    try = function(ns, locals, meta, exprs)
+        exprs = clue.seq(exprs)
+        local to_try = clue.vector()
+        while exprs and exprs:first():first() ~= clue.symbol("finally") do
+            to_try:append(exprs:first())
+            exprs = exprs:next()
+        end
+
+        return "(function() local ok, val = pcall(function() " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", to_try, "return-last") .. "; end); " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", exprs:first():next()) .. "; if ok then return val else error(val) end end)()"
     end
 }
 
