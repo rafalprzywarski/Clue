@@ -277,6 +277,55 @@ clue.compiler.special_forms = {
             return expr
         end
         return clue.compiler.translate_expr(ns, locals, quote_expr(exprs:first()))
+    end,
+    ["syntax-quote"] = function(ns, locals, meta, exprs)
+        local quote_expr
+        local function quote_list(ns, l)
+            if not l then
+                return nil
+            end
+            local next = l:next()
+            if not next then
+                return clue.list(quote_expr(ns, l:first()))
+            end
+            return quote_list(ns, l:next()):cons(quote_expr(ns, l:first()))
+        end
+        local function quote_vector(ns, v)
+            local q = clue.vector()
+            for i=0,v.size - 1 do
+                q:append(quote_expr(ns, v:at(i)))
+            end
+            return q
+        end
+        local function quote_symbol(ns, s)
+            s = clue.compiler.resolve_symbol(ns, {}, s)
+            return clue.list(clue.compiler.SYMBOL, s.ns, s.name)
+        end
+        local function quote_map(ns, m)
+            local q = clue.map()
+            m:each(function(k, v) q = q:assoc(quote_expr(ns, k), quote_expr(ns, v)) end)
+            return q
+        end
+        quote_expr = function(ns, expr)
+            local etype = clue.type(expr)
+            if clue.type(expr) == clue.List then
+                if expr:empty() then
+                    return clue.list(clue.compiler.LIST)
+                end
+                return quote_list(ns, expr):cons(clue.compiler.LIST)
+            end
+            if clue.type(expr) == clue.Symbol then
+                return quote_symbol(ns, expr)
+            end
+            if clue.type(expr) == clue.Vector then
+                return quote_vector(ns, expr)
+            end
+            if clue.type(expr) == clue.Map then
+                return quote_map(ns, expr)
+            end
+            return expr
+        end
+        return clue.compiler.translate_expr(ns, locals, quote_expr(ns, exprs:first()))
     end
 }
 

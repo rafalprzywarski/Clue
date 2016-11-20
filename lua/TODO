@@ -1,6 +1,5 @@
 * #'
 * bindings
-* syntax-quote `
 * ~ and unquote
 * ~@ and unquote-splicing
 * defmacro
