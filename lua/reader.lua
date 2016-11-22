@@ -13,6 +13,7 @@ clue.reader.QUOTE = clue.symbol("quote")
 clue.reader.SYNTAX_QUOTE = clue.symbol("syntax-quote")
 clue.reader.UNQUOTE = clue.symbol("unquote")
 clue.reader.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
+clue.reader.VAR = clue.symbol("var")
 
 function clue.reader.number(value)
     return {type = "number", value = value}
@@ -34,8 +35,10 @@ function clue.reader.is_space(c)
     return c == " " or c == "," or c == "\t" or c == "\r" or c == "\n"
 end
 
+clue.reader.delimiters = clue.set("(", ")", "[", "]", "{", "}", "^", "\'", "`", "~", "#")
+
 function clue.reader.is_delimiter(c)
-    return c == "(" or c == ")" or c == "[" or c == "]" or c == "{" or c == "}" or c == "^" or c == "\'" or c == "`" or c == "~"
+    return clue.reader.delimiters:at(c) ~= nil
 end
 
 function clue.reader.skip_comment(s)
@@ -121,8 +124,11 @@ function clue.reader.read_token(source)
         return clue.reader.nothing, source
     end
     if clue.reader.is_delimiter(first) then
-        if first == "~" and source:sub(2, 2) == "@" then
+        second = source:sub(2, 2)
+        if first == "~" and second == "@" then
             first = "~@"
+        elseif first == "#" and second == "'" then
+            first = "#'"
         end
         return {type = "delimiter", value = first}, source:sub(first:len() + 1)
     elseif first == "\"" then
@@ -214,6 +220,10 @@ function clue.reader.read_expression(source)
     if t.type == "delimiter" and t.value == "~@" then
         local expr, source = clue.reader.read_expression(source)
         return clue.list(clue.reader.UNQUOTE_SPLICING, expr), source
+    end
+    if t.type == "delimiter" and t.value == "#'" then
+        local expr, source = clue.reader.read_expression(source)
+        return clue.list(clue.reader.VAR, expr), source
     end
     error("unexpected token: " .. t.value)
 end

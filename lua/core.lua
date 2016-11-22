@@ -9,6 +9,7 @@ require 'list'
 require 'cons'
 require 'lazy_seq'
 require 'map'
+require 'set'
 require 'fn'
 require 'var'
 

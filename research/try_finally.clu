@@ -1,0 +1,12 @@
+(ns test)
+
+(try
+    (try
+        (lua/print "step 1")
+        (lua/print "step 2")
+        (map)
+        (finally
+            (lua/print "finally")))
+    (finally
+        (lua/print "outer"))
+)

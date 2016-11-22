@@ -135,6 +135,10 @@ t.describe("clue.reader", {
         ["should convert ~@ to unquote-splicing"] = function()
             ct.assert_equals(clue.reader.read("~@a"), clue.list(clue.list(clue.symbol("unquote-splicing"), clue.symbol("a"))))
             ct.assert_equals(clue.reader.read("~@(x y)"), clue.list(clue.list(clue.symbol("unquote-splicing"), clue.list(clue.symbol("x"), clue.symbol("y")))))
+        end,
+        ["should convert #' to var"] = function()
+            ct.assert_equals(clue.reader.read("#'some"), clue.list(clue.list(clue.symbol("var"), clue.symbol("some"))))
+            ct.assert_equals(clue.reader.read("#'ns/some"), clue.list(clue.list(clue.symbol("var"), clue.symbol("ns", "some"))))
         end
     }
 })
