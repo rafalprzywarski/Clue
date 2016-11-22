@@ -24,6 +24,26 @@
     ([f x y z args] ((. lua/clue apply_to) f (list* x y z args)))
     ([f a b c d & args] ((. lua/clue apply_to) f (cons a (cons b (cons c (cons d (spread args)))))))))
 
+(def cat- (fn [xys zs]
+    (lazy-seq
+        (let [xys (seq xys)]
+            (if xys
+                (cons (first xys) (cat- (rest xys) zs))
+                (if zs
+                    (cat- (first zs) (next zs))))))))
+
+(def concat (fn
+    ([] (lazy-seq nil))
+    ([x] (lazy-seq x))
+    ([x y]
+        (lazy-seq
+            (let [s (seq x)]
+                (if s
+                    (cons (first s) (concat (rest s) y))
+                    y))))
+    ([x y & zs]
+        (cat- (concat x y) zs)))))
+
 (def with-meta (fn [obj m] (. obj (with_meta m))))
 (def meta (fn [obj] (. obj meta)))
 

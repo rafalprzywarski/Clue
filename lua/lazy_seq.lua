@@ -8,7 +8,8 @@ function clue.UnrealizedLazySeq:init(fn)
 end
 
 function clue.UnrealizedLazySeq:realize()
-    self.seq = self.fn() or clue.list()
+    local fn = self.fn
+    self.seq = fn and fn() or clue.list()
     self.fn = nil
     setmetatable(self, clue.RealizedLazySeq)
 end

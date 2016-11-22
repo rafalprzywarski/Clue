@@ -216,6 +216,12 @@ t.describe("clue.core", {
         end
     },
     ["lazy-seq should"] = {
+        ["be an empty sequence when given nil"] = function()
+            local seq = clue.lazy_seq(nil)
+            ct.assert_equals(seq:first(), nil)
+            ct.assert_equals(seq:next(), nil)
+            t.assert_true(seq:empty())
+        end,
         ["be an empty sequence when a given function returns nil"] = function()
             local seq = clue.lazy_seq(function() return nil end)
             ct.assert_equals(seq:first(), nil)
