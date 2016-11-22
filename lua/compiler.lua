@@ -276,15 +276,19 @@ clue.compiler.special_forms = {
     end,
     ["syntax-quote"] = function(ns, locals, meta, exprs)
         local quote_expr
-        local function quote_list(ns, l)
-            if not l then
-                return nil
-            end
+        local function quote_list_items(ns, l)
+            local first = l:first()
             local next = l:next()
             if not next then
-                return clue.list(quote_expr(ns, l:first()))
+                return clue.list(quote_expr(ns, first))
             end
-            return quote_list(ns, l:next()):cons(quote_expr(ns, l:first()))
+            return quote_list_items(ns, next):cons(quote_expr(ns, first))
+        end
+        local function quote_list(ns, l)
+            if l:first() == clue.symbol("unquote") then
+                return l:next():first()
+            end
+            return quote_list_items(ns, l):cons(clue.compiler.LIST)
         end
         local function quote_vector(ns, v)
             local q = clue.vector()
@@ -308,7 +312,7 @@ clue.compiler.special_forms = {
                 if expr:empty() then
                     return clue.list(clue.compiler.LIST)
                 end
-                return quote_list(ns, expr):cons(clue.compiler.LIST)
+                return quote_list(ns, expr)
             end
             if clue.type(expr) == clue.Symbol then
                 return quote_symbol(ns, expr)

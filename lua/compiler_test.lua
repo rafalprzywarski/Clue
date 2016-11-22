@@ -292,6 +292,14 @@ t.describe("clue.compiler", {
                     t.assert_equals_any(compile({name="ns"}, "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\")))")
                 end
             }
+        },
+        ["unquote should"] = {
+            ["evaluate expressions inside syntax-quote"] = function()
+                ns = {name="ns"}
+                t.assert_equals(compile(ns, "`~sym"), compile(ns, "sym"))
+                t.assert_equals(compile(ns, "`~(f 1 2)"), compile(ns, "(f 1 2)"))
+                t.assert_equals(compile(ns, "`(f ~f f)"), "clue.list(clue.symbol(\"ns\", \"f\"), clue.var(\"ns\", \"f\"):get(), clue.symbol(\"ns\", \"f\"))")
+            end
         }
     }
 })

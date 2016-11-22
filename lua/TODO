@@ -1,5 +1,5 @@
 * bindings
-* ~ and unquote
 * ~@ and unquote-splicing
 * defmacro
+* fix path handling
 * protocols
