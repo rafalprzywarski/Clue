@@ -228,66 +228,70 @@ t.describe("clue.compiler", {
                 t.assert_equals(compile(nil, "(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", {[\"lua\"] = \"other\"});\n" .. "clue.var(\"other\", \"some\"):get()")
             end
         },
-        ["quote should skip evaluation"] = {
-            ["of symbols"] = function()
-                t.assert_equals(compile({name="ns"}, "'sym"), "clue.symbol(\"sym\")")
-                t.assert_equals(compile({name="ns"}, "'ns/sym"), "clue.symbol(\"ns\", \"sym\")")
+        ["quote should"] = {
+            ["skip evaluation"] = {
+                ["of symbols"] = function()
+                    t.assert_equals(compile({name="ns"}, "'sym"), "clue.symbol(\"sym\")")
+                    t.assert_equals(compile({name="ns"}, "'ns/sym"), "clue.symbol(\"ns\", \"sym\")")
+                end,
+                ["of lists"] = function()
+                    t.assert_equals(compile({name="ns"}, "'()"), "clue.list()")
+                    t.assert_equals(compile({name="ns"}, "'(1 2 3)"), "clue.list(1, 2, 3)")
+                end,
+                ["inside lists"] = function()
+                    t.assert_equals(compile({name="ns"}, "'(1 (2 3) (4 (5 6) () 7))"), "clue.list(1, clue.list(2, 3), clue.list(4, clue.list(5, 6), clue.list(), 7))")
+                end,
+                ["inside vectors"] = function()
+                    t.assert_equals(compile({name="ns"}, "'[1 (2 3) [4 (5 6) 7]]"), "clue.vector(1, clue.list(2, 3), clue.vector(4, clue.list(5, 6), 7))")
+                end,
+                ["inside maps"] = function()
+                    t.assert_equals_any(compile({name="ns"}, "'{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
+                end
+            },
+            ["forward simple values"] = function()
+                t.assert_equals(compile({name="ns"}, "'nil"), "nil")
+                t.assert_equals(compile({name="ns"}, "'10"), "10")
+                t.assert_equals(compile({name="ns"}, "'\"abc\""), "\"abc\"")
+                t.assert_equals(compile({name="ns"}, "':kkk"), "clue.keyword(\"kkk\")")
             end,
-            ["of lists"] = function()
-                t.assert_equals(compile({name="ns"}, "'()"), "clue.list()")
-                t.assert_equals(compile({name="ns"}, "'(1 2 3)"), "clue.list(1, 2, 3)")
-            end,
-            ["inside lists"] = function()
-                t.assert_equals(compile({name="ns"}, "'(1 (2 3) (4 (5 6) () 7))"), "clue.list(1, clue.list(2, 3), clue.list(4, clue.list(5, 6), clue.list(), 7))")
-            end,
-            ["inside vectors"] = function()
-                t.assert_equals(compile({name="ns"}, "'[1 (2 3) [4 (5 6) 7]]"), "clue.vector(1, clue.list(2, 3), clue.vector(4, clue.list(5, 6), 7))")
-            end,
-            ["inside maps"] = function()
-                t.assert_equals_any(compile({name="ns"}, "'{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
-            end
         },
-        ["quote should forward simple values"] = function()
-            t.assert_equals(compile({name="ns"}, "'nil"), "nil")
-            t.assert_equals(compile({name="ns"}, "'10"), "10")
-            t.assert_equals(compile({name="ns"}, "'\"abc\""), "\"abc\"")
-            t.assert_equals(compile({name="ns"}, "':kkk"), "clue.keyword(\"kkk\")")
-        end,
-        ["syntax-quote should skip evaluation"] = {
-            ["of lists"] = function()
-                t.assert_equals(compile({name="ns"}, "`()"), "clue.list()")
-                t.assert_equals(compile({name="ns"}, "`(1 2 3)"), "clue.list(1, 2, 3)")
+        ["syntax-quote should"] = {
+            ["skip evaluation"] = {
+                ["of lists"] = function()
+                    t.assert_equals(compile({name="ns"}, "`()"), "clue.list()")
+                    t.assert_equals(compile({name="ns"}, "`(1 2 3)"), "clue.list(1, 2, 3)")
+                end,
+                ["inside lists"] = function()
+                    t.assert_equals(compile({name="ns"}, "`(1 (2 3) (4 (5 6) () 7))"), "clue.list(1, clue.list(2, 3), clue.list(4, clue.list(5, 6), clue.list(), 7))")
+                end,
+                ["inside vectors"] = function()
+                    t.assert_equals(compile({name="ns"}, "`[1 (2 3) [4 (5 6) 7]]"), "clue.vector(1, clue.list(2, 3), clue.vector(4, clue.list(5, 6), 7))")
+                end,
+                ["inside maps"] = function()
+                    t.assert_equals_any(compile({name="ns"}, "`{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
+                end
+            },
+            ["forward simple values"] = function()
+                t.assert_equals(compile({name="ns"}, "`nil"), "nil")
+                t.assert_equals(compile({name="ns"}, "`10"), "10")
+                t.assert_equals(compile({name="ns"}, "`\"abc\""), "\"abc\"")
+                t.assert_equals(compile({name="ns"}, "`:kkk"), "clue.keyword(\"kkk\")")
             end,
-            ["inside lists"] = function()
-                t.assert_equals(compile({name="ns"}, "`(1 (2 3) (4 (5 6) () 7))"), "clue.list(1, clue.list(2, 3), clue.list(4, clue.list(5, 6), clue.list(), 7))")
-            end,
-            ["inside vectors"] = function()
-                t.assert_equals(compile({name="ns"}, "`[1 (2 3) [4 (5 6) 7]]"), "clue.vector(1, clue.list(2, 3), clue.vector(4, clue.list(5, 6), 7))")
-            end,
-            ["inside maps"] = function()
-                t.assert_equals_any(compile({name="ns"}, "`{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
-            end
-        },
-        ["syntax-quote should forward simple values"] = function()
-            t.assert_equals(compile({name="ns"}, "`nil"), "nil")
-            t.assert_equals(compile({name="ns"}, "`10"), "10")
-            t.assert_equals(compile({name="ns"}, "`\"abc\""), "\"abc\"")
-            t.assert_equals(compile({name="ns"}, "`:kkk"), "clue.keyword(\"kkk\")")
-        end,
-        ["syntax-quote should resolve"] = {
-            ["symbols"] = function()
-                t.assert_equals(compile({name="ns"}, "`sym"), "clue.symbol(\"ns\", \"sym\")")
-                t.assert_equals(compile({name="ns"}, "`ns/sym"), "clue.symbol(\"ns\", \"sym\")")
-            end,
-            ["symbols inside lists"] = function()
-                t.assert_equals(compile({name="ns"}, "`(a (b (c)))"), "clue.list(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\"), clue.list(clue.symbol(\"ns\", \"c\"))))")
-            end,
-            ["symbols inside vectors"] = function()
-                t.assert_equals(compile({name="ns"}, "`[a [b [c]]]"), "clue.vector(clue.symbol(\"ns\", \"a\"), clue.vector(clue.symbol(\"ns\", \"b\"), clue.vector(clue.symbol(\"ns\", \"c\"))))")
-            end,
-            ["symbols inside maps"] = function()
-                t.assert_equals_any(compile({name="ns"}, "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\")))")
-            end
+            ["resolve"] = {
+                ["symbols"] = function()
+                    t.assert_equals(compile({name="ns"}, "`sym"), "clue.symbol(\"ns\", \"sym\")")
+                    t.assert_equals(compile({name="ns"}, "`ns/sym"), "clue.symbol(\"ns\", \"sym\")")
+                end,
+                ["symbols inside lists"] = function()
+                    t.assert_equals(compile({name="ns"}, "`(a (b (c)))"), "clue.list(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\"), clue.list(clue.symbol(\"ns\", \"c\"))))")
+                end,
+                ["symbols inside vectors"] = function()
+                    t.assert_equals(compile({name="ns"}, "`[a [b [c]]]"), "clue.vector(clue.symbol(\"ns\", \"a\"), clue.vector(clue.symbol(\"ns\", \"b\"), clue.vector(clue.symbol(\"ns\", \"c\"))))")
+                end,
+                ["symbols inside maps"] = function()
+                    t.assert_equals_any(compile({name="ns"}, "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\")))")
+                end
+            }
         }
     }
 })
