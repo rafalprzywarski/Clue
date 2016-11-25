@@ -42,7 +42,7 @@
                     (cons (first s) (concat (rest s) y))
                     y))))
     ([x y & zs]
-        (cat- (concat x y) zs)))))
+        (cat- (concat x y) zs))))
 
 (def with-meta (fn [obj m] (. obj (with_meta m))))
 (def meta (fn [obj] (. obj meta)))
