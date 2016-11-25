@@ -7,6 +7,11 @@ clue.compiler = clue.compiler or {}
 clue.compiler.LIST = clue.symbol("lua", "clue.list")
 clue.compiler.SYMBOL = clue.symbol("lua", "clue.symbol")
 clue.compiler.QUOTE = clue.symbol("quote")
+clue.compiler.CONCAT = clue.symbol("clue.core", "concat")
+clue.compiler.SEQ = clue.symbol("clue.core", "seq")
+clue.compiler.VEC = clue.symbol("clue.core", "vec")
+clue.compiler.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
+clue.compiler.UNQUOTE = clue.symbol("unquote")
 
 function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, exprs, opt)
     local translated = {}
@@ -111,23 +116,31 @@ function clue.compiler.syntax_quote(ns, expr)
     local function quote_list_items(ns, l)
         local first = l:first()
         local next = l:next()
-        if not next then
-            return clue.list(quote_expr(ns, first))
+        local qfirst
+        if clue.type(first) == clue.List and first:first() == clue.compiler.UNQUOTE_SPLICING then
+            qfirst = clue.second(first)
+        else
+            qfirst = clue.list(clue.compiler.LIST, quote_expr(ns, first))
         end
-        return quote_list_items(ns, next):cons(quote_expr(ns, first))
+        if not next then
+            return clue.list(qfirst)
+        end
+        return quote_list_items(ns, next):cons(qfirst)
     end
     local function quote_list(ns, l)
-        if l:first() == clue.symbol("unquote") then
+        if l:empty() then
+            return clue.list(clue.compiler.LIST)
+        end
+        if l:first() == clue.compiler.UNQUOTE then
             return l:next():first()
         end
-        return quote_list_items(ns, l):cons(clue.compiler.LIST)
+        return clue.list(clue.compiler.SEQ, quote_list_items(ns, l):cons(clue.compiler.CONCAT))
     end
     local function quote_vector(ns, v)
-        local q = clue.vector()
-        for i=0,v.size - 1 do
-            q:append(quote_expr(ns, v:at(i)))
+        if v:empty() then
+            return clue.vector()
         end
-        return q
+        return clue.list(clue.compiler.VEC, quote_list_items(ns, v):cons(clue.compiler.CONCAT))
     end
     local function quote_symbol(ns, s)
         s = clue.compiler.resolve_symbol(ns, {}, s)
@@ -141,9 +154,6 @@ function clue.compiler.syntax_quote(ns, expr)
     quote_expr = function(ns, expr)
         local etype = clue.type(expr)
         if clue.type(expr) == clue.List then
-            if expr:empty() then
-                return clue.list(clue.compiler.LIST)
-            end
             return quote_list(ns, expr)
         end
         if clue.type(expr) == clue.Symbol then

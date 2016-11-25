@@ -260,23 +260,32 @@ t.describe("clue.compiler", {
         ["syntax-quote should"] = {
             ["skip evaluation"] = {
                 ["of lists"] = function()
-                    t.assert_equals(compile({name="ns"}, "`()"), "clue.list()")
-                    t.assert_equals(compile({name="ns"}, "`(1 2 3)"), "clue.list(1, 2, 3)")
-
                     local ns = {name="ns"}
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("()")), read("(lua/clue.list)"))
-                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(1 2 3)")), read("(lua/clue.list 1 2 3)"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(1)")), read("(clue.core/seq (clue.core/concat (lua/clue.list 1)))"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(1 2 3)")), read("(clue.core/seq (clue.core/concat (lua/clue.list 1) (lua/clue.list 2) (lua/clue.list 3)))"))
+
+                    t.assert_equals(compile(ns, "`()"), "clue.list()")
+                    t.assert_equals(compile(ns, "`(1 2 3)"), "clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(1), clue.list(2), clue.list(3)))")
+                end,
+                ["of vectors"] = function()
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[]")), read("[]"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[1]")), read("(clue.core/vec (clue.core/concat (lua/clue.list 1)))"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[1 2 3]")), read("(clue.core/vec (clue.core/concat (lua/clue.list 1) (lua/clue.list 2) (lua/clue.list 3)))"))
                 end,
                 ["inside lists"] = function()
                     local ns = {name="ns"}
-                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(1 (2 3) (4 (5 6) () 7))")), read("(lua/clue.list 1 (lua/clue.list 2 3) (lua/clue.list 4 (lua/clue.list 5 6) (lua/clue.list) 7))"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(1 (2 (3)))")), read("(clue.core/seq (clue.core/concat (lua/clue.list 1) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list 2) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list 3)))))))))"))
                 end,
                 ["inside vectors"] = function()
                     local ns = {name="ns"}
-                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[1 (2 3) [4 (5 6) 7]]")), read("[1 (lua/clue.list 2 3) [4 (lua/clue.list 5 6) 7]]"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[1 (2 [3]) [4]]")), read("(clue.core/vec (clue.core/concat (lua/clue.list 1) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list 2) (lua/clue.list (clue.core/vec (clue.core/concat (lua/clue.list 3))))))) (lua/clue.list (clue.core/vec (clue.core/concat (lua/clue.list 4))))))"))
                 end,
                 ["inside maps"] = function()
-                    t.assert_equals_any(compile({name="ns"}, "`{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
+                    t.assert_equals_any(
+                        compile({name="ns"}, "`{1 (2 3) (4 5) (6 7)}"),
+                        "clue.map(1, clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(2), clue.list(3))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(4), clue.list(5))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(6), clue.list(7))))",
+                        "clue.map(clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(4), clue.list(5))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(6), clue.list(7))), 1, clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(2), clue.list(3))))")
                 end
             },
             ["forward simple values"] = function()
@@ -294,14 +303,14 @@ t.describe("clue.compiler", {
                 end,
                 ["symbols inside lists"] = function()
                     local ns = {name="ns"}
-                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(a (b (c)))")), read("(lua/clue.list (quote ns/a) (lua/clue.list (quote ns/b) (lua/clue.list (quote ns/c))))"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(a (b (c)))")), read("(clue.core/seq (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list (quote ns/b)) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list (quote ns/c))))))))))"))
                 end,
                 ["symbols inside vectors"] = function()
                     local ns = {name="ns"}
-                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[a [b [c]]]")), read("[(quote ns/a) [(quote ns/b) [(quote ns/c)]]]"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[a [b [c]]]")), read("(clue.core/vec (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (clue.core/vec (clue.core/concat (lua/clue.list (quote ns/b)) (lua/clue.list (clue.core/vec (clue.core/concat (lua/clue.list (quote ns/c))))))))))"))
                 end,
                 ["symbols inside maps"] = function()
-                    t.assert_equals_any(compile({name="ns"}, "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\")))")
+                    t.assert_equals_any(compile({name="ns"}, "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(clue.symbol(\"ns\", \"b\")))))")
                 end
             }
         },
@@ -310,7 +319,18 @@ t.describe("clue.compiler", {
                 local ns = {name="ns"}
                 ct.assert_equals(clue.compiler.syntax_quote(ns, read("~sym")), read("sym"))
                 ct.assert_equals(clue.compiler.syntax_quote(ns, read("~(f 1 2)")), read("(f 1 2)"))
-                ct.assert_equals(clue.compiler.syntax_quote(ns, read("(f ~f f)")), read("(lua/clue.list (quote ns/f) f (quote ns/f))"))
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read("(f ~f f)")), read("(clue.core/seq (clue.core/concat (lua/clue.list (quote ns/f)) (lua/clue.list f) (lua/clue.list (quote ns/f))))"))
+            end
+        },
+        ["unquote-splicing should"] = {
+            ["evaluate expressions inside syntax-quote"] = function()
+                local ns = {name="ns"}
+                ct.assert_equals(
+                    clue.compiler.syntax_quote(ns, read("(a b ~@[c d] ~@'(e f) g)")),
+                    read("(clue.core/seq (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (quote ns/b)) [c d] (quote (e f)) (lua/clue.list (quote ns/g))))"))
+                ct.assert_equals(
+                    clue.compiler.syntax_quote(ns, read("[a b ~@[c d] ~@'(e f) g]")),
+                    read("(clue.core/vec (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (quote ns/b)) [c d] (quote (e f)) (lua/clue.list (quote ns/g))))"))
             end
         }
     }
