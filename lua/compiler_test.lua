@@ -1,7 +1,9 @@
 local t = require("ut")
+local ct = require("clue_ut")
 require("compiler")
 
 local compile = clue.compiler.compile
+local read = function(e) return clue.reader.read(e):at(0) end
 
 t.describe("clue.compiler", {
     [".compile"] = {
@@ -260,33 +262,43 @@ t.describe("clue.compiler", {
                 ["of lists"] = function()
                     t.assert_equals(compile({name="ns"}, "`()"), "clue.list()")
                     t.assert_equals(compile({name="ns"}, "`(1 2 3)"), "clue.list(1, 2, 3)")
+
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("()")), read("(lua/clue.list)"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(1 2 3)")), read("(lua/clue.list 1 2 3)"))
                 end,
                 ["inside lists"] = function()
-                    t.assert_equals(compile({name="ns"}, "`(1 (2 3) (4 (5 6) () 7))"), "clue.list(1, clue.list(2, 3), clue.list(4, clue.list(5, 6), clue.list(), 7))")
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(1 (2 3) (4 (5 6) () 7))")), read("(lua/clue.list 1 (lua/clue.list 2 3) (lua/clue.list 4 (lua/clue.list 5 6) (lua/clue.list) 7))"))
                 end,
                 ["inside vectors"] = function()
-                    t.assert_equals(compile({name="ns"}, "`[1 (2 3) [4 (5 6) 7]]"), "clue.vector(1, clue.list(2, 3), clue.vector(4, clue.list(5, 6), 7))")
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[1 (2 3) [4 (5 6) 7]]")), read("[1 (lua/clue.list 2 3) [4 (lua/clue.list 5 6) 7]]"))
                 end,
                 ["inside maps"] = function()
                     t.assert_equals_any(compile({name="ns"}, "`{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
                 end
             },
             ["forward simple values"] = function()
-                t.assert_equals(compile({name="ns"}, "`nil"), "nil")
-                t.assert_equals(compile({name="ns"}, "`10"), "10")
-                t.assert_equals(compile({name="ns"}, "`\"abc\""), "\"abc\"")
-                t.assert_equals(compile({name="ns"}, "`:kkk"), "clue.keyword(\"kkk\")")
+                local ns = {name="ns"}
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read("nil")), read("nil"))
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read("10")), read("10"))
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read("\"abc\"")), read("\"abc\""))
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read(":kkk")), read(":kkk"))
             end,
             ["resolve"] = {
                 ["symbols"] = function()
-                    t.assert_equals(compile({name="ns"}, "`sym"), "clue.symbol(\"ns\", \"sym\")")
-                    t.assert_equals(compile({name="ns"}, "`ns/sym"), "clue.symbol(\"ns\", \"sym\")")
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("sym")), read("(quote ns/sym)"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("ns/sym")), read("(quote ns/sym)"))
                 end,
                 ["symbols inside lists"] = function()
-                    t.assert_equals(compile({name="ns"}, "`(a (b (c)))"), "clue.list(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\"), clue.list(clue.symbol(\"ns\", \"c\"))))")
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("(a (b (c)))")), read("(lua/clue.list (quote ns/a) (lua/clue.list (quote ns/b) (lua/clue.list (quote ns/c))))"))
                 end,
                 ["symbols inside vectors"] = function()
-                    t.assert_equals(compile({name="ns"}, "`[a [b [c]]]"), "clue.vector(clue.symbol(\"ns\", \"a\"), clue.vector(clue.symbol(\"ns\", \"b\"), clue.vector(clue.symbol(\"ns\", \"c\"))))")
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[a [b [c]]]")), read("[(quote ns/a) [(quote ns/b) [(quote ns/c)]]]"))
                 end,
                 ["symbols inside maps"] = function()
                     t.assert_equals_any(compile({name="ns"}, "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.list(clue.symbol(\"ns\", \"b\")))")
@@ -295,10 +307,10 @@ t.describe("clue.compiler", {
         },
         ["unquote should"] = {
             ["evaluate expressions inside syntax-quote"] = function()
-                ns = {name="ns"}
-                t.assert_equals(compile(ns, "`~sym"), compile(ns, "sym"))
-                t.assert_equals(compile(ns, "`~(f 1 2)"), compile(ns, "(f 1 2)"))
-                t.assert_equals(compile(ns, "`(f ~f f)"), "clue.list(clue.symbol(\"ns\", \"f\"), clue.var(\"ns\", \"f\"):get(), clue.symbol(\"ns\", \"f\"))")
+                local ns = {name="ns"}
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read("~sym")), read("sym"))
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read("~(f 1 2)")), read("(f 1 2)"))
+                ct.assert_equals(clue.compiler.syntax_quote(ns, read("(f ~f f)")), read("(lua/clue.list (quote ns/f) f (quote ns/f))"))
             end
         }
     }

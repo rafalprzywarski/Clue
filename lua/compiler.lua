@@ -6,6 +6,7 @@ clue.compiler = clue.compiler or {}
 
 clue.compiler.LIST = clue.symbol("lua", "clue.list")
 clue.compiler.SYMBOL = clue.symbol("lua", "clue.symbol")
+clue.compiler.QUOTE = clue.symbol("quote")
 
 function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, exprs, opt)
     local translated = {}
@@ -103,6 +104,60 @@ function clue.compiler.translate_fn(ns, locals, exprs)
     end
     table.insert(bodies, "clue.arg_count_error(arg_count_);")
     return "clue.fn(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " end)"
+end
+
+function clue.compiler.syntax_quote(ns, expr)
+    local quote_expr
+    local function quote_list_items(ns, l)
+        local first = l:first()
+        local next = l:next()
+        if not next then
+            return clue.list(quote_expr(ns, first))
+        end
+        return quote_list_items(ns, next):cons(quote_expr(ns, first))
+    end
+    local function quote_list(ns, l)
+        if l:first() == clue.symbol("unquote") then
+            return l:next():first()
+        end
+        return quote_list_items(ns, l):cons(clue.compiler.LIST)
+    end
+    local function quote_vector(ns, v)
+        local q = clue.vector()
+        for i=0,v.size - 1 do
+            q:append(quote_expr(ns, v:at(i)))
+        end
+        return q
+    end
+    local function quote_symbol(ns, s)
+        s = clue.compiler.resolve_symbol(ns, {}, s)
+        return clue.list(clue.compiler.QUOTE, s)
+    end
+    local function quote_map(ns, m)
+        local q = clue.map()
+        m:each(function(k, v) q = q:assoc(quote_expr(ns, k), quote_expr(ns, v)) end)
+        return q
+    end
+    quote_expr = function(ns, expr)
+        local etype = clue.type(expr)
+        if clue.type(expr) == clue.List then
+            if expr:empty() then
+                return clue.list(clue.compiler.LIST)
+            end
+            return quote_list(ns, expr)
+        end
+        if clue.type(expr) == clue.Symbol then
+            return quote_symbol(ns, expr)
+        end
+        if clue.type(expr) == clue.Vector then
+            return quote_vector(ns, expr)
+        end
+        if clue.type(expr) == clue.Map then
+            return quote_map(ns, expr)
+        end
+        return expr
+    end
+    return quote_expr(ns, expr)
 end
 
 clue.compiler.special_forms = {
@@ -275,57 +330,7 @@ clue.compiler.special_forms = {
         return clue.compiler.translate_expr(ns, locals, quote_expr(exprs:first()))
     end,
     ["syntax-quote"] = function(ns, locals, meta, exprs)
-        local quote_expr
-        local function quote_list_items(ns, l)
-            local first = l:first()
-            local next = l:next()
-            if not next then
-                return clue.list(quote_expr(ns, first))
-            end
-            return quote_list_items(ns, next):cons(quote_expr(ns, first))
-        end
-        local function quote_list(ns, l)
-            if l:first() == clue.symbol("unquote") then
-                return l:next():first()
-            end
-            return quote_list_items(ns, l):cons(clue.compiler.LIST)
-        end
-        local function quote_vector(ns, v)
-            local q = clue.vector()
-            for i=0,v.size - 1 do
-                q:append(quote_expr(ns, v:at(i)))
-            end
-            return q
-        end
-        local function quote_symbol(ns, s)
-            s = clue.compiler.resolve_symbol(ns, {}, s)
-            return clue.list(clue.compiler.SYMBOL, s.ns, s.name)
-        end
-        local function quote_map(ns, m)
-            local q = clue.map()
-            m:each(function(k, v) q = q:assoc(quote_expr(ns, k), quote_expr(ns, v)) end)
-            return q
-        end
-        quote_expr = function(ns, expr)
-            local etype = clue.type(expr)
-            if clue.type(expr) == clue.List then
-                if expr:empty() then
-                    return clue.list(clue.compiler.LIST)
-                end
-                return quote_list(ns, expr)
-            end
-            if clue.type(expr) == clue.Symbol then
-                return quote_symbol(ns, expr)
-            end
-            if clue.type(expr) == clue.Vector then
-                return quote_vector(ns, expr)
-            end
-            if clue.type(expr) == clue.Map then
-                return quote_map(ns, expr)
-            end
-            return expr
-        end
-        return clue.compiler.translate_expr(ns, locals, quote_expr(ns, exprs:first()))
+        return clue.compiler.translate_expr(ns, locals, clue.compiler.syntax_quote(ns, exprs:first()))
     end,
     try = function(ns, locals, meta, exprs)
         exprs = clue.seq(exprs)
