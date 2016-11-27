@@ -192,7 +192,7 @@ clue.compiler.special_forms = {
         local sym, value = clue.first(args), clue.second(args)
         if sym.meta and sym.meta:at(clue.keyword("macro")) then
             ns.macros = ns.macros or {}
-            ns.macros[tostring(sym)] = loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))()
+            ns.macros[tostring(clue.symbol(ns.name, sym.name))] = loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))()
         end
         return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
     end,
@@ -375,6 +375,29 @@ clue.compiler.macros = {
     end
 }
 
+function clue.compiler.expand_macro1(ns, locals, meta, form)
+    if not clue.is_seq(form) then
+        return form
+    end
+    local fn, args = clue.first(form), (form:next() or clue.list())
+    if not clue.is_symbol(fn) then
+        return form
+    end
+    fn = clue.compiler.resolve_symbol(ns, locals, fn)
+    if ns and ns.macros and ns.macros[tostring(fn)] then
+        return clue.apply_to(ns.macros[tostring(fn)], args)
+    end
+    return form
+end
+
+function clue.compiler.expand_macro(ns, locals, meta, form)
+    local ex = clue.compiler.expand_macro1(ns, locals, meta, form)
+    if ex == form then
+        return form
+    end
+    return clue.compiler.expand_macro(ns, locals, meta, ex)
+end
+
 function clue.compiler.translate_call(ns, locals, meta, form)
     local fn, args = clue.first(form), (form:next() or clue.list())
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.special_forms[fn.name] then
@@ -385,9 +408,6 @@ function clue.compiler.translate_call(ns, locals, meta, form)
     end
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.macros[fn.name] then
         return clue.compiler.translate_expr(ns, locals, clue.compiler.macros[fn.name](args))
-    end
-    if clue.is_symbol(fn) and ns.macros and ns.macros[tostring(fn)] then
-        return clue.compiler.translate_expr(ns, locals, clue.apply_to(ns.macros[tostring(fn)], args))
     end
     local translated = {}
     args = clue.seq(args)
@@ -466,6 +486,8 @@ function clue.compiler.translate_expr(ns, locals, expr)
     if type(expr) ~= "table" then
         return tostring(expr)
     end
+    expr = clue.compiler.expand_macro(ns, locals, expr.meta, expr)
+    etype = clue.type(expr)
     if clue.is_seq(expr) then
         return clue.compiler.translate_call(ns, locals, expr.meta, expr)
     elseif etype == clue.Symbol then
@@ -479,7 +501,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
     elseif etype == "table" then
         return tostring(expr)
     else
-        error("unexpected expression type")
+        error("unexpected expression type " .. clue.pr_str(expr))
     end
 end
 

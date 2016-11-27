@@ -5,6 +5,15 @@ require("compiler")
 local compile = clue.compiler.compile
 local read = function(e) return clue.reader.read(e):at(0) end
 
+local function read_file(path)
+    local file = io.open(path, "rb")
+    if not file then return nil end
+    local content = file:read("*a")
+    file:close()
+    return content
+end
+
+loadstring(clue.compiler.compile(nil, read_file("clue/core.clu")))()
 t.describe("clue.compiler", {
     [".compile"] = {
         ["should translate"] = {
@@ -350,6 +359,13 @@ t.describe("clue.compiler", {
                 t.assert_equals(
                     compile(ns, "(def ^:macro reverse (fn [a b] [b a])) (reverse (+ 1 2) (+ 3 4))"),
                     compile(ns, "(def ^:macro reverse (fn [a b] [b a])) [(+ 3 4) (+ 1 2)]"))
+            end,
+            ["should expand namespace qualified macros"] = function()
+                local ns = {name="ns"}
+                compile(ns, "(def ^:macro add (fn ([a] a) ([a & rest] `(+ ~a (add ~@rest)))))")
+                ct.assert_equals(
+                    clue.compiler.expand_macro(ns, {}, nil, read("(ns/add 1 2 3)")),
+                    read("(+ 1 (ns/add 2 3))"))
             end
         }
     }

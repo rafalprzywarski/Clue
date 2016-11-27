@@ -9,14 +9,15 @@
         `(let [or# ~x]
             (if or# or# (or ~@next))))))
 
-(def f1 (fn [x] (do (lua/print "f1") x)))
-(def f2 (fn [x] (do (lua/print "f2") x)))
+(def f (fn [x] (do (lua/print ".") x)))
 
-(lua/print "1")
-(or2 (f1 "x") (f2 "x"))
+(lua/print "5")
+(or (f nil) (f nil) (f nil) (f nil) (f "x"))
+(lua/print "4")
+(or (f nil) (f nil) (f nil) (f "x") (f "x"))
+(lua/print "3")
+(or (f nil) (f nil) (f "x") (f "x") (f "x"))
 (lua/print "2")
-(or2 (f1 nil) (f2 "x"))
-(lua/print "2")
-(or2 (f1 nil) (f2 nil))
+(or (f nil) (f "x") (f "x") (f "x") (f "x"))
 (lua/print "1")
-(or2 (f1 "x") (f2 nil))
+(or (f "x") (f "x") (f "x") (f "x") (f "x"))
