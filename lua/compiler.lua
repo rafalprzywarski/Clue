@@ -179,6 +179,10 @@ clue.compiler.special_forms = {
     end,
     def = function(ns, locals, meta, args)
         local sym, value = clue.first(args), clue.second(args)
+        if sym.meta and sym.meta:at(clue.keyword("macro")) then
+            ns.macros = ns.macros or {}
+            ns.macros[tostring(sym)] = loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))()
+        end
         return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
     end,
     var = function(ns, locals, meta, args)
@@ -371,6 +375,9 @@ function clue.compiler.translate_call(ns, locals, meta, form)
     if clue.is_symbol(fn) and fn.ns == nil and clue.compiler.macros[fn.name] then
         return clue.compiler.translate_expr(ns, locals, clue.compiler.macros[fn.name](args))
     end
+    if clue.is_symbol(fn) and ns.macros and ns.macros[tostring(fn)] then
+        return clue.compiler.translate_expr(ns, locals, clue.apply_to(ns.macros[tostring(fn)], args))
+    end
     local translated = {}
     args = clue.seq(args)
     while args do
@@ -445,7 +452,7 @@ function clue.compiler.translate_expr(ns, locals, expr)
     if type(expr) ~= "table" then
         return tostring(expr)
     end
-    if etype == clue.List then
+    if clue.is_seq(expr) then
         return clue.compiler.translate_call(ns, locals, expr.meta, expr)
     elseif etype == clue.Symbol then
         return clue.compiler.translate_symbol(ns, locals, expr)

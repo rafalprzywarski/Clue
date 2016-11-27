@@ -332,6 +332,14 @@ t.describe("clue.compiler", {
                     clue.compiler.syntax_quote(ns, read("[a b ~@[c d] ~@'(e f) g]")),
                     read("(clue.core/vec (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (quote ns/b)) [c d] (quote (e f)) (lua/clue.list (quote ns/g))))"))
             end
+        },
+        ["macro"] = {
+            ["should be evaluated at during compilation"] = function()
+                local ns = {name="ns"}
+                t.assert_equals(
+                    compile(ns, "(def ^:macro reverse (fn [a b] [b a])) (reverse (+ 1 2) (+ 3 4))"),
+                    compile(ns, "(def ^:macro reverse (fn [a b] [b a])) [(+ 3 4) (+ 1 2)]"))
+            end
         }
     }
 })

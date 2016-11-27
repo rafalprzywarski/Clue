@@ -35,6 +35,11 @@ function clue.seq(coll)
     return coll
 end
 
+function clue.is_seq(coll)
+    local t = clue.type(coll)
+    return t == clue.List or t == clue.Cons or t == clue.UnrealizedLazySeq or t == clue.RealizedLazySeq
+end
+
 function clue.first(s)
     s = clue.seq(s)
     if not s then
