@@ -30,6 +30,9 @@ t.describe("clue.reader", {
             ["a symbol with a namespace"] = function()
                 ct.assert_equals(clue.reader.read("s.ss/hello"), clue.list(clue.symbol("s.ss", "hello")))
             end,
+            ["a symbol with a # suffix"] = function()
+                ct.assert_equals(clue.reader.read("hello#"), clue.list(clue.symbol("hello#")))
+            end,
             ["a keyword"] = function()
                 ct.assert_equals(clue.reader.read(":hello"), clue.list(clue.keyword("hello")))
             end,

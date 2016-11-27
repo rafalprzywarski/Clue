@@ -113,61 +113,72 @@ end
 
 function clue.compiler.syntax_quote(ns, expr)
     local quote_expr
-    local function quote_list_items(ns, l)
+    local function quote_list_items(ns, gens, l)
         local first = l:first()
         local next = l:next()
         local qfirst
         if clue.type(first) == clue.List and first:first() == clue.compiler.UNQUOTE_SPLICING then
             qfirst = clue.second(first)
         else
-            qfirst = clue.list(clue.compiler.LIST, quote_expr(ns, first))
+            qfirst = clue.list(clue.compiler.LIST, quote_expr(ns, gens, first))
         end
         if not next then
             return clue.list(qfirst)
         end
-        return quote_list_items(ns, next):cons(qfirst)
+        return quote_list_items(ns, gens, next):cons(qfirst)
     end
-    local function quote_list(ns, l)
+    local function quote_list(ns, gens, l)
         if l:empty() then
             return clue.list(clue.compiler.LIST)
         end
         if l:first() == clue.compiler.UNQUOTE then
             return l:next():first()
         end
-        return clue.list(clue.compiler.SEQ, quote_list_items(ns, l):cons(clue.compiler.CONCAT))
+        return clue.list(clue.compiler.SEQ, quote_list_items(ns, gens, l):cons(clue.compiler.CONCAT))
     end
-    local function quote_vector(ns, v)
+    local function quote_vector(ns, gens, v)
         if v:empty() then
             return clue.vector()
         end
-        return clue.list(clue.compiler.VEC, quote_list_items(ns, v):cons(clue.compiler.CONCAT))
+        return clue.list(clue.compiler.VEC, quote_list_items(ns, gens, v):cons(clue.compiler.CONCAT))
     end
-    local function quote_symbol(ns, s)
-        s = clue.compiler.resolve_symbol(ns, {}, s)
+    local function quote_symbol(ns, gens, s)
+        if s.name:sub(s.name:len()) == "#" then
+            local gname = gens[s.name]
+            if not gname then
+                ns.gen_index = (ns.gen_index or 0) + 1
+                gname = s.name:sub(1, s.name:len() - 1) .. "__" .. ns.gen_index .. "__auto__"
+                gens[s.name] = gname
+            end
+            s = clue.symbol(gname)
+        else
+            s = clue.compiler.resolve_symbol(ns, {}, s)
+        end
         return clue.list(clue.compiler.QUOTE, s)
     end
-    local function quote_map(ns, m)
+    local function quote_map(ns, gens, m)
         local q = clue.map()
-        m:each(function(k, v) q = q:assoc(quote_expr(ns, k), quote_expr(ns, v)) end)
+        m:each(function(k, v) q = q:assoc(quote_expr(ns, gens, k), quote_expr(ns, gens, v)) end)
         return q
     end
-    quote_expr = function(ns, expr)
+    quote_expr = function(ns, gens, expr)
         local etype = clue.type(expr)
         if clue.type(expr) == clue.List then
-            return quote_list(ns, expr)
+            return quote_list(ns, gens, expr)
         end
         if clue.type(expr) == clue.Symbol then
-            return quote_symbol(ns, expr)
+            return quote_symbol(ns, gens, expr)
         end
         if clue.type(expr) == clue.Vector then
-            return quote_vector(ns, expr)
+            return quote_vector(ns, gens, expr)
         end
         if clue.type(expr) == clue.Map then
-            return quote_map(ns, expr)
+            return quote_map(ns, gens, expr)
         end
         return expr
     end
-    return quote_expr(ns, expr)
+    local gens = {}
+    return quote_expr(ns, gens, expr)
 end
 
 clue.compiler.special_forms = {
@@ -414,6 +425,9 @@ end
 function clue.compiler.resolve_ns(ns, locals, sym)
     if not sym.ns then
         if locals[sym.name] then
+            return nil
+        end
+        if clue.compiler.special_forms[sym.name] then
             return nil
         end
         return ns.name

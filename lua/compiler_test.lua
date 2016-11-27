@@ -301,6 +301,17 @@ t.describe("clue.compiler", {
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("sym")), read("(quote ns/sym)"))
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("ns/sym")), read("(quote ns/sym)"))
                 end,
+                ["symbols but not special forms"] = function()
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("if")), read("(quote if)"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("def")), read("(quote def)"))
+                end,
+                ["generated symbols"] = function()
+                    local ns = {name="ns"}
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("xyz#")), read("(quote xyz__1__auto__)"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[xyz# xyz#]")), read("(clue.core/vec (clue.core/concat (lua/clue.list (quote xyz__2__auto__)) (lua/clue.list (quote xyz__2__auto__))))"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("[xyz# abc#]")), read("(clue.core/vec (clue.core/concat (lua/clue.list (quote xyz__3__auto__)) (lua/clue.list (quote abc__4__auto__))))"))
+                end,
                 ["symbols inside lists"] = function()
                     local ns = {name="ns"}
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("(a (b (c)))")), read("(clue.core/seq (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list (quote ns/b)) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list (quote ns/c))))))))))"))

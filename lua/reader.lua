@@ -35,7 +35,7 @@ function clue.reader.is_space(c)
     return c == " " or c == "," or c == "\t" or c == "\r" or c == "\n"
 end
 
-clue.reader.delimiters = clue.set("(", ")", "[", "]", "{", "}", "^", "\'", "`", "~", "#")
+clue.reader.delimiters = clue.set("(", ")", "[", "]", "{", "}", "^", "\'", "`", "~")
 
 function clue.reader.is_delimiter(c)
     return clue.reader.delimiters:at(c) ~= nil
@@ -123,7 +123,7 @@ function clue.reader.read_token(source)
     if first == "" then
         return clue.reader.nothing, source
     end
-    if clue.reader.is_delimiter(first) then
+    if clue.reader.is_delimiter(first) or first == "#" then
         second = source:sub(2, 2)
         if first == "~" and second == "@" then
             first = "~@"
