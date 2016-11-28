@@ -19,7 +19,7 @@ function clue.Var:with_meta(m)
 end
 
 function clue.var(ns, name)
-    if not clue.namespaces[ns][name] then
+    if not clue.namespaces[ns] or not clue.namespaces[ns][name] then
         error("Var not found " .. ns .. "/" .. name)
     end
     return clue.namespaces[ns][name]
