@@ -2,6 +2,8 @@ require 'class'
 
 clue.class("Var")
 
+clue.Var.MACRO = clue.keyword("macro")
+
 function clue.Var:init(ns, name, root)
     self.ns = ns
     self.name = name
@@ -13,27 +15,32 @@ function clue.Var:get()
 end
 
 function clue.Var:with_meta(m)
-    local wm = clue.Var.new(ns, name, root)
+    local wm = clue.Var.new(self.ns, self.name, self.root)
     wm.meta = m
     return wm
 end
 
+function clue.Var:is_macro()
+    return self.meta and self.meta:at(clue.Var.MACRO)
+end
+
 function clue.var(ns, name)
-    if not clue.namespaces[ns] or not clue.namespaces[ns][name] then
+    local n = clue.namespaces:at(ns)
+    if not n or not n:get(name) then
         error("Var not found " .. ns .. "/" .. name)
     end
-    return clue.namespaces[ns][name]
+    return n:get(name)
 end
 
 function clue.def(ns, name, value, meta)
-    ns = clue.namespaces[ns]
+    ns = clue.namespaces:at(ns)
     var = ns[name]
     if var then
         var.root = value
     else
         var = clue.Var.new(ns.name, name, value)
         var.meta = meta
-        ns[name] = var
+        ns:add(var)
     end
     return var
 end

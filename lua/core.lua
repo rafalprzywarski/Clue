@@ -1,6 +1,4 @@
 clue = clue or {}
-clue.namespaces = clue.namespaces or {}
-clue.namespaces["lua"] = {}
 
 require 'keyword'
 require 'symbol'
@@ -12,6 +10,9 @@ require 'map'
 require 'set'
 require 'fn'
 require 'var'
+require 'namespace'
+
+clue.namespaces = clue.namespaces or clue.map("lua", {})
 
 function clue.arg_count_error(n)
     error("Wrong number of args (" .. n .. ")")
@@ -107,26 +108,24 @@ function clue.set_union(s1, s2)
 end
 
 function clue.get_or_create_ns(name)
-    n = clue.namespaces[name]
+    n = clue.namespaces:at(name)
     if n then return n end
-    n = {name = name, _aliases_ = {}}
-    clue.namespaces[name] = n
+    n = clue.Namespace.new(name)
+    clue.namespaces = clue.namespaces:assoc(name, n)
     return n
 end
 
 function clue.ns(name, aliases)
     clue._ns_ = clue.get_or_create_ns(name)
-    for n, v in pairs(clue.namespaces["clue.core"]) do
-        if n ~= "name" and n ~= "_aliases_" then
-            clue._ns_[n] = v
-        end
+    clue._ns_:use(clue.namespaces:at("clue.core"))
+    if aliases then
+        aliases:each(function(_, ref_ns)
+            if not clue.namespaces:at(ref_ns) then
+                loadstring(clue.compiler.compile_file("../research/" .. ref_ns:gsub("[.]", "/") .. ".clu"))()
+            end
+        end)
     end
-    for _, ref_ns in pairs(aliases or {}) do
-        if not clue.namespaces[ref_ns] then
-            loadstring(clue.compiler.compile_file("../research/" .. ref_ns:gsub("[.]", "/") .. ".clu"))()
-        end
-    end
-    clue._ns_._aliases_ = aliases
+    clue._ns_.aliases = aliases
 end
 
 function clue.has_tostring(value)

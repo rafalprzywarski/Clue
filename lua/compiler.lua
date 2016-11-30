@@ -191,8 +191,8 @@ clue.compiler.special_forms = {
     def = function(ns, locals, meta, args)
         local sym, value = clue.first(args), clue.second(args)
         if sym.meta and sym.meta:at(clue.keyword("macro")) then
-            ns.macros = ns.macros or {}
-            ns.macros[tostring(clue.symbol(ns.name, sym.name))] = loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))()
+            print("adding " .. tostring(sym.name))
+            ns:add(clue.Var.new(ns.name, sym.name, loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))()):with_meta(sym.meta))
         end
         return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
     end,
@@ -226,7 +226,7 @@ clue.compiler.special_forms = {
     ns = function(ns, locals, meta, args)
         local sym, requires = clue.first(args), clue.second(args)
         local translated_reqs = ""
-        local aliases = {}
+        local aliases = clue.map()
         if requires then
             local reqs = {}
             requires = clue.seq(requires):next()
@@ -236,7 +236,7 @@ clue.compiler.special_forms = {
                 if clue.type(req) == clue.Vector then
                     req_ns = req[1].name
                     req_alias = req[3].name
-                    aliases[req_alias] = req_ns
+                    aliases = aliases:assoc(req_alias, req_ns)
                 else
                     req_ns = req.name
                     req_alias = req_ns
@@ -246,7 +246,7 @@ clue.compiler.special_forms = {
             end
             translated_reqs = ", " .. "{" .. table.concat(reqs, ", ") .. "}"
         end
-        return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")", {name = sym.name, aliases = aliases}
+        return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")", clue.Namespace.new(sym.name, aliases)
     end,
     ["+"] = function(ns, locals, meta, args)
         return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " + ", args) .. ")"
@@ -384,8 +384,9 @@ function clue.compiler.expand_macro1(ns, locals, meta, form)
         return form
     end
     fn = clue.compiler.resolve_symbol(ns, locals, fn)
-    if ns and ns.macros and ns.macros[tostring(fn)] then
-        return clue.apply_to(ns.macros[tostring(fn)], args)
+    -- if ns then print(ns:get(fn.name)) end
+    if ns and ns:get(fn.name) and ns:get(fn.name):is_macro() then
+        return clue.apply_to(ns:get(fn.name):get(), args)
     end
     return form
 end
@@ -452,7 +453,7 @@ function clue.compiler.resolve_ns(ns, locals, sym)
         end
         return ns.name
     end
-    local resolved_ns = ns.aliases and ns.aliases[sym.ns] or sym.ns
+    local resolved_ns = ns.aliases:at(sym.ns) or sym.ns
     if resolved_ns == "lua" then
         return nil
     end

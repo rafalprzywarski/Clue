@@ -4,10 +4,13 @@ clue.class("Map")
 
 function clue.Map:init(...)
     local values = {}
+    local size = 0
     for i=1,select("#", ...),2 do
         values[select(i, ...)] = select(i + 1, ...)
+        size = size + 1
     end
     self.values = values
+    self.size = size
 end
 
 function clue.Map:__call(k)
@@ -29,6 +32,10 @@ function clue.Map:assoc(k,v)
     for k,v in pairs(self.values) do
         n.values[k] = v
     end
+    n.size = self.size
+    if not n.values[k] then
+        n.size = n.size + 1
+    end
     n.values[k] = v
     return n
 end
@@ -38,11 +45,16 @@ function clue.Map:merge(other)
     for k,v in pairs(self.values) do
         n.values[k] = v
     end
+    local size = self.size
     if other then
         for k,v in pairs(other.values) do
+            if n.values[k] == nil then
+                size = size + 1
+            end
             n.values[k] = v
         end
     end
+    n.size = size
     return n
 end
 
