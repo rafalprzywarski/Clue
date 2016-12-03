@@ -174,6 +174,18 @@ function clue.pr_str(value)
     return tostring(value)
 end
 
+function clue.str(...)
+    local s = ""
+    for i=1,select("#", ...) do
+        local e = select(i, ...)
+        if clue.type(e) ~= "string" then
+            e = clue.pr_str(e)
+        end
+        s = s .. e
+    end
+    return s
+end
+
 function clue.equals(...)
     local function seq_equals(s1, s2)
         s1 = clue.seq(s1)
@@ -323,3 +335,4 @@ clue.def("clue.core", "first", function(seq) return seq:first() end)
 clue.def("clue.core", "rest", clue.rest)
 clue.def("clue.core", "next", function(seq) return seq:next() end)
 clue.def("clue.core", "pr-str", clue.pr_str)
+clue.def("clue.core", "str", clue.str)
