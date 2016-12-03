@@ -19,6 +19,7 @@ t.describe("clue.compiler", {
         ["should translate"] = {
             ["lists into function calls"] = function()
                 local ns = clue.Namespace.new("user.ns")
+                compile(ns, "(def hi nil) (def x nil)")
                 t.assert_equals(compile(ns, "(hi)"), "clue.var(\"user.ns\", \"hi\"):get()()")
                 t.assert_equals(compile(ns, "(hi 1 2 3)"), "clue.var(\"user.ns\", \"hi\"):get()(1, 2, 3)")
                 t.assert_equals(compile(ns, "(my.ns/ff)"), "clue.var(\"my.ns\", \"ff\"):get()()")
@@ -28,6 +29,7 @@ t.describe("clue.compiler", {
             end,
             ["nested list into nested function calls"] = function()
                 local ns = clue.Namespace.new("user.ns")
+                compile(ns, "(def hi nil) (def there nil)")
                 t.assert_equals(compile(ns, "(hi (there))"), "clue.var(\"user.ns\", \"hi\"):get()(clue.var(\"user.ns\", \"there\"):get()())")
             end,
             ["strings"] = function()
@@ -35,6 +37,7 @@ t.describe("clue.compiler", {
             end,
             ["symbols into vars"] = function()
                 local ns = clue.Namespace.new("user.ns")
+                compile(ns, "(def an-example nil)")
                 t.assert_equals(compile(ns, "an-example"), "clue.var(\"user.ns\", \"an-example\"):get()")
                 t.assert_equals(compile(ns, "my.ns.example/an-example"), "clue.var(\"my.ns.example\", \"an-example\"):get()")
             end,
@@ -44,6 +47,7 @@ t.describe("clue.compiler", {
             end,
             ["vectors into clue.vector calls"] = function()
                 local ns = clue.Namespace.new("user.ns")
+                compile(ns, "(def hello nil)")
                 t.assert_equals(compile(ns, "[]"), "clue.vector()")
                 t.assert_equals(compile(ns, "[1 2 3 4]"), "clue.vector(1, 2, 3, 4)")
                 t.assert_equals(compile(ns, "[(hello) s/x]"), "clue.vector(clue.var(\"user.ns\", \"hello\"):get()(), clue.var(\"s\", \"x\"):get())")
@@ -56,11 +60,13 @@ t.describe("clue.compiler", {
             ["function definitions"] = {
                 ["with no parameters"] = function()
                     local ns = clue.Namespace.new("user.ns")
+                    compile(ns, "(def f nil) (def g nil) (def h nil)")
                     t.assert_equals(compile(ns, "(fn [] (f 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then return clue.var(\"user.ns\", \"f\"):get()(1, 2) end; clue.arg_count_error(arg_count_); end)")
                     t.assert_equals(compile(ns, "(fn [] (f 1) (g 2) (h 3))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 0 then clue.var(\"user.ns\", \"f\"):get()(1); clue.var(\"user.ns\", \"g\"):get()(2); return clue.var(\"user.ns\", \"h\"):get()(3) end; clue.arg_count_error(arg_count_); end)")
                 end,
                 ["with declared parameters"] = function()
                     local ns = clue.Namespace.new("user.ns")
+                    compile(ns, "(def f nil) (def g nil) (def h nil)")
                     t.assert_equals(compile(ns, "(fn [a] (f 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return clue.var(\"user.ns\", \"f\"):get()(1, 2) end)(...) end; clue.arg_count_error(arg_count_); end)")
                     t.assert_equals(compile(ns, "(fn [b c d] (f 1 2) (g 2) (h 3))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(b, c, d) clue.var(\"user.ns\", \"f\"):get()(1, 2); clue.var(\"user.ns\", \"g\"):get()(2); return clue.var(\"user.ns\", \"h\"):get()(3) end)(...) end; clue.arg_count_error(arg_count_); end)")
                 end,
@@ -72,6 +78,7 @@ t.describe("clue.compiler", {
                 ["with parameters used in the body"] = function()
                     local ns = clue.Namespace.new("user.ns")
                     t.assert_equals(compile(ns, "(fn [a] (a 1 2))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return a(1, 2) end)(...) end; clue.arg_count_error(arg_count_); end)")
+                    compile(ns, "(def y nil)")
                     t.assert_equals(compile(ns, "(fn [f x] (f x y))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(f, x) return f(x, clue.var(\"user.ns\", \"y\"):get()) end)(...) end; clue.arg_count_error(arg_count_); end)")
                     t.assert_equals(compile(ns, "(fn [a b c] (a b) [a b c])"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 3 then return (function(a, b, c) a(b); return clue.vector(a, b, c) end)(...) end; clue.arg_count_error(arg_count_); end)")
                 end,
@@ -115,6 +122,7 @@ t.describe("clue.compiler", {
                 end,
                 ["but not function calls"] = function()
                     local ns = clue.Namespace.new("user.ns")
+                    compile(ns, "(def print nil)")
                     t.assert_equals(compile(ns, "^:no (print 1 2)"), compile(ns, "(print 1 2)"))
                 end
             },
@@ -126,18 +134,21 @@ t.describe("clue.compiler", {
             end,
             ["variable access"] = function()
                 local ns = clue.Namespace.new("user.ns")
+                compile(ns, "(def some nil)")
                 t.assert_equals(compile(ns, "(var some)"), "clue.var(\"user.ns\", \"some\")")
                 t.assert_equals(compile(ns, "(var other/some)"), "clue.var(\"other\", \"some\")")
             end,
             ["let definitions"] = {
                 ["without constants"] = function()
                     local ns = clue.Namespace.new("user.ns")
+                    compile(ns, "(def f nil)")
                     t.assert_equals(compile(ns, "(let [])"), "nil")
                     t.assert_equals(compile(ns, "(let [] (f 1 2))"), "(function() return clue.var(\"user.ns\", \"f\"):get()(1, 2) end)()")
                     t.assert_equals(compile(ns, "(let [] (f) (f 1 2))"), "(function() clue.var(\"user.ns\", \"f\"):get()(); return clue.var(\"user.ns\", \"f\"):get()(1, 2) end)()")
                 end,
                 ["with constants"] = function()
                     local ns = clue.Namespace.new("user.ns")
+                    compile(ns, "(def f nil) (def a nil) (def b nil)")
                     t.assert_equals(compile(ns, "(let [a (f)])"), "(function() local a = clue.var(\"user.ns\", \"f\"):get()(); return nil end)()")
                     t.assert_equals(compile(ns, "(let [a f b 2] (a b))"), "(function() local a = clue.var(\"user.ns\", \"f\"):get(); local b = 2; return a(b) end)()")
                     t.assert_equals(compile(ns, "(let [a 1 b 2] (a) (b))"), "(function() local a = 1; local b = 2; a(); return b() end)()")
@@ -147,6 +158,7 @@ t.describe("clue.compiler", {
             },
             ["multiple expressions into multiple statements"] = function()
                 local ns = clue.Namespace.new("some")
+                compile(ns, "(def f1 nil) (def f2 nil)")
                 t.assert_equals(compile(ns, "(def x 9)(f1)"), "clue.def(\"some\", \"x\", 9, nil);\nclue.var(\"some\", \"f1\"):get()()")
                 t.assert_equals(compile(ns, "(def x 9)(f1)(f2)"), "clue.def(\"some\", \"x\", 9, nil);\nclue.var(\"some\", \"f1\"):get()();\nclue.var(\"some\", \"f2\"):get()()")
             end,
@@ -156,76 +168,94 @@ t.describe("clue.compiler", {
                     t.assert_equals(compile(ns, "(ns user.core)"), "clue.ns(\"user.core\")")
                     t.assert_equals(compile(
                         ns,
-                        "(ns user.core)(f1)(f2)"),
-                        "clue.ns(\"user.core\");\nclue.var(\"user.core\", \"f1\"):get()();\nclue.var(\"user.core\", \"f2\"):get()()")
-                    t.assert_equals(compile(
-                        ns,
-                        "(f1 (ns other))(f2)"),
-                        "clue.var(\"some\", \"f1\"):get()(clue.ns(\"other\"));\nclue.var(\"some\", \"f2\"):get()()")
+                        "(ns user.core)(def f1 nil)(def f2 nil)(f1)(f2)"),
+                        "clue.ns(\"user.core\");\nclue.def(\"user.core\", \"f1\", nil, nil);\nclue.def(\"user.core\", \"f2\", nil, nil);\nclue.var(\"user.core\", \"f1\"):get()();\nclue.var(\"user.core\", \"f2\"):get()()")
                 end,
                 ["with require"] = function()
-                    t.assert_equals(compile(nil, "(ns user.core (:require org.some.xyz))"), "clue.ns(\"user.core\", {[\"org.some.xyz\"] = \"org.some.xyz\"})")
-                    t.assert_equals(compile(nil, "(ns user.core (:require [org.some.xyz :as some]))"), "clue.ns(\"user.core\", {[\"some\"] = \"org.some.xyz\"})")
-                    t.assert_equals(compile(nil, "(ns user.core (:require [org.some.xyz :as xyz] [org.some.abc :as other]))"), "clue.ns(\"user.core\", {[\"xyz\"] = \"org.some.xyz\", [\"other\"] = \"org.some.abc\"})")
+                    t.assert_equals(compile(nil, "(ns user.core (:require org.some.xyz))"), "clue.ns(\"user.core\", clue.map(\"org.some.xyz\", \"org.some.xyz\"))")
+                    t.assert_equals(compile(nil, "(ns user.core (:require [org.some.xyz :as some]))"), "clue.ns(\"user.core\", clue.map(\"some\", \"org.some.xyz\"))")
+                    t.assert_equals(compile(nil, "(ns user.core (:require [org.some.xyz :as xyz] [org.some.abc :as other]))"), "clue.ns(\"user.core\", clue.map(\"xyz\", \"org.some.xyz\", \"other\", \"org.some.abc\"))")
                     t.assert_equals(compile(
                         nil, "(ns user.core (:require [org.some.xyz :as some])) (some/f1)"),
-                        "clue.ns(\"user.core\", {[\"some\"] = \"org.some.xyz\"});\n" ..
+                        "clue.ns(\"user.core\", clue.map(\"some\", \"org.some.xyz\"));\n" ..
                         "clue.var(\"org.some.xyz\", \"f1\"):get()()")
                 end
             },
             ["operator"] = {
                 ["+"] = function()
-                    t.assert_equals(compile(nil, "(+ 1)"), "(1)")
-                    t.assert_equals(compile(nil, "(+ 1 2)"), "(1 + 2)")
-                    t.assert_equals(compile(nil, "(+ 1 2 3)"), "(1 + 2 + 3)")
+                    local ns = clue.Namespace.new("some")
+                    ns:use(clue.namespaces:at("clue.core"))
+                    t.assert_equals(compile(ns, "(+ 1)"), "(1)")
+                    t.assert_equals(compile(ns, "(+ 1 2)"), "(1 + 2)")
+                    t.assert_equals(compile(ns, "(+ 1 2 3)"), "(1 + 2 + 3)")
+                    t.assert_equals(compile(ns, "(apply + 1 2 3)"), compile(ns, "(clue.core/apply clue.core/+ 1 2 3)"))
                 end,
                 ["-"] = function()
-                    t.assert_equals(compile(nil, "(- 1)"), "(-1)")
-                    t.assert_equals(compile(nil, "(- 1 2)"), "(1 - 2)")
-                    t.assert_equals(compile(nil, "(- 1 2 3)"), "(1 - 2 - 3)")
+                    local ns = clue.Namespace.new("some")
+                    ns:use(clue.namespaces:at("clue.core"))
+                    t.assert_equals(compile(ns, "(- 1)"), "(-1)")
+                    t.assert_equals(compile(ns, "(- 1 2)"), "(1 - 2)")
+                    t.assert_equals(compile(ns, "(- 1 2 3)"), "(1 - 2 - 3)")
                 end,
                 ["*"] = function()
-                    t.assert_equals(compile(nil, "(* 1)"), "(1)")
-                    t.assert_equals(compile(nil, "(* 1 2)"), "(1 * 2)")
-                    t.assert_equals(compile(nil, "(* 1 2 3)"), "(1 * 2 * 3)")
+                    local ns = clue.Namespace.new("some")
+                    ns:use(clue.namespaces:at("clue.core"))
+                    t.assert_equals(compile(ns, "(* 1)"), "(1)")
+                    t.assert_equals(compile(ns, "(* 1 2)"), "(1 * 2)")
+                    t.assert_equals(compile(ns, "(* 1 2 3)"), "(1 * 2 * 3)")
                 end,
                 ["/"] = function()
-                    t.assert_equals(compile(nil, "(/ 1)"), "(1)")
-                    t.assert_equals(compile(nil, "(/ 1 2)"), "(1 / 2)")
-                    t.assert_equals(compile(nil, "(/ 1 2 3)"), "(1 / 2 / 3)")
+                    local ns = clue.Namespace.new("some")
+                    ns:use(clue.namespaces:at("clue.core"))
+                    t.assert_equals(compile(ns, "(/ 1)"), "(1)")
+                    t.assert_equals(compile(ns, "(/ 1 2)"), "(1 / 2)")
+                    t.assert_equals(compile(ns, "(/ 1 2 3)"), "(1 / 2 / 3)")
                 end,
                 ["%"] = function()
-                    t.assert_equals(compile(nil, "(% 1)"), "(1)")
-                    t.assert_equals(compile(nil, "(% 1 2)"), "(1 % 2)")
-                    t.assert_equals(compile(nil, "(% 1 2 3)"), "(1 % 2 % 3)")
+                    local ns = clue.Namespace.new("some")
+                    ns:use(clue.namespaces:at("clue.core"))
+                    t.assert_equals(compile(ns, "(% 1)"), "(1)")
+                    t.assert_equals(compile(ns, "(% 1 2)"), "(1 % 2)")
+                    t.assert_equals(compile(ns, "(% 1 2 3)"), "(1 % 2 % 3)")
                 end
             },
             ["dot operator"] = {
                 ["for method calls"] = function()
-                    t.assert_equals(compile(clue.Namespace.new("ns"), "(. instance (method))"), "clue.var(\"ns\", \"instance\"):get():method()")
-                    t.assert_equals(compile(clue.Namespace.new("ns"), "(. instance (method 1))"), "clue.var(\"ns\", \"instance\"):get():method(1)")
-                    t.assert_equals(compile(clue.Namespace.new("ns"), "(. instance (method 1 2 3))"), "clue.var(\"ns\", \"instance\"):get():method(1, 2, 3)")
+                    local ns = clue.Namespace.new("ns")
+                    compile(ns, "(def instance nil)")
+                    t.assert_equals(compile(ns, "(. instance (method))"), "clue.var(\"ns\", \"instance\"):get():method()")
+                    t.assert_equals(compile(ns, "(. instance (method 1))"), "clue.var(\"ns\", \"instance\"):get():method(1)")
+                    t.assert_equals(compile(ns, "(. instance (method 1 2 3))"), "clue.var(\"ns\", \"instance\"):get():method(1, 2, 3)")
                 end,
                 ["for member access"] = function()
-                    t.assert_equals(compile(clue.Namespace.new("ns"), "(. instance member)"), "clue.var(\"ns\", \"instance\"):get().member")
+                    local ns = clue.Namespace.new("ns")
+                    compile(ns, "(def instance nil)")
+                    t.assert_equals(compile(ns, "(. instance member)"), "clue.var(\"ns\", \"instance\"):get().member")
                 end
             },
             ["if statement"] = {
                 ["with else"] = function()
-                    t.assert_equals(compile(clue.Namespace.new("ns"), "(if cond then else)"), "(function() if (clue.var(\"ns\", \"cond\"):get()) then return clue.var(\"ns\", \"then\"):get(); else return clue.var(\"ns\", \"else\"):get(); end end)()")
+                    local ns = clue.Namespace.new("ns")
+                    compile(ns, "(def cond nil) (def then nil) (def else nil)")
+                    t.assert_equals(compile(ns, "(if cond then else)"), "(function() if (clue.var(\"ns\", \"cond\"):get()) then return clue.var(\"ns\", \"then\"):get(); else return clue.var(\"ns\", \"else\"):get(); end end)()")
                 end,
                 ["without else"] = function()
-                    t.assert_equals(compile(clue.Namespace.new("ns"), "(if cond then)"), "(function() if (clue.var(\"ns\", \"cond\"):get()) then return clue.var(\"ns\", \"then\"):get(); else return nil; end end)()")
+                    local ns = clue.Namespace.new("ns")
+                    compile(ns, "(def cond nil) (def then nil)")
+                    t.assert_equals(compile(ns, "(if cond then)"), "(function() if (clue.var(\"ns\", \"cond\"):get()) then return clue.var(\"ns\", \"then\"):get(); else return nil; end end)()")
                 end
             },
             ["do statement"] = function()
                 local ns = clue.Namespace.new("ns")
+                compile(ns, "(def f1 nil) (def f2 nil) (def f3 nil)")
                 t.assert_equals(compile(ns, "(do)"), compile(ns, "nil"))
                 t.assert_equals(compile(ns, "(do (f1))"), compile(ns, "(f1)"))
                 t.assert_equals(compile(ns, "(do (f1) (f2) (f3))"), "(function() clue.var(\"ns\", \"f1\"):get()(); clue.var(\"ns\", \"f2\"):get()(); return clue.var(\"ns\", \"f3\"):get()(); end)()")
             end,
             ["try/finally"] = function()
-                t.assert_equals(compile(clue.Namespace.new("ns"), "(try (f1) (f2) (finally (f3) (f4)))"), "(function() local ok, val = pcall(function() clue.var(\"ns\", \"f1\"):get()(); return clue.var(\"ns\", \"f2\"):get()(); end); clue.var(\"ns\", \"f3\"):get()(); clue.var(\"ns\", \"f4\"):get()(); if ok then return val else error(val) end end)()")
+                local ns = clue.Namespace.new("ns")
+                compile(ns, "(def f1 nil) (def f2 nil) (def f3 nil) (def f4 nil)")
+                t.assert_equals(compile(ns, "(try (f1) (f2) (finally (f3) (f4)))"), "(function() local ok, val = pcall(function() clue.var(\"ns\", \"f1\"):get()(); return clue.var(\"ns\", \"f2\"):get()(); end); clue.var(\"ns\", \"f3\"):get()(); clue.var(\"ns\", \"f4\"):get()(); if ok then return val else error(val) end end)()")
             end
         },
         ["should inline lua symbols"] = {
@@ -233,10 +263,10 @@ t.describe("clue.compiler", {
                 t.assert_equals(compile(clue.Namespace.new("ns"), "lua/some"), "some")
             end,
             ["aliased"] = function()
-                t.assert_equals(compile(nil, "(ns user (:require [lua :as L])) L/some"), "clue.ns(\"user\", {[\"L\"] = \"lua\"});\n" .. "some")
+                t.assert_equals(compile(nil, "(ns user (:require [lua :as L])) L/some"), "clue.ns(\"user\", clue.map(\"L\", \"lua\"));\n" .. "some")
             end,
             ["but not lua aliases"] = function()
-                t.assert_equals(compile(nil, "(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", {[\"lua\"] = \"other\"});\n" .. "clue.var(\"other\", \"some\"):get()")
+                t.assert_equals(compile(nil, "(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", clue.map(\"lua\", \"other\"));\n" .. "clue.var(\"other\", \"some\"):get()")
             end
         },
         ["quote should"] = {
@@ -305,7 +335,15 @@ t.describe("clue.compiler", {
                 ct.assert_equals(clue.compiler.syntax_quote(ns, read(":kkk")), read(":kkk"))
             end,
             ["resolve"] = {
-                ["symbols"] = function()
+                ["defined symbols"] = function()
+                    local ns = clue.Namespace.new("ns")
+                    ns:use(clue.namespaces:at("clue.core"))
+                    compile(ns, "(def sym nil)")
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("sym")), read("(quote ns/sym)"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("ns/sym")), read("(quote ns/sym)"))
+                    ct.assert_equals(clue.compiler.syntax_quote(ns, read("+")), read("(quote clue.core/+)"))
+                end,
+                ["not defined symbols"] = function()
                     local ns = clue.Namespace.new("ns")
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("sym")), read("(quote ns/sym)"))
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("ns/sym")), read("(quote ns/sym)"))
@@ -323,20 +361,25 @@ t.describe("clue.compiler", {
                 end,
                 ["symbols inside lists"] = function()
                     local ns = clue.Namespace.new("ns")
+                    compile(ns, "(def a nil) (def b nil) (def c nil)")
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("(a (b (c)))")), read("(clue.core/seq (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list (quote ns/b)) (lua/clue.list (clue.core/seq (clue.core/concat (lua/clue.list (quote ns/c))))))))))"))
                 end,
                 ["symbols inside vectors"] = function()
                     local ns = clue.Namespace.new("ns")
+                    compile(ns, "(def a nil) (def b nil) (def c nil)")
                     ct.assert_equals(clue.compiler.syntax_quote(ns, read("[a [b [c]]]")), read("(clue.core/vec (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (clue.core/vec (clue.core/concat (lua/clue.list (quote ns/b)) (lua/clue.list (clue.core/vec (clue.core/concat (lua/clue.list (quote ns/c))))))))))"))
                 end,
                 ["symbols inside maps"] = function()
-                    t.assert_equals_any(compile(clue.Namespace.new("ns"), "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(clue.symbol(\"ns\", \"b\")))))")
+                    local ns = clue.Namespace.new("ns")
+                    compile(ns, "(def a nil) (def b nil)")
+                    t.assert_equals_any(compile(ns, "`{a (b)}"), "clue.map(clue.symbol(\"ns\", \"a\"), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(clue.symbol(\"ns\", \"b\")))))")
                 end
             }
         },
         ["unquote should"] = {
             ["evaluate expressions inside syntax-quote"] = function()
                 local ns = clue.Namespace.new("ns")
+                compile(ns, "(def f nil)")
                 ct.assert_equals(clue.compiler.syntax_quote(ns, read("~sym")), read("sym"))
                 ct.assert_equals(clue.compiler.syntax_quote(ns, read("~(f 1 2)")), read("(f 1 2)"))
                 ct.assert_equals(clue.compiler.syntax_quote(ns, read("(f ~f f)")), read("(clue.core/seq (clue.core/concat (lua/clue.list (quote ns/f)) (lua/clue.list f) (lua/clue.list (quote ns/f))))"))
@@ -345,6 +388,7 @@ t.describe("clue.compiler", {
         ["unquote-splicing should"] = {
             ["evaluate expressions inside syntax-quote"] = function()
                 local ns = clue.Namespace.new("ns")
+                compile(ns, "(def a nil) (def b nil) (def g nil)")
                 ct.assert_equals(
                     clue.compiler.syntax_quote(ns, read("(a b ~@[c d] ~@'(e f) g)")),
                     read("(clue.core/seq (clue.core/concat (lua/clue.list (quote ns/a)) (lua/clue.list (quote ns/b)) [c d] (quote (e f)) (lua/clue.list (quote ns/g))))"))
@@ -357,15 +401,16 @@ t.describe("clue.compiler", {
             ["should be evaluated at during compilation"] = function()
                 local ns = clue.Namespace.new("ns")
                 t.assert_equals(
-                    compile(ns, "(def ^:macro reverse (fn [a b] [b a])) (reverse (+ 1 2) (+ 3 4))"),
-                    compile(ns, "(def ^:macro reverse (fn [a b] [b a])) [(+ 3 4) (+ 1 2)]"))
+                    compile(nil, "(ns user) (def ^:macro reverse (fn [a b] [b a])) (reverse (+ 1 2) (+ 3 4))"),
+                    compile(nil, "(ns user) (def ^:macro reverse (fn [a b] [b a])) [(+ 3 4) (+ 1 2)]"))
             end,
             ["should expand namespace qualified macros"] = function()
                 local ns = clue.Namespace.new("ns")
+                ns:use(clue.namespaces:at("clue.core"))
                 compile(ns, "(def ^:macro add (fn ([a] a) ([a & rest] `(+ ~a (add ~@rest)))))")
                 ct.assert_equals(
                     clue.compiler.expand_macro(ns, {}, nil, read("(ns/add 1 2 3)")),
-                    read("(+ 1 (ns/add 2 3))"))
+                    read("(clue.core/+ 1 (ns/add 2 3))"))
             end
         }
     }

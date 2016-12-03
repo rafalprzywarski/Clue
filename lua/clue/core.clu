@@ -24,6 +24,11 @@
     ([f x y z args] ((. lua/clue apply_to) f (list* x y z args)))
     ([f a b c d & args] ((. lua/clue apply_to) f (cons a (cons b (cons c (cons d (spread args)))))))))
 
+(def ^:macro lazy-seq (fn [body]
+    (list (list '. 'lua/clue 'lazy_seq) (list 'fn [] body))))
+
+(def ^:macro declare (fn [sym] (list 'def sym nil)))
+
 (def cat- (fn [xys zs]
     (lazy-seq
         (let [xys (seq xys)]

@@ -16,5 +16,5 @@ function clue.Namespace:add(var)
 end
 
 function clue.Namespace:use(ns)
-    self.used = self.used:assoc(ns.name, ns)
+    self.vars = self.vars:merge(ns.vars)
 end
