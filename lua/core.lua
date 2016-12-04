@@ -118,13 +118,12 @@ end
 function clue.ns(name, aliases)
     clue._ns_ = clue.get_or_create_ns(name)
     clue._ns_:use(clue.namespaces:at("clue.core"))
-    if aliases then
-        aliases:each(function(_, ref_ns)
-            if not clue.namespaces:at(ref_ns) then
-                loadstring(clue.compiler.compile_file("../research/" .. ref_ns:gsub("[.]", "/") .. ".clu"))()
-            end
-        end)
-    end
+    aliases = aliases or clue.map()
+    aliases:each(function(_, ref_ns)
+        if not clue.namespaces:at(ref_ns) then
+            loadstring(clue.compiler.compile_file("../research/" .. ref_ns:gsub("[.]", "/") .. ".clu"))()
+        end
+    end)
     clue._ns_.aliases = aliases
 end
 
@@ -153,14 +152,6 @@ function clue.pr_str(value)
             end
             return op .. table.concat(t, " ") .. cp
         end
-        if clue.type(value) == "table" then
-            local t = { "lua-table" }
-            for k,v in pairs(value) do
-                table.insert(t, clue.pr_str(k))
-                table.insert(t, clue.pr_str(v))
-            end
-            return "(" .. table.concat(t, " ").. ")"
-        end
         if clue.type(value) == clue.Map then
             local t = {}
             value:each(function(k,v) table.insert(t, clue.pr_str(k) .. " " .. clue.pr_str(v)) end)
@@ -169,7 +160,19 @@ function clue.pr_str(value)
         if clue.type(value) == clue.Vector then
             return pr_str_seq("[", clue.seq(value), "]")
         end
-        return pr_str_seq("(", clue.seq(value), ")")
+        if clue.is_seq(value) then
+            return pr_str_seq("(", clue.seq(value), ")")
+        end
+        local t = { "lua-table" }
+        for k,v in pairs(value) do
+            table.insert(t, clue.pr_str(k))
+            table.insert(t, clue.pr_str(v))
+        end
+        local tag = ""
+        if clue.type(value) ~= "table" then
+            tag = "^" .. tostring(clue.type(value)) .. " "
+        end
+        return "(" .. tag .. table.concat(t, " ").. ")"
     end
     return tostring(value)
 end

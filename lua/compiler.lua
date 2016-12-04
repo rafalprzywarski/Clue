@@ -446,7 +446,7 @@ end
 
 function clue.compiler.resolve_symbol(ns, locals, sym)
     if sym.ns then
-        return clue.symbol(ns.aliases and ns.aliases:at(sym.ns) or sym.ns, sym.name)
+        return clue.symbol(ns.aliases:at(sym.ns) or sym.ns, sym.name)
     end
     if locals[sym.name] or clue.compiler.special_forms[sym.name] then
         return sym

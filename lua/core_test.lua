@@ -213,6 +213,13 @@ t.describe("clue.core", {
                 "(lua-table 3 4 1 2 5 6)", "(lua-table 3 4 5 6 1 2)",
                 "(lua-table 5 6 1 2 3 4)", "(lua-table 5 6 3 4 1 2)")
             t.assert_equals(clue.var("clue.core", "pr-str"):get()({x = clue.vector(1, 2)}), "(lua-table \"x\" [1 2])")
+        end,
+        ["unknown types"] = function()
+            clue.class("UnknownClass425642")
+            function clue.UnknownClass425642:init(x)
+                self.x = x
+            end
+            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.UnknownClass425642.new(10)), "(^clue.UnknownClass425642 lua-table \"x\" 10)")
         end
     },
     ["lazy-seq should"] = {
