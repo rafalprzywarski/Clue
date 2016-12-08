@@ -4,7 +4,6 @@ function clue.Namespace:init(name, aliases)
     self.name = name
     self.vars = clue.map()
     self.aliases = aliases or clue.map()
-    self.used = clue.map()
 end
 
 function clue.Namespace:get(name)
