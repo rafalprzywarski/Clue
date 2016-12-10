@@ -1,4 +1,5 @@
 local M = {}
+local S = {}
 
 local function equals(left, right)
     if left == right then
@@ -89,23 +90,49 @@ function M.assert_false(actual)
     M.assert_equals(actual, false)
 end
 
-function run_spec(name, spec)
-    if type(spec) == "function" then
-        local ok, error = xpcall(spec, function(error)
-            if not is_failure(error) then
-                return make_failure("error: " .. to_string(error))
-            end
-            return error
-        end)
-        if not ok then
-            return {name .. "\n  failure: " .. tostring(error)}
+local function new_globals_store()
+    local old_S = S
+    S = {}
+    S.unbind_globals = function() end
+    return old_S
+end
+
+local function restore_globals(old_S)
+    S.unbind_globals()
+    S = old_S
+end
+
+function run_spec_func(name, spec)
+    local ok, error = xpcall(spec, function(error)
+        if not is_failure(error) then
+            return make_failure("error: " .. to_string(error))
         end
-        return {}
+        return error
+    end)
+    if not ok then
+        return {name .. "\n  failure: " .. tostring(error)}
+    end
+    return {}
+end
+
+function run_spec(name, spec, before_each)
+    if type(spec) == "function" then
+        local globals = new_globals_store()
+        before_each()
+        local failures = run_spec_func(name, spec)
+        restore_globals(globals)
+        return failures
     elseif type(spec) == "table" then
+        if spec["before each"] then
+            local parent_before_each = before_each
+            before_each = function() parent_before_each(); spec["before each"]() end
+        end
         local failures = {}
         for ctx,s in pairs(spec) do
-            for _, failure in ipairs(run_spec(ctx, s)) do
-                table.insert(failures, name .. (failure:sub(1, 1) ~= "." and " " or "") .. failure)
+            if ctx ~= "before each" then
+                for _, failure in ipairs(run_spec(ctx, s, before_each)) do
+                    table.insert(failures, name .. (failure:sub(1, 1) ~= "." and " " or "") .. failure)
+                end
             end
         end
         return failures
@@ -114,7 +141,7 @@ function run_spec(name, spec)
 end
 
 function M.describe(name, spec)
-    local failures = run_spec(name, spec)
+    local failures = run_spec(name, spec, function() end)
     for _, failure in ipairs(failures) do
         print(failure)
     end
@@ -124,6 +151,28 @@ function M.describe(name, spec)
     else
         print(name .. " ok")
     end
+end
+
+local function get_global_value(name)
+    return loadstring("return _G." .. name)()
+end
+
+local function set_global_value(name, value)
+    return loadstring("return function(val) _G." .. name .. " = val end")()(value)
+end
+
+function M.bind_global(name, value)
+    local unbind_previous_globals = S.unbind_globals
+    local old_value = get_global_value(name)
+    S.unbind_globals = function()
+        set_global_value(name, old_value)
+        unbind_previous_globals()
+    end
+    set_global_value(name, value)
+end
+
+function M.save_global(name)
+    M.bind_global(name, get_global_value(name))
 end
 
 return M
