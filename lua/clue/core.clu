@@ -1,5 +1,27 @@
 (ns clue.core)
 
+(def not (fn [x] (if x false true)))
+
+(def cons lua/clue.cons)
+(def conj lua/clue.conj)
+(def list lua/clue.list)
+(def vector lua/clue.vector)
+(def seq lua/clue.seq)
+(def vec lua/clue.vec)
+(def first (fn [seq] (. seq (first))))
+(def rest lua/clue.rest)
+(def next (fn [seq] (. seq (next))))
+(def pr-str lua/clue.pr_str)
+(def str lua/clue.str)
+(def + lua/clue.op_add)
+(def - lua/clue.op_sub)
+(def * lua/clue.op_mul)
+(def / lua/clue.op_div)
+(def % lua/clue.op_mod)
+(def = lua/clue.equals)
+
+(def assoc (fn [map k v] (. map (assoc k v))))
+
 (def nil? (fn [x] (= x nil)))
 
 (def spread (fn
@@ -23,6 +45,8 @@
     ([f x y args] ((. lua/clue apply_to) f (list* x y args)))
     ([f x y z args] ((. lua/clue apply_to) f (list* x y z args)))
     ([f a b c d & args] ((. lua/clue apply_to) f (cons a (cons b (cons c (cons d (spread args)))))))))
+
+(def not= (fn [& args] (not (apply = args))))
 
 (def ^:macro lazy-seq (fn [body]
     (list (list '. 'lua/clue 'lazy_seq) (list 'fn [] body))))
@@ -61,7 +85,6 @@
 (def dec (fn [n] (- n 1)))
 (def inc (fn [n] (+ n 1)))
 (def zero? (fn [n] (= n 0)))
-(def not (fn [x] (if x false true)))
 
 (def take (
     fn [n coll]

@@ -273,17 +273,15 @@ function clue.conj(coll, x)
     return clue.cons(x, coll)
 end
 
-clue.ns("clue.core")
-
-clue.def("clue.core", "+", function(...)
+function clue.op_add(...)
     local s = 0
     for i=1,select("#", ...) do
         s = s + select(i, ...)
     end
     return s
-end)
+end
 
-clue.def("clue.core", "-", function(...)
+function clue.op_sub(...)
     if select("#", ...) == 1 then
         return -select(1, ...)
     end
@@ -292,50 +290,32 @@ clue.def("clue.core", "-", function(...)
         s = s - select(i, ...)
     end
     return s
-end)
+end
 
-clue.def("clue.core", "*", function(...)
+function clue.op_mul(...)
     local s = 1
     for i=1,select("#", ...) do
         s = s * select(i, ...)
     end
     return s
-end)
+end
 
-clue.def("clue.core", "/", function(...)
+function clue.op_div(...)
     local s = select(1, ...)
     for i=2,select("#", ...) do
         s = s / select(i, ...)
     end
     return s
-end)
+end
 
-clue.def("clue.core", "%", function(...)
+function clue.op_mod(...)
     local s = select(1, ...)
     for i=2,select("#", ...) do
         s = s % select(i, ...)
     end
     return s
-end)
+end
 
-clue.def("clue.core", "=", clue.equals)
+clue.ns("clue.core")
 
-clue.def("clue.core", "not=", function(...)
-    return not clue.var("clue.core", "="):get()(...)
-end)
-
-clue.def("clue.core", "assoc", function(map, k, v)
-    return map:assoc(k, v)
-end)
-
-clue.def("clue.core", "cons", clue.cons)
-clue.def("clue.core", "conj", clue.conj)
 clue.def("clue.core", "list", clue.list)
-clue.def("clue.core", "vector", clue.vector)
-clue.def("clue.core", "seq", clue.seq)
-clue.def("clue.core", "vec", clue.vec)
-clue.def("clue.core", "first", function(seq) return seq:first() end)
-clue.def("clue.core", "rest", clue.rest)
-clue.def("clue.core", "next", function(seq) return seq:next() end)
-clue.def("clue.core", "pr-str", clue.pr_str)
-clue.def("clue.core", "str", clue.str)
