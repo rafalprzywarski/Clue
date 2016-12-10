@@ -154,7 +154,7 @@ function clue.compiler.syntax_quote(ns, expr)
         else
             local rs = clue.compiler.resolve_symbol(ns, {}, s)
             if not rs then
-                rs = clue.symbol(ns.name, s.name)
+                rs = clue.symbol(s.ns or ns.name, s.name)
             end
             s = rs
         end
@@ -196,7 +196,8 @@ clue.compiler.special_forms = {
         local sym, value = clue.first(args), clue.second(args)
         local var = clue.Var.new(ns.name, sym.name):with_meta(sym.meta)
         ns:add(var)
-        var:reset(loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))())
+        local val = loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))
+        var:reset(val())
         return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
     end,
     var = function(ns, locals, meta, args)
@@ -250,8 +251,17 @@ clue.compiler.special_forms = {
             translated_reqs = ", " .. "clue.map(" .. table.concat(reqs, ", ") .. ")"
         end
         ns = clue.Namespace.new(sym.name, aliases)
-        ns:use(clue.namespaces:at("clue.core"))
-        return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")", ns
+        if sym.name ~= "clue.core" then
+            ns:use(clue.namespaces:at("clue.core"))
+        end
+        clue.namespaces = clue.namespaces:assoc(ns.name, ns)
+        clue._ns_ = ns
+        return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")"
+    end,
+    ["in-ns"] = function(ns, locals, meta, args)
+        local sym = clue.first(args)
+        clue.in_ns(sym.name)
+        return "clue.in_ns(\"" .. sym.name .. "\")"
     end,
     ["."] = function(ns, locals, meta, dargs)
         local instance, call = clue.first(dargs), clue.second(dargs)
@@ -445,13 +455,20 @@ function clue.compiler.translate_map(ns, locals, map)
 end
 
 function clue.compiler.resolve_symbol(ns, locals, sym)
-    if sym.ns then
-        return clue.symbol(ns.aliases:at(sym.ns) or sym.ns, sym.name)
+    local sym_ns = sym.ns
+    if sym_ns then
+        sym_ns = ns.aliases:at(sym_ns) or sym_ns
     end
-    if locals[sym.name] or clue.compiler.special_forms[sym.name] then
-        return sym
+    if sym_ns == "lua" then
+        return clue.symbol(sym_ns, sym.name)
     end
-    local var = ns:get(sym.name)
+    if not sym_ns then
+        if locals[sym.name] or clue.compiler.special_forms[sym.name] then
+            return sym
+        end
+        sym_ns = ns.name
+    end
+    local var = clue.namespaces:at(sym_ns) and clue.namespaces:at(sym_ns):get(sym.name)
     if not var then
         return nil
     end
@@ -508,20 +525,19 @@ function clue.compiler.translate_expr(ns, locals, expr)
     end
 end
 
-function clue.compiler.translate(ns, exprs)
+function clue.compiler.translate(exprs)
     local translated = {}
     local expr = clue.seq(exprs)
     while expr do
-        local t, new_ns = clue.compiler.translate_expr(ns, {}, expr:first())
-        if new_ns then ns = new_ns end
+        local t = clue.compiler.translate_expr(clue._ns_, {}, expr:first())
     	table.insert(translated, t)
         expr = expr:next()
     end
     return table.concat(translated, ";\n")
 end
 
-function clue.compiler.compile(ns, source)
-    return clue.compiler.translate(ns, clue.reader.read(source))
+function clue.compiler.compile(source)
+    return clue.compiler.translate(clue.reader.read(source))
 end
 
 function clue.compiler.read_file(path)
@@ -533,5 +549,5 @@ function clue.compiler.read_file(path)
 end
 
 function clue.compiler.compile_file(filename)
-    return clue.compiler.compile(nil, clue.compiler.read_file(filename))
+    return clue.compiler.compile(clue.compiler.read_file(filename))
 end

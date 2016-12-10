@@ -8,6 +8,6 @@ local function read_file(path)
     return content
 end
 
-loadstring(clue.compiler.compile(nil, read_file("clue/core.clu")))()
+loadstring(clue.compiler.compile(read_file("clue/core.clu")))()
 
-print(clue.compiler.compile(nil, read_file(arg[1])))
+print(clue.compiler.compile(read_file(arg[1])))

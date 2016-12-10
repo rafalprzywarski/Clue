@@ -115,9 +115,15 @@ function clue.get_or_create_ns(name)
     return n
 end
 
+function clue.in_ns(name)
+    clue._ns_ = clue.get_or_create_ns(name)
+end
+
 function clue.ns(name, aliases)
     clue._ns_ = clue.get_or_create_ns(name)
-    clue._ns_:use(clue.namespaces:at("clue.core"))
+    if name ~= "clue.core" then
+        clue._ns_:use(clue.namespaces:at("clue.core"))
+    end
     aliases = aliases or clue.map()
     aliases:each(function(_, ref_ns)
         if not clue.namespaces:at(ref_ns) then
@@ -315,7 +321,3 @@ function clue.op_mod(...)
     end
     return s
 end
-
-clue.ns("clue.core")
-
-clue.def("clue.core", "list", clue.list)

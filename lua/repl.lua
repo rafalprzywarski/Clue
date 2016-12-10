@@ -8,7 +8,7 @@ local function read_file(path)
     return content
 end
 
-loadstring(clue.compiler.compile(nil, read_file("clue/core.clu")))()
+loadstring(clue.compiler.compile(read_file("clue/core.clu")))()
 clue.ns("user")
 
 local cmd
@@ -24,7 +24,7 @@ while true do
     local compiled, result
     local ok, error = xpcall(
         function()
-            compiled = "return " .. clue.compiler.compile(clue._ns_, cmd)
+            compiled = "return " .. clue.compiler.compile(cmd)
             result = loadstring(compiled, "repl")()
         end,
         function(error)
