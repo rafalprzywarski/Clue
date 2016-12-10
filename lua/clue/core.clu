@@ -113,3 +113,20 @@
                 (cons (f (first s)) (map f (rest s)))))))
 
 (defn pr [val] (lua/print (pr-str val)))
+
+
+(defmacro when
+    [test & body]
+    (list 'if test (cons 'do body)))
+
+(defmacro when-not
+    [test & body]
+    (list 'if test nil (cons 'do body)))
+
+(defmacro when-let
+    [bindings & body]
+    (let [form (bindings 0) test (bindings 1)]
+        `(let [temp# ~test]
+            (when temp#
+                (let [~form temp#]
+                    ~@body)))))
