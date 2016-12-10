@@ -1,15 +1,15 @@
 (ns macros)
 
-(def ^:macro or2 (fn [x y] `(let [or# ~x] (if or# or# ~y))))
+(defmacro or2 [x y] `(let [or# ~x] (if or# or# ~y)))
 
-(def ^:macro or (fn
+(defmacro or
     ([] nil)
     ([x] x)
     ([x & next]
         `(let [or# ~x]
-            (if or# or# (or ~@next))))))
+            (if or# or# (or ~@next)))))
 
-(def f (fn [x] (do (lua/print ".") x)))
+(defn f [x] (do (lua/print ".") x))
 
 (lua/print "5")
 (or (f nil) (f nil) (f nil) (f nil) (f "x"))

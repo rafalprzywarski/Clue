@@ -22,6 +22,10 @@
 
 (def ^:macro defn (fn [name & body] (list 'def name (cons 'fn body))))
 
+(defn with-meta [obj m] (. obj (with_meta m)))
+
+(defn ^:macro defmacro [name & body] (list 'def (with-meta name {:macro true}) (cons 'fn body)))
+
 (defn assoc [map k v] (. map (assoc k v)))
 
 (defn nil? [x] (= x nil))
@@ -50,10 +54,10 @@
 
 (defn not= [& args] (not (apply = args)))
 
-(defn ^:macro lazy-seq [body]
+(defmacro lazy-seq [body]
     (list (list '. 'lua/clue 'lazy_seq) (list 'fn [] body)))
 
-(defn ^:macro declare [sym] (list 'def sym nil))
+(defmacro declare [sym] (list 'def sym nil))
 
 (defn cat- [xys zs]
     (lazy-seq
@@ -75,7 +79,6 @@
     ([x y & zs]
         (cat- (concat x y) zs)))
 
-(defn with-meta [obj m] (. obj (with_meta m)))
 (defn meta [obj] (. obj meta))
 
 (defn type [obj] (lua/clue.type obj))

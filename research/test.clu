@@ -1,7 +1,7 @@
 (ns test (:require [lua :as L] [lib.other :as o]))
 
-(def hello (fn [x y] (L/print 10 20 (+ x 9) y)))
-(def apply (fn [op a b] (op a b)))
+(defn hello [x y] (L/print 10 20 (+ x 9) y))
+(defn apply [op a b] (op a b))
 
 (hello 2 3)
 (L/print (apply + 3 9))
