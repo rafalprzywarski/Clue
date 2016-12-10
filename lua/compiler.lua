@@ -250,12 +250,7 @@ clue.compiler.special_forms = {
             end
             translated_reqs = ", " .. "clue.map(" .. table.concat(reqs, ", ") .. ")"
         end
-        ns = clue.Namespace.new(sym.name, aliases)
-        if sym.name ~= "clue.core" then
-            ns:use(clue.namespaces:at("clue.core"))
-        end
-        clue.namespaces = clue.namespaces:assoc(ns.name, ns)
-        clue._ns_ = ns
+        clue.ns(sym.name, aliases)
         return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")"
     end,
     ["in-ns"] = function(ns, locals, meta, args)

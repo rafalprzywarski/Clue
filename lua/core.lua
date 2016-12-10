@@ -120,17 +120,19 @@ function clue.in_ns(name)
 end
 
 function clue.ns(name, aliases)
-    clue._ns_ = clue.get_or_create_ns(name)
+    local ns = clue.get_or_create_ns(name)
     if name ~= "clue.core" then
-        clue._ns_:use(clue.namespaces:at("clue.core"))
+        ns:use(clue.namespaces:at("clue.core"))
     end
     aliases = aliases or clue.map()
     aliases:each(function(_, ref_ns)
         if not clue.namespaces:at(ref_ns) then
             loadstring(clue.compiler.compile_file("../research/" .. ref_ns:gsub("[.]", "/") .. ".clu"))()
+            clue.in_ns(name)
         end
     end)
-    clue._ns_.aliases = aliases
+    ns.aliases = aliases
+    clue.in_ns(name)
 end
 
 function clue.has_tostring(value)
