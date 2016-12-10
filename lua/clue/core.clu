@@ -20,48 +20,50 @@
 (def % lua/clue.op_mod)
 (def = lua/clue.equals)
 
-(def assoc (fn [map k v] (. map (assoc k v))))
+(def ^:macro defn (fn [name & body] (list 'def name (cons 'fn body))))
 
-(def nil? (fn [x] (= x nil)))
+(defn assoc [map k v] (. map (assoc k v)))
 
-(def spread (fn
+(defn nil? [x] (= x nil))
+
+(defn spread
     [args]
     (if (nil? args)
         nil
         (if (nil? (next args))
             (seq (first args))
-            (cons (first args) (spread (next args)))))))
+            (cons (first args) (spread (next args))))))
 
-(def list* (fn
+(defn list*
     ([args] (seq args))
     ([a args] (cons a args))
     ([a b args] (cons a (cons b args)))
     ([a b c args] (cons a (cons b (cons c args))))
-    ([a b c d & more] (cons a (cons b (cons c (cons d (spread more))))))))
+    ([a b c d & more] (cons a (cons b (cons c (cons d (spread more)))))))
 
-(def apply (fn
+(defn apply
     ([f args] ((. lua/clue apply_to) f (seq args)))
     ([f x args] ((. lua/clue apply_to) f (list* x args)))
     ([f x y args] ((. lua/clue apply_to) f (list* x y args)))
     ([f x y z args] ((. lua/clue apply_to) f (list* x y z args)))
-    ([f a b c d & args] ((. lua/clue apply_to) f (cons a (cons b (cons c (cons d (spread args)))))))))
+    ([f a b c d & args] ((. lua/clue apply_to) f (cons a (cons b (cons c (cons d (spread args))))))))
 
-(def not= (fn [& args] (not (apply = args))))
+(defn not= [& args] (not (apply = args)))
 
-(def ^:macro lazy-seq (fn [body]
-    (list (list '. 'lua/clue 'lazy_seq) (list 'fn [] body))))
+(defn ^:macro lazy-seq [body]
+    (list (list '. 'lua/clue 'lazy_seq) (list 'fn [] body)))
 
-(def ^:macro declare (fn [sym] (list 'def sym nil)))
+(defn ^:macro declare [sym] (list 'def sym nil))
 
-(def cat- (fn [xys zs]
+(defn cat- [xys zs]
     (lazy-seq
         (let [xys (seq xys)]
             (if xys
                 (cons (first xys) (cat- (rest xys) zs))
                 (if zs
-                    (cat- (first zs) (next zs))))))))
+                    (cat- (first zs) (next zs)))))))
 
-(def concat (fn
+(defn concat
     ([] (lazy-seq nil))
     ([x] (lazy-seq x))
     ([x y]
@@ -71,43 +73,40 @@
                     (cons (first s) (concat (rest s) y))
                     y))))
     ([x y & zs]
-        (cat- (concat x y) zs))))
+        (cat- (concat x y) zs)))
 
-(def with-meta (fn [obj m] (. obj (with_meta m))))
-(def meta (fn [obj] (. obj meta)))
+(defn with-meta [obj m] (. obj (with_meta m)))
+(defn meta [obj] (. obj meta))
 
-(def type (fn [obj] (lua/clue.type obj)))
-(def instance? (fn [cls, obj] (= cls (type obj))))
+(defn type [obj] (lua/clue.type obj))
+(defn instance? [cls, obj] (= cls (type obj)))
 
-(def var? (fn [obj] (instance? lua/clue.Var obj)))
-(def var-get (fn [v] (. v (get))))
+(defn var? [obj] (instance? lua/clue.Var obj))
+(defn var-get [v] (. v (get)))
 
-(def dec (fn [n] (- n 1)))
-(def inc (fn [n] (+ n 1)))
-(def zero? (fn [n] (= n 0)))
+(defn dec [n] (- n 1))
+(defn inc [n] (+ n 1))
+(defn zero? [n] (= n 0))
 
-(def take (
-    fn [n coll]
+(defn take [n coll]
     (cons
         (first coll)
-        (if (not= n 1) (lazy-seq (take (dec n) (rest coll)))))))
+        (if (not= n 1) (lazy-seq (take (dec n) (rest coll))))))
 
-(def take-while
-    (fn [pred coll]
-        (lazy-seq
-            (let [s (seq coll)]
-                (if s
-                    (if (pred (first s))
-                        (cons (first s) (take-while pred (rest s)))))))))
-
-(def drop
-    (fn [n coll]
-        (if (zero? n) coll (drop (dec n) (lazy-seq (rest coll))))))
-
-(def map (fn [f coll]
+(defn take-while [pred coll]
     (lazy-seq
         (let [s (seq coll)]
             (if s
-                (cons (f (first s)) (map f (rest s))))))))
+                (if (pred (first s))
+                    (cons (first s) (take-while pred (rest s))))))))
 
-(def pr (fn [val] (lua/print (pr-str val))))
+(defn drop [n coll]
+    (if (zero? n) coll (drop (dec n) (lazy-seq (rest coll)))))
+
+(defn map [f coll]
+    (lazy-seq
+        (let [s (seq coll)]
+            (if s
+                (cons (f (first s)) (map f (rest s)))))))
+
+(defn pr [val] (lua/print (pr-str val)))
