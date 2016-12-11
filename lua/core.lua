@@ -236,6 +236,10 @@ function clue.str(...)
     return s
 end
 
+function clue.identical(l, r)
+    return l == r
+end
+
 function clue.equals(...)
     local function seq_equals(s1, s2)
         s1 = clue.seq(s1)

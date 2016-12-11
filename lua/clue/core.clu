@@ -21,16 +21,37 @@
 (def / lua/clue.op_div)
 (def % lua/clue.op_mod)
 (def = lua/clue.equals)
+(def merge (fn [m1 m2] (. m1 (merge m2))))
 
-(def ^:macro defn (fn [name & body] (list 'def name (cons 'fn body))))
+(def type (fn [obj] (lua/clue.type obj)))
+(def instance? (fn [cls obj] (lua/clue.identical cls (type obj))))
+(def map? (fn [obj] (instance? lua/clue.Map obj)))
+(def string? (fn [obj] (instance? "string" obj)))
 
-(defn with-meta [obj m] (. obj (with_meta m)))
+(def with-meta (fn [obj m] (. obj (with_meta m))))
 
-(defn ^:macro defmacro [name & body] (list 'def (with-meta name {:macro true}) (cons 'fn body)))
+(def ^:macro defn (fn [name & fdecl]
+    (let [
+        m (if (string? (first fdecl)) {:doc (first fdecl)} {})
+        fdecl (if (string? (first fdecl)) (next fdecl) fdecl)
+        m (if (map? (first fdecl)) (merge m (first fdecl)) m)
+        fdecl (if (map? (first fdecl)) (next fdecl) fdecl)]
+        (list 'def (with-meta name m) (cons 'fn fdecl)))))
+
+(def ^:macro defmacro (fn [name & fdecl]
+    (let [
+        m {:macro true}
+        m (if (string? (first fdecl)) (merge m {:doc (first fdecl)}) m)
+        fdecl (if (string? (first fdecl)) (next fdecl) fdecl)
+        m (if (map? (first fdecl)) (merge m (first fdecl)) m)
+        fdecl (if (map? (first fdecl)) (next fdecl) fdecl)]
+        (list 'def (with-meta name m) (cons 'fn fdecl)))))
 
 (defn assoc [map k v] (. map (assoc k v)))
 
-(defn nil? [x] (= x nil))
+(defn nil?
+    "Returns true if x is nil, false otherwise."
+    [x] (= x nil))
 
 (defn spread
     [args]
@@ -56,8 +77,12 @@
 
 (defn not= [& args] (not (apply = args)))
 
-(defmacro lazy-seq [body]
-    (list (list '. 'lua/clue 'lazy_seq) (list 'fn [] body)))
+(defmacro lazy-seq
+  "Takes an expressions that returns a sequence or nil, and yields
+  a sequence that will invoke the body only the first time
+  the returned sequence is used, and will cache the result
+  and return it on all subsequent uses."
+  [body] (list (list '. 'lua/clue 'lazy_seq) (list 'fn [] body)))
 
 (defmacro declare [sym] (list 'def sym nil))
 
@@ -82,9 +107,6 @@
         (cat- (concat x y) zs)))
 
 (defn meta [obj] (. obj meta))
-
-(defn type [obj] (lua/clue.type obj))
-(defn instance? [cls, obj] (= cls (type obj)))
 
 (defn var? [obj] (instance? lua/clue.Var obj))
 (defn var-get [v] (. v (get)))

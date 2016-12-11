@@ -28,6 +28,7 @@ t.describe("clue.compiler", {
             end,
             ["strings"] = function()
                 t.assert_equals(compile("\"Sonia\""), "\"Sonia\"")
+                t.assert_equals(compile("\"one\ntwo\n\""), "\"one\\ntwo\\n\"")
             end,
             ["symbols into vars"] = function()
                 compile("(def an-example nil) (ns my.ns.example) (def an-example nil) (in-ns user.ns)")

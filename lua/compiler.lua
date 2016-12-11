@@ -499,7 +499,7 @@ end
 function clue.compiler.translate_expr(ns, locals, expr)
     local etype = clue.type(expr)
     if etype == "string" then
-        return "\"" .. expr .. "\""
+        return "\"" .. expr:gsub("\n", "\\n") .. "\""
     end
     if type(expr) ~= "table" then
         return tostring(expr)
