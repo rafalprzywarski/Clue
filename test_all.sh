@@ -1,4 +1,4 @@
 set -e
 for test in $(ls lua/*_test.lua); do
-  (cd lua; lua ../${test})
+  lua -e "package.path=package.path .. \";./lua/?.lua\"" ${test}
 done

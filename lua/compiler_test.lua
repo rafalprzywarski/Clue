@@ -5,7 +5,7 @@ require("compiler")
 local compile = clue.compiler.compile
 local read = function(e) return clue.reader.read(e):at(0) end
 
-loadstring(clue.compiler.compile_file("clue/core.clu"))()
+clue.load_ns("clue.core")
 t.describe("clue.compiler", {
     ["before each"] = function()
         t.save_global("clue.namespaces")
@@ -146,8 +146,8 @@ t.describe("clue.compiler", {
                         "clue.ns(\"user.core\");\nclue.def(\"user.core\", \"f1\", nil, nil);\nclue.def(\"user.core\", \"f2\", nil, nil);\nclue.var(\"user.core\", \"f1\"):get()();\nclue.var(\"user.core\", \"f2\"):get()()")
                 end,
                 ["with require"] = function()
-                    t.save_global("clue.compiler.compile_file")
-                    clue.compiler.compile_file = function() return "" end
+                    t.save_global("clue.load_ns")
+                    clue.load_ns = function() end
                     t.assert_equals(compile("(ns user.core (:require org.some.xyz))"), "clue.ns(\"user.core\", clue.map(\"org.some.xyz\", \"org.some.xyz\"))")
                     t.assert_equals(compile("(ns user.core (:require [org.some.xyz :as some]))"), "clue.ns(\"user.core\", clue.map(\"some\", \"org.some.xyz\"))")
                     t.assert_equals(compile("(ns user.core (:require [org.some.xyz :as xyz] [org.some.abc :as other]))"), "clue.ns(\"user.core\", clue.map(\"xyz\", \"org.some.xyz\", \"other\", \"org.some.abc\"))")

@@ -1,6 +1,6 @@
 require "compiler"
 
-loadstring(clue.compiler.compile_file("clue/core.clu"))()
+clue.load_ns("clue.core")
 clue.ns("user")
 
 local cmd

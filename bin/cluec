@@ -1,0 +1,4 @@
+#!/bin/bash
+BIN_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+LUA_DIR=${BIN_DIR}/../lua
+lua -e "package.path=package.path .. \";${LUA_DIR}/?.lua\"" ${LUA_DIR}/compile.lua $@

@@ -547,5 +547,8 @@ function clue.compiler.read_file(path)
 end
 
 function clue.compiler.compile_file(filename)
-    return clue.compiler.compile(clue.compiler.read_file(filename))
+    clue._file_ = filename
+    local c = clue.compiler.compile(clue.compiler.read_file(filename))
+    clue._file_ = nil
+    return c
 end

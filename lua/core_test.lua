@@ -2,7 +2,7 @@ local t = require("ut")
 local ct = require("clue_ut")
 require("compiler")
 
-loadstring(clue.compiler.compile_file("clue/core.clu"))()
+clue.load_ns("clue.core")
 
 t.describe("clue.core", {
     ["+ should add numbers"] = function()

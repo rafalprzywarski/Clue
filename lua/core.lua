@@ -119,6 +119,45 @@ function clue.in_ns(name)
     clue._ns_ = clue.get_or_create_ns(name)
 end
 
+function clue.locate_file(localpath)
+    local function dir(path)
+        return path:match(".*/") or ""
+    end
+    local projpath = dir(clue._file_ or "") .. localpath
+    local file = io.open(projpath, "rb")
+    if file then
+        file.close()
+        return projpath
+    end
+    for path in package.path:gmatch("([^;]+)") do
+        if path:match("%?%.lua") then
+            local filename = string.gsub(path, "%?%.lua", localpath)
+            local file = io.open(filename, "rb")
+            if file then
+                file.close()
+                return filename
+            end
+        end
+    end
+    error("Cannot find " .. localpath)
+end
+
+function clue.compile(path)
+    return clue.compiler.compile_file(clue.locate_file(path))
+end
+
+function clue.compile_ns(ns_name)
+    return clue.compile(ns_name:gsub("%.", "/") .. ".clu")
+end
+
+function clue.load(path)
+    loadstring(clue.compile(path))()
+end
+
+function clue.load_ns(ns_name)
+    loadstring(clue.compile_ns(ns_name))()
+end
+
 function clue.ns(name, aliases)
     local ns = clue.get_or_create_ns(name)
     if name ~= "clue.core" then
@@ -127,7 +166,7 @@ function clue.ns(name, aliases)
     aliases = aliases or clue.map()
     aliases:each(function(_, ref_ns)
         if not clue.namespaces:at(ref_ns) then
-            loadstring(clue.compiler.compile_file("../research/" .. ref_ns:gsub("[.]", "/") .. ".clu"))()
+            clue.load_ns(ref_ns)
             clue.in_ns(name)
         end
     end)

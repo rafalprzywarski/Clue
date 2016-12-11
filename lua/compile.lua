@@ -1,4 +1,4 @@
 require "compiler"
 
-loadstring(clue.compiler.compile_file("clue/core.clu"))()
-print(clue.compiler.compile_file(arg[1]))
+clue.load_ns("clue.core")
+print(clue.compile(arg[1]))
