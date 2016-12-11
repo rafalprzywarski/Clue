@@ -54,7 +54,7 @@ t.describe("clue.compiler", {
             end,
             ["maps into clue.map calls"] = function()
                 t.assert_equals(compile("{}"), "clue.map()")
-                t.assert_equals_any(compile("{3 4 1 2}"), "clue.map(1, 2, 3, 4)", "clue.map(3, 4, 1, 2)a")
+                t.assert_equals_any(compile("{3 4 1 2}"), "clue.map(1, 2, 3, 4)", "clue.map(3, 4, 1, 2)")
             end,
             ["function definitions"] = {
                 ["with no parameters"] = function()
