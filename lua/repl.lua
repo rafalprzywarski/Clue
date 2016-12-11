@@ -1,7 +1,9 @@
 require "compiler"
 
 clue.load_ns("clue.core")
+clue.load_ns("clue.repl")
 clue.ns("user")
+clue.namespaces:at("user"):use(clue.namespaces:at("clue.repl"))
 
 local cmd
 while true do

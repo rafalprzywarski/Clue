@@ -1,0 +1,3 @@
+(ns clue.repl)
+
+(defmacro doc [sym] `(do (lua/print "-------------------------") (lua/print (str (. (var ~sym) ns) "/" (. (var ~sym) name))) (lua/print (str "  " (:doc (meta (var ~sym)))))))
