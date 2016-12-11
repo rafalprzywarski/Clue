@@ -357,6 +357,9 @@ clue.compiler.special_forms = {
         end
 
         return "(function() local ok, val = pcall(function() " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", to_try, "return-last") .. "; end); " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", exprs:first():next()) .. "; if ok then return val else error(val) end end)()"
+    end,
+    ["finally"] = function()
+        error("finally without try")
     end
 }
 

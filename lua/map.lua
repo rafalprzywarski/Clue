@@ -6,7 +6,7 @@ function clue.Map:init(...)
     local values = {}
     local size = 0
     for i=1,select("#", ...),2 do
-        values[select(i, ...)] = select(i + 1, ...)
+        values[tostring(select(i, ...))] = {key = select(i, ...), val = select(i + 1, ...)}
         size = size + 1
     end
     self.values = values
@@ -14,44 +14,50 @@ function clue.Map:init(...)
 end
 
 function clue.Map:__call(k)
-    return self.values[k]
+    local v = self.values[tostring(k)]
+    return v and v.val
 end
 
 function clue.Map:at(k)
-    return self.values[k]
+    local v = self.values[tostring(k)]
+    return v and v.val
+end
+
+function clue.Map:contains(k)
+    return self.values[tostring(k)] ~= nil
 end
 
 function clue.Map:each(f)
-    for k,v in pairs(self.values) do
-        f(k, v)
+    for _,v in pairs(self.values) do
+        f(v.key, v.val)
     end
 end
 
 function clue.Map:assoc(k,v)
     local n = clue.map()
     for k,v in pairs(self.values) do
-        n.values[k] = v
+        n.values[tostring(k)] = v
     end
     n.size = self.size
-    if not n.values[k] then
+    if not n.values[tostring(k)] then
         n.size = n.size + 1
     end
-    n.values[k] = v
+    n.values[tostring(k)] = {key = k, val = v}
     return n
 end
 
 function clue.Map:merge(other)
     local n = clue.map()
     for k,v in pairs(self.values) do
-        n.values[k] = v
+        n.values[tostring(k)] = v
     end
     local size = self.size
     if other then
         for k,v in pairs(other.values) do
-            if n.values[k] == nil then
+            if not n.values[tostring(k)] then
                 size = size + 1
             end
-            n.values[k] = v
+            n.values[tostring(k)] = v
         end
     end
     n.size = size
@@ -63,12 +69,12 @@ function clue.Map:equals(other)
         return false
     end
     for k,v in pairs(self.values) do
-        if not clue.equals(other.values[k], v) then
+        if not clue.equals(other.values[tostring(k)], v) then
             return false
         end
     end
     for k,v in pairs(other.values) do
-        if not clue.equals(self.values[k], v) then
+        if not clue.equals(self.values[tostring(k)], v) then
             return false
         end
     end

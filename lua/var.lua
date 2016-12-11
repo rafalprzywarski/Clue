@@ -11,7 +11,27 @@ function clue.Var:init(ns, name, root)
 end
 
 function clue.Var:get()
+    if clue.Var.frame then
+        local sym = clue.symbol(self.ns, self.name)
+        if clue.Var.frame.bindings:contains(sym) then
+            return clue.Var.frame.bindings:at(sym)
+        end
+    end
     return self.root
+end
+
+function clue.Var.push_bindings(bindings)
+    if clue.Var.frame then
+        bindings = clue.Var.frame.bindings:merge(bindings)
+    end
+    clue.Var.frame = {bindings = bindings, prev = clue.Var.frame}
+end
+
+function clue.Var.pop_bindings()
+    if not clue.Var.frame then
+        error("trying to pop bindings when nothing was pushed")
+    end
+    clue.Var.frame = clue.Var.frame.prev
 end
 
 function clue.Var:reset(new_root)

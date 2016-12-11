@@ -6,9 +6,11 @@
 (def conj lua/clue.conj)
 (def list lua/clue.list)
 (def vector lua/clue.vector)
+(def hash-map lua/clue.map)
 (def seq lua/clue.seq)
 (def vec lua/clue.vec)
 (def first (fn [seq] (. seq (first))))
+(def second lua/clue.second)
 (def rest lua/clue.rest)
 (def next (fn [seq] (. seq (next))))
 (def pr-str lua/clue.pr_str)
@@ -130,3 +132,16 @@
             (when temp#
                 (let [~form temp#]
                     ~@body)))))
+
+(defn symbolize-bindings [bindings]
+    (if bindings
+        (assoc (symbolize-bindings (next (next bindings))) `(syntax-quote ~(first bindings)) (second bindings))
+        {}))
+
+(defmacro binding [bindings & body]
+    `(do
+        (lua/clue.Var.push_bindings ~(symbolize-bindings (seq bindings)))
+        (try
+            ~@body
+            (finally
+                (lua/clue.Var.pop_bindings))))))
