@@ -77,6 +77,10 @@
 
 (defn not= [& args] (not (apply = args)))
 
+(defn some?
+  "Returns true if x is not nil, false otherwise."
+  [x] (not (nil? x)))
+
 (defmacro lazy-seq
   "Takes an expressions that returns a sequence or nil, and yields
   a sequence that will invoke the body only the first time
