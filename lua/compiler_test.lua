@@ -357,6 +357,15 @@ t.describe("clue.compiler", {
                 ct.assert_equals(
                     clue.compiler.expand_macro(clue._ns_, {}, nil, read("(user.ns/add 1 2 3)")),
                     read("(clue.core/+ 1 (user.ns/add 2 3))"))
+            end,
+            ["should convert suffix . to new"] = function()
+                compile("(def so.me nil)")
+                compile("(def some nil)")
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(so.me)")), read("(so.me)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(some.)")), read("(new some)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(some. a)")), read("(new some a)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(some. x y)")), read("(new some x y)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(user/some. x y)")), read("(new user/some x y)"))
             end
         }
     }

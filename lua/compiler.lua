@@ -360,6 +360,9 @@ clue.compiler.special_forms = {
     end,
     ["finally"] = function()
         error("finally without try")
+    end,
+    ["new"] = function()
+        error("new not implemented")
     end
 }
 
@@ -392,6 +395,9 @@ function clue.compiler.expand_macro1(ns, locals, meta, form)
     local fn, args = clue.first(form), (form:next() or clue.list())
     if not clue.is_symbol(fn) then
         return form
+    end
+    if fn.name:len() > 1 and fn.name:sub(fn.name:len()) == "." then
+        return clue.cons(clue.symbol("new"), clue.cons(clue.symbol(fn.ns, fn.name:sub(1, fn.name:len() - 1)), args))
     end
     fn = clue.compiler.resolve_var(ns, locals, fn)
     if ns and ns:get(fn.name) and ns:get(fn.name):is_macro() then
