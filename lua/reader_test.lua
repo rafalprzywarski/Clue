@@ -99,6 +99,21 @@ t.describe("clue.reader", {
                 ct.assert_equals(clue.reader.read("%"), clue.list(clue.symbol("%")))
             end
         },
+        ["should fail"] = {
+            ["on missing closing brackets"] = function()
+                t.assert_fails(clue.reader.read, "(")
+                t.assert_fails(clue.reader.read, "[")
+                t.assert_fails(clue.reader.read, "{")
+            end,
+            ["on mismatched brackets"] = function()
+                t.assert_fails(clue.reader.read, "(]")
+                t.assert_fails(clue.reader.read, "(}")
+                t.assert_fails(clue.reader.read, "[)")
+                t.assert_fails(clue.reader.read, "[}")
+                t.assert_fails(clue.reader.read, "{]")
+                t.assert_fails(clue.reader.read, "{)")
+            end
+        },
         ["should ignore comments"] = function()
             ct.assert_equals(clue.reader.read(";"), clue.list())
             ct.assert_equals(clue.reader.read(";nil"), clue.list())

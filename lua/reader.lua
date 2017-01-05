@@ -142,7 +142,7 @@ function clue.reader.read_token(source)
     end
 end
 
-function clue.reader.read_sequence(source, create)
+function clue.reader.read_sequence(source, create, closing)
     local l = clue.vector()
     local e, nsource = clue.reader.read_expression(source)
     while e ~= clue.reader.nothing do
@@ -151,7 +151,13 @@ function clue.reader.read_sequence(source, create)
         e, nsource = clue.reader.read_expression(source)
     end
 
-    local t, source = clue.reader.read_token(source) -- ) or ]
+    local t, source = clue.reader.read_token(source)
+    if t == clue.reader.nothing then
+        error("expected " .. closing)
+    end
+    if t.value ~= closing then
+        error("expected " .. closing .. " got " .. tostring(t.value))
+    end
     return create(l:unpack()), source
 end
 
@@ -182,19 +188,19 @@ function clue.reader.read_expression(source)
         return clue.reader.nothing
     end
     if t.type == "delimiter" and t.value == "(" then
-        return clue.reader.read_sequence(source, clue.list)
+        return clue.reader.read_sequence(source, clue.list, ")")
     end
     if t.type == "delimiter" and t.value == "]" then
         return clue.reader.nothing
     end
     if t.type == "delimiter" and t.value == "[" then
-        return clue.reader.read_sequence(source, clue.vector)
+        return clue.reader.read_sequence(source, clue.vector, "]")
     end
     if t.type == "delimiter" and t.value == "}" then
         return clue.reader.nothing
     end
     if t.type == "delimiter" and t.value == "{" then
-        return clue.reader.read_sequence(source, clue.map)
+        return clue.reader.read_sequence(source, clue.map, "}")
     end
     if t.type == "delimiter" and t.value == "^" then
         local meta, source = clue.reader.read_expression(source)

@@ -90,6 +90,12 @@ function M.assert_false(actual)
     M.assert_equals(actual, false)
 end
 
+function M.assert_fails(f, ...)
+    if pcall(f, ...) then
+        M.fail("did not fail")
+    end
+end
+
 local function new_globals_store()
     local old_S = S
     S = {}

@@ -131,7 +131,7 @@ t.describe("clue.compiler", {
                     t.assert_equals(compile("(let [a f b 2] (a b))"), "(function() local a = clue.var(\"user.ns\", \"f\"):get(); local b = 2; return a(b) end)()")
                     t.assert_equals(compile("(let [a 1 b 2] (a) (b))"), "(function() local a = 1; local b = 2; a(); return b() end)()")
                     t.assert_equals(compile("(fn [a] (let [b a] (b a)))"), "clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(a) return (function() local b = a; return b(a) end)() end)(...) end; clue.arg_count_error(arg_count_); end)")
-                    t.assert_equals(compile("(let [a a a a a b b a] (b a)"), "(function() local a = clue.var(\"user.ns\", \"a\"):get(); local a = a; local a = clue.var(\"user.ns\", \"b\"):get(); local b = a; return b(a) end)()")
+                    t.assert_equals(compile("(let [a a a a a b b a] (b a))"), "(function() local a = clue.var(\"user.ns\", \"a\"):get(); local a = a; local a = clue.var(\"user.ns\", \"b\"):get(); local b = a; return b(a) end)()")
                 end
             },
             ["multiple expressions into multiple statements"] = function()
