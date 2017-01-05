@@ -29,7 +29,7 @@ while true do
     if ok then
         print(clue.pr_str(result))
     else
-        print(error.error)
+        print("error: " .. tostring(error.error))
         print(error.traceback)
         if compiled then
             print("compiled:")

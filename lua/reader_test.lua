@@ -2,6 +2,13 @@ local t = require("ut")
 local ct = require("clue_ut")
 require("reader")
 
+local function assert_read_error(source, message)
+    local ok, error = pcall(clue.reader.read, source)
+    t.assert_false(ok)
+    t.assert_true(clue.type(error) == clue.ReadError)
+    t.assert_equals(error.message, message)
+end
+
 t.describe("clue.reader", {
     [".read"] = {
         ["should read"] = {
@@ -101,17 +108,17 @@ t.describe("clue.reader", {
         },
         ["should fail"] = {
             ["on missing closing brackets"] = function()
-                t.assert_fails(clue.reader.read, "(")
-                t.assert_fails(clue.reader.read, "[")
-                t.assert_fails(clue.reader.read, "{")
+                assert_read_error("(", "expected )")
+                assert_read_error("[", "expected ]")
+                assert_read_error("{", "expected }")
             end,
             ["on mismatched brackets"] = function()
-                t.assert_fails(clue.reader.read, "(]")
-                t.assert_fails(clue.reader.read, "(}")
-                t.assert_fails(clue.reader.read, "[)")
-                t.assert_fails(clue.reader.read, "[}")
-                t.assert_fails(clue.reader.read, "{]")
-                t.assert_fails(clue.reader.read, "{)")
+                assert_read_error("(]", "expected ) got ]")
+                assert_read_error("(}", "expected ) got }")
+                assert_read_error("[)", "expected ] got )")
+                assert_read_error("[}", "expected ] got }")
+                assert_read_error("{)", "expected } got )")
+                assert_read_error("{]", "expected } got ]")
             end
         },
         ["should ignore comments"] = function()

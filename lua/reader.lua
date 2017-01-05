@@ -1,6 +1,17 @@
 require 'core'
 
 clue = clue or {}
+
+clue.class("ReadError")
+
+function clue.ReadError:init(message)
+    self.message = message
+end
+
+function clue.ReadError:__tostring()
+    return self.message
+end
+
 clue.reader = clue.reader or {}
 clue.reader.nothing = clue.reader.nothing or {"nothing"}
 clue.reader.constants = {
@@ -14,6 +25,10 @@ clue.reader.SYNTAX_QUOTE = clue.symbol("syntax-quote")
 clue.reader.UNQUOTE = clue.symbol("unquote")
 clue.reader.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
 clue.reader.VAR = clue.symbol("var")
+
+function clue.reader.read_error(msg)
+    error(clue.ReadError.new(msg))
+ end
 
 function clue.reader.number(value)
     return {type = "number", value = value}
@@ -73,7 +88,7 @@ function clue.reader.read_string(s)
     for i = 2, s:len() do
         if s:sub(i, i) == "\"" then return clue.reader.string(s:sub(2, i - 1)), s:sub(i + 1) end
     end
-    error("missing closing \"")
+    clue.reader.read_error("missing closing \"")
 end
 
 function clue.reader.read_number(s)
@@ -153,10 +168,10 @@ function clue.reader.read_sequence(source, create, closing)
 
     local t, source = clue.reader.read_token(source)
     if t == clue.reader.nothing then
-        error("expected " .. closing)
+        clue.reader.read_error("expected " .. closing)
     end
     if t.value ~= closing then
-        error("expected " .. closing .. " got " .. tostring(t.value))
+        clue.reader.read_error("expected " .. closing .. " got " .. tostring(t.value))
     end
     return create(l:unpack()), source
 end
@@ -231,7 +246,7 @@ function clue.reader.read_expression(source)
         local expr, source = clue.reader.read_expression(source)
         return clue.list(clue.reader.VAR, expr), source
     end
-    error("unexpected token: " .. t.value)
+    clue.reader.read_error("unexpected token: " .. t.value)
 end
 
 function clue.reader.read(source)
