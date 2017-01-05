@@ -1,5 +1,7 @@
 (ns clue.core)
 
+(def new lua/clue.new)
+
 (def not (fn [x] (if x false true)))
 
 (def cons lua/clue.cons)
@@ -9,10 +11,10 @@
 (def hash-map lua/clue.map)
 (def seq lua/clue.seq)
 (def vec lua/clue.vec)
-(def first (fn [seq] (. seq (first))))
+(def first lua/clue.first)
 (def second lua/clue.second)
 (def rest lua/clue.rest)
-(def next (fn [seq] (. seq (next))))
+(def next lua/clue.next)
 (def pr-str lua/clue.pr_str)
 (def str lua/clue.str)
 (def + lua/clue.op_add)
@@ -170,4 +172,4 @@
         (try
             ~@body
             (finally
-                (lua/clue.Var.pop_bindings))))))
+                (lua/clue.Var.pop_bindings)))))

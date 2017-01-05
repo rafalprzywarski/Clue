@@ -366,3 +366,7 @@ function clue.op_mod(...)
     end
     return s
 end
+
+function clue.new(type, ...)
+    return type.new(...)
+end

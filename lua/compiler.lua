@@ -360,9 +360,6 @@ clue.compiler.special_forms = {
     end,
     ["finally"] = function()
         error("finally without try")
-    end,
-    ["new"] = function()
-        error("new not implemented")
     end
 }
 
