@@ -2,11 +2,19 @@ local t = require("ut")
 local ct = require("clue_ut")
 require("reader")
 
-local function assert_read_error(source, message)
+local function assert_read_error(source, message, row, column)
     local ok, error = pcall(clue.reader.read, source)
     t.assert_false(ok)
-    t.assert_true(clue.type(error) == clue.ReadError)
+    if clue.type(error) ~= clue.ReadError then
+        t.fail(clue.pr_str(error))
+    end
     t.assert_equals(error.message, message)
+    if row then
+        t.assert_equals(error.row, row)
+    end
+    if column then
+        t.assert_equals(error.column, column)
+    end
 end
 
 t.describe("clue.reader", {
@@ -121,6 +129,17 @@ t.describe("clue.reader", {
                 assert_read_error("{]", "expected } got ]")
             end
         },
+        ["should provide error location"] = function()
+            assert_read_error("(", "expected )", 1, 2)
+            assert_read_error("        (", "expected )", 1, 10)
+            assert_read_error("\n(", "expected )", 2, 2)
+            assert_read_error("\n\n(", "expected )", 3, 2)
+            assert_read_error("\n \n(", "expected )", 3, 2)
+            assert_read_error("\n \n (", "expected )", 3, 3)
+            assert_read_error("\n \n  (", "expected )", 3, 4)
+            assert_read_error("\n \n  (\n", "expected )", 4, 1)
+            assert_read_error("{]", "expected } got ]", 1, 2)
+        end,
         ["should ignore comments"] = function()
             ct.assert_equals(clue.reader.read(";"), clue.list())
             ct.assert_equals(clue.reader.read(";nil"), clue.list())
