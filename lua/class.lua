@@ -1,4 +1,4 @@
-function clue.class(name)
+function clue.new_class(name)
     local mcls = {}
     function mcls:__tostring() return self.__clue_name__ end
     local cls = setmetatable({}, mcls)
@@ -11,5 +11,9 @@ function clue.class(name)
     	end
         return instance
     end
-    clue[name] = cls
+    return cls
+end
+
+function clue.class(name)
+    clue[name] = clue.new_class(name)
 end

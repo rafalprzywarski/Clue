@@ -360,6 +360,26 @@ clue.compiler.special_forms = {
     end,
     ["finally"] = function()
         error("finally without try")
+    end,
+    ["deftype"] = function(ns, locals, meta, exprs)
+        exprs = clue.seq(exprs)
+        local name, fields, sigs = clue.first(exprs), clue.second(exprs), clue.nnext(exprs)
+        local self_fields = {}
+        local source_fields = {}
+        local args = {}
+        fields = clue.seq(fields)
+        while fields do
+            local field = fields:first().name
+            table.insert(args, ", " .. field)
+            table.insert(self_fields, "self." .. field)
+            table.insert(source_fields, field)
+            fields = fields:next()
+        end
+        local init = ""
+        if #self_fields > 0 then
+            init = table.concat(self_fields, ", ") .. " = " .. table.concat(source_fields, ", ") .. " "
+        end
+        return "clue.def_type(\"" .. name.name .. "\", function(self" .. table.concat(args) .. ") " .. init .. "end)"
     end
 }
 

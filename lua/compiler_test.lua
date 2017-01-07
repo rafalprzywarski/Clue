@@ -367,6 +367,13 @@ t.describe("clue.compiler", {
                 ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(some. x y)")), read("(new some x y)"))
                 ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(user/some. x y)")), read("(new user/some x y)"))
             end
+        },
+        ["deftype"] = {
+            ["should define a new class with given fields"] = function()
+                ct.assert_equals(compile("(deftype X [])"), "clue.def_type(\"X\", function(self) end)")
+                ct.assert_equals(compile("(deftype X [a])"), "clue.def_type(\"X\", function(self, a) self.a = a end)")
+                ct.assert_equals(compile("(deftype X [a b c])"), "clue.def_type(\"X\", function(self, a, b, c) self.a, self.b, self.c = a, b, c end)")
+            end
         }
     }
 })

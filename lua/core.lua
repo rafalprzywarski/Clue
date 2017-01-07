@@ -57,6 +57,10 @@ function clue.next(s)
     return s:next()
 end
 
+function clue.nnext(s)
+    return clue.next(clue.next())
+end
+
 function clue.second(s)
     return clue.first(clue.next(s))
 end
@@ -369,4 +373,10 @@ end
 
 function clue.new(type, ...)
     return type.new(...)
+end
+
+function clue.def_type(name, init)
+    local cls = clue.new_class(name)
+    cls.init = init
+    clue._ns_:add(clue.Var.new(clue._ns_.name, name, cls))
 end
