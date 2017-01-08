@@ -41,9 +41,9 @@ function clue.compiler.translate_fn(ns, locals, exprs)
         return param_names, va_name
     end
     local function add_locals(locals, param_names, va_name)
-        locals = clue.set_union(locals, clue.to_set(param_names))
+        locals = locals:merge(clue.to_self_map(param_names))
         if va_name then
-            locals[va_name] = true
+            locals = locals:assoc(va_name, va_name)
         end
         return locals
     end
@@ -152,7 +152,7 @@ function clue.compiler.syntax_quote(ns, expr)
             end
             s = clue.symbol(gname)
         else
-            local rs = clue.compiler.resolve_symbol(ns, {}, s)
+            local rs = clue.compiler.resolve_symbol(ns, clue.map(), s)
             if not rs then
                 rs = clue.symbol(s.ns or ns.name, s.name)
             end
@@ -196,9 +196,9 @@ clue.compiler.special_forms = {
         local sym, value = clue.first(args), clue.second(args)
         local var = clue.Var.new(ns.name, sym.name):with_meta(sym.meta)
         ns:add(var)
-        local val = loadstring("return " .. clue.compiler.translate_expr(ns, {}, value))
+        local val = loadstring("return " .. clue.compiler.translate_expr(ns, clue.map(), value))
         var:reset(val())
-        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, {}, value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
+        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, clue.map(), value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
     end,
     var = function(ns, locals, meta, args)
         local sym = clue.first(args)
@@ -211,10 +211,9 @@ clue.compiler.special_forms = {
             return "nil"
         end
         local translated = {}
-        local locals = clue.set_union(locals, {})
         for i = 1, defs.size, 2 do
             table.insert(translated, "local " .. defs[i].name .. " = " .. clue.compiler.translate_expr(ns, locals, defs[i + 1]))
-            locals[defs[i].name] = true
+            locals = locals:assoc(defs[i].name, defs[i].name)
         end
         local expr = clue.seq(exprs)
         while expr do
@@ -367,9 +366,11 @@ clue.compiler.special_forms = {
         local self_fields = {}
         local source_fields = {}
         local args = {}
-        fields = clue.seq(fields)
+        local field_names = {}
+        local fields = clue.seq(fields)
         while fields do
             local field = fields:first().name
+            table.insert(field_names, field)
             table.insert(args, ", " .. field)
             table.insert(self_fields, "self." .. field)
             table.insert(source_fields, field)
@@ -385,7 +386,11 @@ clue.compiler.special_forms = {
             sigs = sigs:next()
             while sigs do
                 local sig = sigs:first()
-                table.insert(tsigs, ", \"" .. ns.name .. "/" .. protocol .. "." .. clue.first(sig).name .. "__" .. clue.second(sig).size .. "\", " .. clue.compiler.translate_fn(ns, locals, clue.list(clue.next(sig))))
+                local prefixed_fields = clue.map()
+                for _, f in ipairs(field_names) do
+                    prefixed_fields = prefixed_fields:assoc(f, clue.first(clue.second(sig)).name .. "." .. f)
+                end
+                table.insert(tsigs, ", \"" .. ns.name .. "/" .. protocol .. "." .. clue.first(sig).name .. "__" .. clue.second(sig).size .. "\", " .. clue.compiler.translate_fn(ns, locals:merge(prefixed_fields), clue.list(clue.next(sig))))
                 sigs = sigs:next()
             end
         end
@@ -494,7 +499,10 @@ function clue.compiler.resolve_symbol(ns, locals, sym)
         return clue.symbol(sym_ns, sym.name)
     end
     if not sym_ns then
-        if locals[sym.name] or clue.compiler.special_forms[sym.name] then
+        if locals:at(sym.name) then
+            return clue.symbol(nil, locals:at(sym.name))
+        end
+        if clue.compiler.special_forms[sym.name] then
             return sym
         end
         sym_ns = ns.name
@@ -560,7 +568,7 @@ function clue.compiler.translate(exprs)
     local translated = {}
     local expr = clue.seq(exprs)
     while expr do
-        local t = clue.compiler.translate_expr(clue._ns_, {}, expr:first())
+        local t = clue.compiler.translate_expr(clue._ns_, clue.map(), expr:first())
     	table.insert(translated, t)
         expr = expr:next()
     end

@@ -96,18 +96,11 @@ function clue.vec(coll)
     return v
 end
 
-function clue.to_set(a)
-    local s = {}
+function clue.to_self_map(a)
+    local s = clue.map()
     for i=1,a.size do
-        s[a[i]] = true
+        s = s:assoc(a[i], a[i])
     end
-    return s
-end
-
-function clue.set_union(s1, s2)
-    local s = {}
-    for k, _ in pairs(s1) do s[k] = true end
-    for k, _ in pairs(s2) do s[k] = true end
     return s
 end
 

@@ -361,11 +361,11 @@ t.describe("clue.compiler", {
             ["should convert suffix . to new"] = function()
                 compile("(def so.me nil)")
                 compile("(def some nil)")
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(so.me)")), read("(so.me)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(some.)")), read("(new some)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(some. a)")), read("(new some a)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(some. x y)")), read("(new some x y)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, {}, nil, read("(user/some. x y)")), read("(new user/some x y)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(so.me)")), read("(so.me)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(some.)")), read("(new some)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(some. a)")), read("(new some a)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(some. x y)")), read("(new some x y)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(user/some. x y)")), read("(new user/some x y)"))
             end
         },
         ["deftype"] = {
@@ -378,6 +378,11 @@ t.describe("clue.compiler", {
                 ct.assert_equals(
                     compile("(deftype X [] Px (foo [x] nil) (bar [y z] nil))"),
                     "clue.def_type(\"X\", function(self) end, \"user.ns/Px.foo__1\", clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(x) return nil end)(...) end; clue.arg_count_error(arg_count_); end), \"user.ns/Px.bar__2\", clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(y, z) return nil end)(...) end; clue.arg_count_error(arg_count_); end))")
+            end,
+            ["should define methods that access members"] = function()
+                ct.assert_equals(
+                    compile("(deftype X [a b] Px (foo [x y] (+ a b y)))"),
+                    "clue.def_type(\"X\", function(self, a, b) self.a, self.b = a, b end, \"user.ns/Px.foo__2\", clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(x, y) return (x.a + x.b + y) end)(...) end; clue.arg_count_error(arg_count_); end))")
             end
         }
     }
