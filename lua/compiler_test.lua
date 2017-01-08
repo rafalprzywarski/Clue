@@ -384,6 +384,11 @@ t.describe("clue.compiler", {
                     compile("(deftype X [a b] Px (foo [x y] (+ a b y)))"),
                     "clue.def_type(\"X\", function(self, a, b) self.a, self.b = a, b end, \"user.ns/Px.foo__2\", clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(x, y) return (x.a + x.b + y) end)(...) end; clue.arg_count_error(arg_count_); end))")
             end
+        },
+        ["defprotocol"] = {
+            ["should define the protocol method"] = function()
+                ct.assert_equals(compile("(defprotocol P (foo [x y z]))"), "clue.def(\"user.ns\", \"foo\", clue.fn(function(...) return select(1, ...)[\"user.ns/P.foo__3\"](...) end), nil)")
+            end
         }
     }
 })

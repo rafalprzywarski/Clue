@@ -395,6 +395,14 @@ clue.compiler.special_forms = {
             end
         end
         return "clue.def_type(\"" .. name.name .. "\", function(self" .. table.concat(args) .. ") " .. init .. "end" .. table.concat(tsigs) .. ")"
+    end,
+    ["defprotocol"] = function(ns, locals, meta, exprs)
+        exprs = clue.seq(exprs)
+        local name, sigs = clue.first(exprs).name, clue.next(exprs)
+        local sig = clue.first(sigs)
+        local mname, params = clue.first(sig).name, clue.second(sig)
+        local this = "select(1, ...)"
+        return "clue.def(\"" .. ns.name .. "\", \"" .. mname .. "\", clue.fn(function(...) return " .. this .. "[\"".. ns.name .. "/" .. name .. "." .. mname .. "__" .. params.size .. "\"](...) end), nil)"
     end
 }
 
