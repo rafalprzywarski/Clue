@@ -379,7 +379,17 @@ clue.compiler.special_forms = {
         if #self_fields > 0 then
             init = table.concat(self_fields, ", ") .. " = " .. table.concat(source_fields, ", ") .. " "
         end
-        return "clue.def_type(\"" .. name.name .. "\", function(self" .. table.concat(args) .. ") " .. init .. "end)"
+        local tsigs = {}
+        if sigs then
+            local protocol = sigs:first().name
+            sigs = sigs:next()
+            while sigs do
+                local sig = sigs:first()
+                table.insert(tsigs, ", \"" .. ns.name .. "/" .. protocol .. "." .. clue.first(sig).name .. "__" .. clue.second(sig).size .. "\", " .. clue.compiler.translate_fn(ns, locals, clue.list(clue.next(sig))))
+                sigs = sigs:next()
+            end
+        end
+        return "clue.def_type(\"" .. name.name .. "\", function(self" .. table.concat(args) .. ") " .. init .. "end" .. table.concat(tsigs) .. ")"
     end
 }
 

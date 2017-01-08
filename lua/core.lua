@@ -58,7 +58,7 @@ function clue.next(s)
 end
 
 function clue.nnext(s)
-    return clue.next(clue.next())
+    return clue.next(clue.next(s))
 end
 
 function clue.second(s)
@@ -375,8 +375,11 @@ function clue.new(type, ...)
     return type.new(...)
 end
 
-function clue.def_type(name, init)
+function clue.def_type(name, init, ...)
     local cls = clue.new_class(name)
     cls.init = init
+    for i=1,select("#", ...),2 do
+        cls[select(i, ...)] = select(i + 1, ...)
+    end
     clue._ns_:add(clue.Var.new(clue._ns_.name, name, cls))
 end

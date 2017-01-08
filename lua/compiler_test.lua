@@ -373,6 +373,11 @@ t.describe("clue.compiler", {
                 ct.assert_equals(compile("(deftype X [])"), "clue.def_type(\"X\", function(self) end)")
                 ct.assert_equals(compile("(deftype X [a])"), "clue.def_type(\"X\", function(self, a) self.a = a end)")
                 ct.assert_equals(compile("(deftype X [a b c])"), "clue.def_type(\"X\", function(self, a, b, c) self.a, self.b, self.c = a, b, c end)")
+            end,
+            ["should define methods"] = function()
+                ct.assert_equals(
+                    compile("(deftype X [] Px (foo [x] nil) (bar [y z] nil))"),
+                    "clue.def_type(\"X\", function(self) end, \"user.ns/Px.foo__1\", clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 1 then return (function(x) return nil end)(...) end; clue.arg_count_error(arg_count_); end), \"user.ns/Px.bar__2\", clue.fn(function(...) local arg_count_ = select(\"#\", ...); if arg_count_ == 2 then return (function(y, z) return nil end)(...) end; clue.arg_count_error(arg_count_); end))")
             end
         }
     }
