@@ -399,10 +399,15 @@ clue.compiler.special_forms = {
     ["defprotocol"] = function(ns, locals, meta, exprs)
         exprs = clue.seq(exprs)
         local name, sigs = clue.first(exprs).name, clue.next(exprs)
-        local sig = clue.first(sigs)
-        local mname, params = clue.first(sig).name, clue.second(sig)
-        local this = "select(1, ...)"
-        return "clue.def(\"" .. ns.name .. "\", \"" .. mname .. "\", clue.fn(function(...) return " .. this .. "[\"".. ns.name .. "/" .. name .. "." .. mname .. "__" .. params.size .. "\"](...) end), nil)"
+        local dispatchers = {}
+        while sigs do
+            local sig = clue.first(sigs)
+            local mname, params = clue.first(sig).name, clue.second(sig)
+            local this = "select(1, ...)"
+            table.insert(dispatchers, "clue.def(\"" .. ns.name .. "\", \"" .. mname .. "\", clue.fn(function(...) return " .. this .. "[\"".. ns.name .. "/" .. name .. "." .. mname .. "__" .. params.size .. "\"](...) end), nil)")
+            sigs = clue.next(sigs)
+        end
+        return table.concat(dispatchers, "\n")
     end
 }
 
