@@ -386,13 +386,24 @@ t.describe("clue.compiler", {
             end
         },
         ["defprotocol"] = {
-            ["should define the protocol methods"] = function()
+            ["should define the protocol methods with one arity"] = function()
                 ct.assert_equals(compile("(defprotocol P (foo [x y z]))"), "clue.def(\"user.ns\", \"foo\", clue.fn(function(...) return select(1, ...)[\"user.ns/P.foo__3\"](...) end), nil)")
                 ct.assert_equals(
                     compile("(defprotocol P (foo [x]) (bar [y]) (baz [z]))"),
                     "clue.def(\"user.ns\", \"foo\", clue.fn(function(...) return select(1, ...)[\"user.ns/P.foo__1\"](...) end), nil)\n" ..
                     "clue.def(\"user.ns\", \"bar\", clue.fn(function(...) return select(1, ...)[\"user.ns/P.bar__1\"](...) end), nil)\n" ..
                     "clue.def(\"user.ns\", \"baz\", clue.fn(function(...) return select(1, ...)[\"user.ns/P.baz__1\"](...) end), nil)")
+            end,
+            ["should define the protocol methods with multiple arities"] = function()
+                ct.assert_equals(
+                    compile("(defprotocol P (foo [a] [b c] [x y z]))"),
+                    "clue.def(\"user.ns\", \"foo\", clue.fn(function(...) " ..
+                    "local arg_count_ = select(\"#\", ...); " ..
+                    "if arg_count_ == 1 then return select(1, ...)[\"user.ns/P.foo__1\"](...) end; " ..
+                    "if arg_count_ == 2 then return select(1, ...)[\"user.ns/P.foo__2\"](...) end; " ..
+                    "if arg_count_ == 3 then return select(1, ...)[\"user.ns/P.foo__3\"](...) end; " ..
+                    "clue.arg_count_error(arg_count_); " ..
+                    "end), nil)")
             end
         }
     }

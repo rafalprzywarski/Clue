@@ -402,9 +402,24 @@ clue.compiler.special_forms = {
         local dispatchers = {}
         while sigs do
             local sig = clue.first(sigs)
-            local mname, params = clue.first(sig).name, clue.second(sig)
-            local this = "select(1, ...)"
-            table.insert(dispatchers, "clue.def(\"" .. ns.name .. "\", \"" .. mname .. "\", clue.fn(function(...) return " .. this .. "[\"".. ns.name .. "/" .. name .. "." .. mname .. "__" .. params.size .. "\"](...) end), nil)")
+            local mname, param_groups = clue.first(sig).name, clue.next(sig)
+            local rets = {}
+            local should_check = clue.next(param_groups) ~= nil
+            while param_groups do
+                local params = clue.first(param_groups)
+                local this = "select(1, ...)"
+                local ret = "return " .. this .. "[\"".. ns.name .. "/" .. name .. "." .. mname .. "__" .. params.size .. "\"](...)"
+                if should_check then
+                    ret = "if arg_count_ == " .. params.size .. " then " .. ret .. " end;"
+                end
+                table.insert(rets, ret)
+                param_groups = clue.next(param_groups)
+            end
+            local body = table.concat(rets, " ")
+            if should_check then
+                body = "local arg_count_ = select(\"#\", ...); " .. body .. " clue.arg_count_error(arg_count_);"
+            end
+            table.insert(dispatchers, "clue.def(\"" .. ns.name .. "\", \"" .. mname .. "\", clue.fn(function(...) " .. body .. " end), nil)")
             sigs = clue.next(sigs)
         end
         return table.concat(dispatchers, "\n")
