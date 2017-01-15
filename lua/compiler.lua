@@ -394,12 +394,14 @@ clue.compiler.special_forms = {
                 sigs = sigs:next()
             end
         end
-        return "clue.def_type(\"" .. name.name .. "\", function(self" .. table.concat(args) .. ") " .. init .. "end" .. table.concat(tsigs) .. ")"
+        local def = "clue.def_type(\"" .. name.name .. "\", function(self" .. table.concat(args) .. ") " .. init .. "end" .. table.concat(tsigs) .. ")"
+        loadstring(def)()
+        return def
     end,
     ["defprotocol"] = function(ns, locals, meta, exprs)
         exprs = clue.seq(exprs)
         local name, sigs = clue.first(exprs).name, clue.next(exprs)
-        local dispatchers = {}
+        local defs = {}
         while sigs do
             local sig = clue.first(sigs)
             local mname, param_groups = clue.first(sig).name, clue.next(sig)
@@ -419,10 +421,12 @@ clue.compiler.special_forms = {
             if should_check then
                 body = "local arg_count_ = select(\"#\", ...); " .. body .. " clue.arg_count_error(arg_count_);"
             end
-            table.insert(dispatchers, "clue.def(\"" .. ns.name .. "\", \"" .. mname .. "\", clue.fn(function(...) " .. body .. " end), nil)")
+            table.insert(defs, "clue.def(\"" .. ns.name .. "\", \"" .. mname .. "\", clue.fn(function(...) " .. body .. " end), nil)")
             sigs = clue.next(sigs)
         end
-        return table.concat(dispatchers, "\n")
+        defs = table.concat(defs, "\n")
+        loadstring(defs)()
+        return defs
     end
 }
 
