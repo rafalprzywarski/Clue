@@ -401,7 +401,8 @@ clue.compiler.special_forms = {
     ["defprotocol"] = function(ns, locals, meta, exprs)
         exprs = clue.seq(exprs)
         local name, sigs = clue.first(exprs).name, clue.next(exprs)
-        local defs = {}
+        local proto_def = "clue.def(\"".. ns.name .. "\", \"" .. name .. "\", clue.Protocol.new(clue.symbol(\"" .. ns.name .. "\", \"" .. name .. "\")))"
+        local defs = {proto_def}
         while sigs do
             local sig = clue.first(sigs)
             local mname, param_groups = clue.first(sig).name, clue.next(sig)
@@ -410,7 +411,7 @@ clue.compiler.special_forms = {
             while param_groups do
                 local params = clue.first(param_groups)
                 local this = "select(1, ...)"
-                local ret = "return " .. this .. "[\"".. ns.name .. "/" .. name .. "." .. mname .. "__" .. params.size .. "\"](...)"
+                local ret = "return (" .. this .. "[\"".. ns.name .. "/" .. name .. "." .. mname .. "__" .. params.size .. "\"] or clue.var(\"" .. ns.name .. "\", \"" .. name .. "\"):get().extended:at(\"" .. mname .. "\"):at(tostring(clue.type(select(1, ...)))))(...)"
                 if should_check then
                     ret = "if arg_count_ == " .. params.size .. " then " .. ret .. " end;"
                 end

@@ -49,6 +49,8 @@
         fdecl (if (map? (first fdecl)) (next fdecl) fdecl)]
         (list 'def (with-meta name m) (cons 'fn fdecl)))))
 
+(defn extend [type proto methods] (. proto (extend type methods)))
+
 (defn assoc [map k v] (. map (assoc k v)))
 
 (defn nil?

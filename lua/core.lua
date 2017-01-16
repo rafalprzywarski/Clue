@@ -11,6 +11,7 @@ require 'set'
 require 'fn'
 require 'var'
 require 'namespace'
+require 'protocol'
 
 clue.namespaces = clue.namespaces or clue.map("lua", {})
 
