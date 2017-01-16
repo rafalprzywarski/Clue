@@ -1,0 +1,27 @@
+(ns protocol-test)
+
+(defprotocol P
+    (foo [x])
+    (bar-me [x y]))
+
+(deftype Foo [a b c]
+    P
+    (foo [x] a)
+    (bar-me [this y] (+ c y)))
+
+(deftype Bar [a b]
+    P
+    (foo [this] b)
+    (bar-me [this y] (+ a y)))
+
+(extend "string"
+    P
+    {:foo (fn [s] (str "foo " s " works"))
+     :bar-me (fn [s y] (str "bar-me " s " - " y))})
+
+(pr (foo (Foo. 1 2 3)))
+(pr (bar-me (Foo. 1 2 3) 42))
+(pr (foo (Bar. 1 2)))
+(pr (bar-me (Bar. 1 2) 42))
+(pr (foo "abc"))
+(pr (bar-me "cd" "ef"))
