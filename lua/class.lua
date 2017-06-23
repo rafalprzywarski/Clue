@@ -15,5 +15,7 @@ function clue.new_class(name)
 end
 
 function clue.class(name)
-    clue[name] = clue.new_class(name)
+    local cls = clue.new_class(name)
+    clue[name] = cls
+    return cls
 end

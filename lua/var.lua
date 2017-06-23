@@ -1,51 +1,51 @@
 require 'class'
 
-clue.class("Var")
+local M = clue.class("Var")
 
-clue.Var.MACRO = clue.keyword("macro")
+local MACRO = clue.keyword("macro")
 
-function clue.Var:init(ns, name, root)
+function M:init(ns, name, root)
     self.ns = ns
     self.name = name
     self.root = root
 end
 
-function clue.Var:get()
-    if clue.Var.frame then
+function M:get()
+    if M.frame then
         local sym = clue.symbol(self.ns, self.name)
-        if clue.Var.frame.bindings:contains(sym) then
-            return clue.Var.frame.bindings:at(sym)
+        if M.frame.bindings:contains(sym) then
+            return M.frame.bindings:at(sym)
         end
     end
     return self.root
 end
 
-function clue.Var.push_bindings(bindings)
-    if clue.Var.frame then
-        bindings = clue.Var.frame.bindings:merge(bindings)
+function M.push_bindings(bindings)
+    if M.frame then
+        bindings = M.frame.bindings:merge(bindings)
     end
-    clue.Var.frame = {bindings = bindings, prev = clue.Var.frame}
+    M.frame = {bindings = bindings, prev = M.frame}
 end
 
-function clue.Var.pop_bindings()
-    if not clue.Var.frame then
+function M.pop_bindings()
+    if not M.frame then
         error("trying to pop bindings when nothing was pushed")
     end
-    clue.Var.frame = clue.Var.frame.prev
+    M.frame = M.frame.prev
 end
 
-function clue.Var:reset(new_root)
+function M:reset(new_root)
     self.root = new_root
 end
 
-function clue.Var:with_meta(m)
-    local wm = clue.Var.new(self.ns, self.name, self.root)
+function M:with_meta(m)
+    local wm = M.new(self.ns, self.name, self.root)
     wm.meta = m
     return wm
 end
 
-function clue.Var:is_macro()
-    return self.meta and self.meta:at(clue.Var.MACRO)
+function M:is_macro()
+    return self.meta and self.meta:at(MACRO)
 end
 
 function clue.var(ns, name)
@@ -62,7 +62,7 @@ function clue.def(ns, name, value, meta)
     if var then
         var.root = value
     else
-        var = clue.Var.new(ns.name, name, value)
+        var = M.new(ns.name, name, value)
         var.meta = meta
         ns:add(var)
     end
