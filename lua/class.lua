@@ -1,3 +1,5 @@
+require "clue"
+
 function clue.new_class(name)
     local mcls = {}
     function mcls:__tostring() return self.__clue_name__ end

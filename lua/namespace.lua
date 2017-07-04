@@ -1,19 +1,21 @@
-clue.class('Namespace')
+require 'class'
 
-function clue.Namespace:init(name, aliases)
+local M = clue.class('Namespace')
+
+function M:init(name, aliases)
     self.name = name
     self.vars = clue.map()
     self.aliases = aliases or clue.map()
 end
 
-function clue.Namespace:get(name)
+function M:get(name)
     return self.vars:at(name)
 end
 
-function clue.Namespace:add(var)
+function M:add(var)
     self.vars = self.vars:assoc(var.name, var)
 end
 
-function clue.Namespace:use(ns)
+function M:use(ns)
     self.vars = self.vars:merge(ns.vars)
 end

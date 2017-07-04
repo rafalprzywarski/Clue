@@ -1,41 +1,41 @@
 require 'class'
 
-clue.class("List")
+local M = clue.class("List")
 
-function clue.List:init(...)
+function M:init(...)
     self:init_n(select("#", ...), ...)
 end
 
-function clue.List:init_n(n, first, ...)
+function M:init_n(n, first, ...)
     self.size = n
     if n == 0 then return end
     self.first_ = first
     if n == 1 then return end
-    self.next_ = clue.List.new(...)
+    self.next_ = M.new(...)
 end
 
-function clue.List:empty()
+function M:empty()
     return self.size == 0
 end
 
-function clue.List:first()
+function M:first()
     return self.first_
 end
 
-function clue.List:next()
+function M:next()
     return self.next_
 end
 
-function clue.List:cons(e)
-    local l = clue.List.new()
+function M:cons(e)
+    local l = M.new()
     l.size = self.size + 1
     l.first_ = e
     l.next_ = self
     return l
 end
 
-function clue.List:with_meta(m)
-    local wm = clue.List.new()
+function M:with_meta(m)
+    local wm = M.new()
     wm.size = n
     wm.first_ = self.first_
     wm.next_ = self.next_
@@ -43,4 +43,4 @@ function clue.List:with_meta(m)
     return wm
 end
 
-clue.list = clue.List.new
+clue.list = M.new

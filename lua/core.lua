@@ -1,5 +1,4 @@
-clue = clue or {}
-
+require 'clue'
 require 'keyword'
 require 'symbol'
 require 'vector'
@@ -13,7 +12,7 @@ require 'var'
 require 'namespace'
 require 'protocol'
 
-clue.namespaces = clue.namespaces or clue.map("lua", {})
+clue.namespaces = clue.map("lua", {})
 
 function clue.arg_count_error(n)
     error("Wrong number of args (" .. n .. ")")

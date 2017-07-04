@@ -1,23 +1,23 @@
 require 'core'
 require 'reader'
 
-clue = clue or {}
-clue.compiler = clue.compiler or {}
+clue.compiler = {}
+local M = clue.compiler
 
-clue.compiler.LIST = clue.symbol("lua", "clue.list")
-clue.compiler.SYMBOL = clue.symbol("lua", "clue.symbol")
-clue.compiler.QUOTE = clue.symbol("quote")
-clue.compiler.CONCAT = clue.symbol("clue.core", "concat")
-clue.compiler.SEQ = clue.symbol("clue.core", "seq")
-clue.compiler.VEC = clue.symbol("clue.core", "vec")
-clue.compiler.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
-clue.compiler.UNQUOTE = clue.symbol("unquote")
+M.LIST = clue.symbol("lua", "clue.list")
+M.SYMBOL = clue.symbol("lua", "clue.symbol")
+M.QUOTE = clue.symbol("quote")
+M.CONCAT = clue.symbol("clue.core", "concat")
+M.SEQ = clue.symbol("clue.core", "seq")
+M.VEC = clue.symbol("clue.core", "vec")
+M.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
+M.UNQUOTE = clue.symbol("unquote")
 
-function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, exprs, opt)
+function M.translate_and_concat_expressions(ns, locals, delimiter, exprs, opt)
     local translated = {}
     exprs = clue.seq(exprs)
     while exprs do
-        table.insert(translated, clue.compiler.translate_expr(ns, locals, exprs:first()))
+        table.insert(translated, M.translate_expr(ns, locals, exprs:first()))
         exprs = exprs:next()
     end
     if opt == "return-last" then
@@ -26,7 +26,7 @@ function clue.compiler.translate_and_concat_expressions(ns, locals, delimiter, e
     return table.concat(translated, delimiter)
 end
 
-function clue.compiler.translate_fn(ns, locals, exprs)
+function M.translate_fn(ns, locals, exprs)
     local function parse_params(params)
         local param_names = clue.vector()
         local va_name = nil
@@ -54,7 +54,7 @@ function clue.compiler.translate_fn(ns, locals, exprs)
         end
         exprs = clue.seq(exprs)
         while exprs do
-            table.insert(translated, clue.compiler.translate_expr(ns, locals, exprs:first()))
+            table.insert(translated, M.translate_expr(ns, locals, exprs:first()))
             exprs = exprs:next()
         end
         translated[#translated] = "return " .. translated[#translated]
@@ -111,16 +111,16 @@ function clue.compiler.translate_fn(ns, locals, exprs)
     return "clue.fn(function(...) local arg_count_ = select(\"#\", ...); " .. table.concat(bodies, "; ") .. " end)"
 end
 
-function clue.compiler.syntax_quote(ns, expr)
+function M.syntax_quote(ns, expr)
     local quote_expr
     local function quote_list_items(ns, gens, l)
         local first = l:first()
         local next = l:next()
         local qfirst
-        if clue.type(first) == clue.List and first:first() == clue.compiler.UNQUOTE_SPLICING then
+        if clue.type(first) == clue.List and first:first() == M.UNQUOTE_SPLICING then
             qfirst = clue.second(first)
         else
-            qfirst = clue.list(clue.compiler.LIST, quote_expr(ns, gens, first))
+            qfirst = clue.list(M.LIST, quote_expr(ns, gens, first))
         end
         if not next then
             return clue.list(qfirst)
@@ -129,18 +129,18 @@ function clue.compiler.syntax_quote(ns, expr)
     end
     local function quote_list(ns, gens, l)
         if l:empty() then
-            return clue.list(clue.compiler.LIST)
+            return clue.list(M.LIST)
         end
-        if l:first() == clue.compiler.UNQUOTE then
+        if l:first() == M.UNQUOTE then
             return l:next():first()
         end
-        return clue.list(clue.compiler.SEQ, quote_list_items(ns, gens, l):cons(clue.compiler.CONCAT))
+        return clue.list(M.SEQ, quote_list_items(ns, gens, l):cons(M.CONCAT))
     end
     local function quote_vector(ns, gens, v)
         if v:empty() then
             return clue.vector()
         end
-        return clue.list(clue.compiler.VEC, quote_list_items(ns, gens, v):cons(clue.compiler.CONCAT))
+        return clue.list(M.VEC, quote_list_items(ns, gens, v):cons(M.CONCAT))
     end
     local function quote_symbol(ns, gens, s)
         if s.name:sub(s.name:len()) == "#" then
@@ -152,13 +152,13 @@ function clue.compiler.syntax_quote(ns, expr)
             end
             s = clue.symbol(gname)
         else
-            local rs = clue.compiler.resolve_symbol(ns, clue.map(), s)
+            local rs = M.resolve_symbol(ns, clue.map(), s)
             if not rs then
                 rs = clue.symbol(s.ns or ns.name, s.name)
             end
             s = rs
         end
-        return clue.list(clue.compiler.QUOTE, s)
+        return clue.list(M.QUOTE, s)
     end
     local function quote_map(ns, gens, m)
         local q = clue.map()
@@ -185,24 +185,24 @@ function clue.compiler.syntax_quote(ns, expr)
     return quote_expr(ns, gens, expr)
 end
 
-clue.compiler.special_forms = {
+M.special_forms = {
     fn = function(ns, locals, meta, fns)
         if fns.size > 0 and clue.type(fns:first()) == clue.Vector then
             fns = clue.list(fns)
         end
-        return clue.compiler.translate_fn(ns, locals, fns) .. clue.compiler.translate_meta(meta)
+        return M.translate_fn(ns, locals, fns) .. M.translate_meta(meta)
     end,
     def = function(ns, locals, meta, args)
         local sym, value = clue.first(args), clue.second(args)
         local var = clue.Var.new(ns.name, sym.name):with_meta(sym.meta)
         ns:add(var)
-        local val = loadstring("return " .. clue.compiler.translate_expr(ns, clue.map(), value))
+        local val = loadstring("return " .. M.translate_expr(ns, clue.map(), value))
         var:reset(val())
-        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. clue.compiler.translate_expr(ns, clue.map(), value) .. ", " .. clue.compiler.translate_expr(nil, nil, sym.meta) .. ")"
+        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. M.translate_expr(ns, clue.map(), value) .. ", " .. M.translate_expr(nil, nil, sym.meta) .. ")"
     end,
     var = function(ns, locals, meta, args)
         local sym = clue.first(args)
-        sym = clue.compiler.resolve_var(ns, locals, sym)
+        sym = M.resolve_var(ns, locals, sym)
         return "clue.var(\"" .. sym.ns .. "\", \"" .. sym.name  .. "\")"
     end,
     let = function(ns, locals, meta, args)
@@ -212,12 +212,12 @@ clue.compiler.special_forms = {
         end
         local translated = {}
         for i = 1, defs.size, 2 do
-            table.insert(translated, "local " .. defs[i].name .. " = " .. clue.compiler.translate_expr(ns, locals, defs[i + 1]))
+            table.insert(translated, "local " .. defs[i].name .. " = " .. M.translate_expr(ns, locals, defs[i + 1]))
             locals = locals:assoc(defs[i].name, defs[i].name)
         end
         local expr = clue.seq(exprs)
         while expr do
-            table.insert(translated, clue.compiler.translate_expr(ns, locals, expr:first()))
+            table.insert(translated, M.translate_expr(ns, locals, expr:first()))
             expr = expr:next()
         end
         if not exprs then
@@ -267,7 +267,7 @@ clue.compiler.special_forms = {
             call = call:next()
             local translated = {}
             while call do
-                table.insert(translated, clue.compiler.translate_expr(ns, locals, call:first()))
+                table.insert(translated, M.translate_expr(ns, locals, call:first()))
                 call = call:next()
             end
             args = "(" .. table.concat(translated, ", ") .. ")"
@@ -276,22 +276,22 @@ clue.compiler.special_forms = {
             args = ""
             op = "."
         end
-        return clue.compiler.translate_expr(ns, locals, instance) .. op .. name .. args
+        return M.translate_expr(ns, locals, instance) .. op .. name .. args
     end,
     ["if"] = function(ns, locals, meta, args)
         local cond, then_, else_ = clue.first(args), clue.second(args), clue.nth(args, 2)
-        return "(function() if (" .. clue.compiler.translate_expr(ns, locals, cond) .. ") then " ..
-            "return " .. clue.compiler.translate_expr(ns, locals, then_) .. "; else " ..
-            "return " .. clue.compiler.translate_expr(ns, locals, else_) .. "; end end)()"
+        return "(function() if (" .. M.translate_expr(ns, locals, cond) .. ") then " ..
+            "return " .. M.translate_expr(ns, locals, then_) .. "; else " ..
+            "return " .. M.translate_expr(ns, locals, else_) .. "; end end)()"
     end,
     ["do"] = function(ns, locals, meta, exprs)
         if exprs.size == 0 then
             return "nil"
         end
         if exprs.size == 1 then
-            return clue.compiler.translate_expr(ns, locals, exprs:first())
+            return M.translate_expr(ns, locals, exprs:first())
         end
-        return "(function() " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", exprs, "return-last") .. "; end)()"
+        return "(function() " .. M.translate_and_concat_expressions(ns, locals, "; ", exprs, "return-last") .. "; end)()"
     end,
     ["quote"] = function(ns, locals, meta, exprs)
         local quote_expr
@@ -314,9 +314,9 @@ clue.compiler.special_forms = {
         end
         local function quote_symbol(s)
             if not s.ns then
-                return clue.list(clue.compiler.SYMBOL, s.name)
+                return clue.list(M.SYMBOL, s.name)
             end
-            return clue.list(clue.compiler.SYMBOL, s.ns, s.name)
+            return clue.list(M.SYMBOL, s.ns, s.name)
         end
         local function quote_map(m)
             local q = clue.map()
@@ -327,9 +327,9 @@ clue.compiler.special_forms = {
             local etype = clue.type(expr)
             if clue.type(expr) == clue.List then
                 if expr:empty() then
-                    return clue.list(clue.compiler.LIST)
+                    return clue.list(M.LIST)
                 end
-                return quote_list(expr):cons(clue.compiler.LIST)
+                return quote_list(expr):cons(M.LIST)
             end
             if clue.type(expr) == clue.Symbol then
                 return quote_symbol(expr)
@@ -342,10 +342,10 @@ clue.compiler.special_forms = {
             end
             return expr
         end
-        return clue.compiler.translate_expr(ns, locals, quote_expr(exprs:first()))
+        return M.translate_expr(ns, locals, quote_expr(exprs:first()))
     end,
     ["syntax-quote"] = function(ns, locals, meta, exprs)
-        return clue.compiler.translate_expr(ns, locals, clue.compiler.syntax_quote(ns, exprs:first()))
+        return M.translate_expr(ns, locals, M.syntax_quote(ns, exprs:first()))
     end,
     try = function(ns, locals, meta, exprs)
         exprs = clue.seq(exprs)
@@ -355,7 +355,7 @@ clue.compiler.special_forms = {
             exprs = exprs:next()
         end
 
-        return "(function() local ok, val = pcall(function() " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", to_try, "return-last") .. "; end); " .. clue.compiler.translate_and_concat_expressions(ns, locals, "; ", exprs:first():next()) .. "; if ok then return val else error(val) end end)()"
+        return "(function() local ok, val = pcall(function() " .. M.translate_and_concat_expressions(ns, locals, "; ", to_try, "return-last") .. "; end); " .. M.translate_and_concat_expressions(ns, locals, "; ", exprs:first():next()) .. "; if ok then return val else error(val) end end)()"
     end,
     ["finally"] = function()
         error("finally without try")
@@ -390,7 +390,7 @@ clue.compiler.special_forms = {
                 for _, f in ipairs(field_names) do
                     prefixed_fields = prefixed_fields:assoc(f, clue.first(clue.second(sig)).name .. "." .. f)
                 end
-                table.insert(tsigs, ", \"" .. ns.name .. "/" .. protocol .. "." .. clue.first(sig).name .. "__" .. clue.second(sig).size .. "\", " .. clue.compiler.translate_fn(ns, locals:merge(prefixed_fields), clue.list(clue.next(sig))))
+                table.insert(tsigs, ", \"" .. ns.name .. "/" .. protocol .. "." .. clue.first(sig).name .. "__" .. clue.second(sig).size .. "\", " .. M.translate_fn(ns, locals:merge(prefixed_fields), clue.list(clue.next(sig))))
                 sigs = sigs:next()
             end
         end
@@ -431,29 +431,29 @@ clue.compiler.special_forms = {
     end
 }
 
-clue.compiler.optimized = {
+M.optimized = {
     ["clue.core/+"] = function(ns, locals, meta, args)
-        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " + ", args) .. ")"
+        return "(" .. M.translate_and_concat_expressions(ns, locals, " + ", args) .. ")"
     end,
     ["clue.core/-"] = function(ns, locals, meta, args)
-        local translated = clue.compiler.translate_and_concat_expressions(ns, locals, " - ", args)
+        local translated = M.translate_and_concat_expressions(ns, locals, " - ", args)
         if args.size == 1 then
             translated = "-" .. translated
         end
         return "(" .. translated .. ")"
     end,
     ["clue.core/*"] = function(ns, locals, meta, args)
-        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " * ", args) .. ")"
+        return "(" .. M.translate_and_concat_expressions(ns, locals, " * ", args) .. ")"
     end,
     ["clue.core//"] = function(ns, locals, meta, args)
-        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " / ", args) .. ")"
+        return "(" .. M.translate_and_concat_expressions(ns, locals, " / ", args) .. ")"
     end,
     ["clue.core/%"] = function(ns, locals, meta, args)
-        return "(" .. clue.compiler.translate_and_concat_expressions(ns, locals, " % ", args) .. ")"
+        return "(" .. M.translate_and_concat_expressions(ns, locals, " % ", args) .. ")"
     end
 }
 
-function clue.compiler.expand_macro1(ns, locals, meta, form)
+function M.expand_macro1(ns, locals, meta, form)
     if not clue.is_seq(form) then
         return form
     end
@@ -464,28 +464,28 @@ function clue.compiler.expand_macro1(ns, locals, meta, form)
     if fn.name:len() > 1 and fn.name:sub(fn.name:len()) == "." then
         return clue.cons(clue.symbol("new"), clue.cons(clue.symbol(fn.ns, fn.name:sub(1, fn.name:len() - 1)), args))
     end
-    fn = clue.compiler.resolve_var(ns, locals, fn)
+    fn = M.resolve_var(ns, locals, fn)
     if ns and ns:get(fn.name) and ns:get(fn.name):is_macro() then
         return clue.apply_to(ns:get(fn.name):get(), args)
     end
     return form
 end
 
-function clue.compiler.expand_macro(ns, locals, meta, form)
-    local ex = clue.compiler.expand_macro1(ns, locals, meta, form)
+function M.expand_macro(ns, locals, meta, form)
+    local ex = M.expand_macro1(ns, locals, meta, form)
     if ex == form then
         return form
     end
-    return clue.compiler.expand_macro(ns, locals, meta, ex)
+    return M.expand_macro(ns, locals, meta, ex)
 end
 
-function clue.compiler.translate_call(ns, locals, meta, form)
+function M.translate_call(ns, locals, meta, form)
     local fn, args = clue.first(form), (form:next() or clue.list())
     if clue.is_symbol(fn) then
-        if fn.ns == nil and clue.compiler.special_forms[fn.name] then
-            return clue.compiler.special_forms[fn.name](ns, locals, meta, args)
+        if fn.ns == nil and M.special_forms[fn.name] then
+            return M.special_forms[fn.name](ns, locals, meta, args)
         end
-        local optimized = clue.compiler.optimized[tostring(clue.compiler.resolve_symbol(ns, locals, fn))]
+        local optimized = M.optimized[tostring(M.resolve_symbol(ns, locals, fn))]
         if optimized then
             return optimized(ns, locals, meta, args)
         end
@@ -493,37 +493,37 @@ function clue.compiler.translate_call(ns, locals, meta, form)
     local translated = {}
     args = clue.seq(args)
     while args do
-        local te = clue.compiler.translate_expr(ns, locals, args:first())
+        local te = M.translate_expr(ns, locals, args:first())
         table.insert(translated, te)
         args = args:next()
     end
-    return clue.compiler.translate_expr(ns, locals, fn) .. "(" .. table.concat(translated, ", ") .. ")"
+    return M.translate_expr(ns, locals, fn) .. "(" .. table.concat(translated, ", ") .. ")"
 end
 
-function clue.compiler.translate_meta(meta)
+function M.translate_meta(meta)
     if not meta then
         return ""
     end
-    return ":with_meta(" .. clue.compiler.translate_map(nil, nil, meta) .. ")"
+    return ":with_meta(" .. M.translate_map(nil, nil, meta) .. ")"
 end
 
-function clue.compiler.translate_vector(ns, locals, vector)
+function M.translate_vector(ns, locals, vector)
     local translated = {}
     for i=1,vector.size do
-        table.insert(translated, clue.compiler.translate_expr(ns, locals, vector[i]))
+        table.insert(translated, M.translate_expr(ns, locals, vector[i]))
     end
-    return "clue.vector(" .. table.concat(translated, ", ").. ")" .. clue.compiler.translate_meta(vector.meta)
+    return "clue.vector(" .. table.concat(translated, ", ").. ")" .. M.translate_meta(vector.meta)
 end
 
-function clue.compiler.translate_map(ns, locals, map)
+function M.translate_map(ns, locals, map)
     local translated = {}
     map:each(function(k, v)
-        table.insert(translated, clue.compiler.translate_expr(ns, locals, k) .. ", " .. clue.compiler.translate_expr(ns, locals, v))
+        table.insert(translated, M.translate_expr(ns, locals, k) .. ", " .. M.translate_expr(ns, locals, v))
     end)
-    return "clue.map(" .. table.concat(translated, ", ").. ")" .. clue.compiler.translate_meta(map.meta)
+    return "clue.map(" .. table.concat(translated, ", ").. ")" .. M.translate_meta(map.meta)
 end
 
-function clue.compiler.resolve_symbol(ns, locals, sym)
+function M.resolve_symbol(ns, locals, sym)
     local sym_ns = sym.ns
     if sym_ns then
         sym_ns = ns.aliases:at(sym_ns) or sym_ns
@@ -535,7 +535,7 @@ function clue.compiler.resolve_symbol(ns, locals, sym)
         if locals:at(sym.name) then
             return clue.symbol(nil, locals:at(sym.name))
         end
-        if clue.compiler.special_forms[sym.name] then
+        if M.special_forms[sym.name] then
             return sym
         end
         sym_ns = ns.name
@@ -547,30 +547,30 @@ function clue.compiler.resolve_symbol(ns, locals, sym)
     return clue.symbol(var.ns, var.name)
 end
 
-function clue.compiler.resolve_var(ns, locals, sym)
-    local r = clue.compiler.resolve_symbol(ns, locals, sym)
+function M.resolve_var(ns, locals, sym)
+    local r = M.resolve_symbol(ns, locals, sym)
     if not r then
         error("unable to resolve symbol " .. tostring(sym))
     end
     return r
 end
 
-function clue.compiler.translate_symbol(ns, locals, expr)
-    local sym = clue.compiler.resolve_var(ns, locals, expr)
+function M.translate_symbol(ns, locals, expr)
+    local sym = M.resolve_var(ns, locals, expr)
     if not sym.ns or sym.ns == "lua" then
         return sym.name
     end
     return "clue.var(\"" .. sym.ns .. "\", \"" .. sym.name .. "\"):get()"
 end
 
-function clue.compiler.translate_keyword(ns, locals, expr)
+function M.translate_keyword(ns, locals, expr)
     if expr.ns then
-        return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
+        return "clue.keyword(\"" .. expr.ns .. "\", \"" .. expr.name .. "\")" .. M.translate_meta(expr.meta)
     end
-    return "clue.keyword(\"" .. expr.name .. "\")" .. clue.compiler.translate_meta(expr.meta)
+    return "clue.keyword(\"" .. expr.name .. "\")" .. M.translate_meta(expr.meta)
 end
 
-function clue.compiler.translate_expr(ns, locals, expr)
+function M.translate_expr(ns, locals, expr)
     local etype = clue.type(expr)
     if etype == "string" then
         return "\"" .. expr:gsub("\n", "\\n") .. "\""
@@ -578,18 +578,18 @@ function clue.compiler.translate_expr(ns, locals, expr)
     if type(expr) ~= "table" then
         return tostring(expr)
     end
-    expr = clue.compiler.expand_macro(ns, locals, expr.meta, expr)
+    expr = M.expand_macro(ns, locals, expr.meta, expr)
     etype = clue.type(expr)
     if clue.is_seq(expr) then
-        return clue.compiler.translate_call(ns, locals, expr.meta, expr)
+        return M.translate_call(ns, locals, expr.meta, expr)
     elseif etype == clue.Symbol then
-        return clue.compiler.translate_symbol(ns, locals, expr)
+        return M.translate_symbol(ns, locals, expr)
     elseif etype == clue.Keyword then
-        return clue.compiler.translate_keyword(ns, locals, expr)
+        return M.translate_keyword(ns, locals, expr)
     elseif etype == clue.Vector then
-        return clue.compiler.translate_vector(ns, locals, expr)
+        return M.translate_vector(ns, locals, expr)
     elseif etype == clue.Map then
-        return clue.compiler.translate_map(ns, locals, expr)
+        return M.translate_map(ns, locals, expr)
     elseif etype == "table" then
         return tostring(expr)
     else
@@ -597,22 +597,22 @@ function clue.compiler.translate_expr(ns, locals, expr)
     end
 end
 
-function clue.compiler.translate(exprs)
+function M.translate(exprs)
     local translated = {}
     local expr = clue.seq(exprs)
     while expr do
-        local t = clue.compiler.translate_expr(clue._ns_, clue.map(), expr:first())
+        local t = M.translate_expr(clue._ns_, clue.map(), expr:first())
     	table.insert(translated, t)
         expr = expr:next()
     end
     return table.concat(translated, ";\n")
 end
 
-function clue.compiler.compile(source)
-    return clue.compiler.translate(clue.reader.read(source))
+function M.compile(source)
+    return M.translate(clue.reader.read(source))
 end
 
-function clue.compiler.read_file(path)
+function M.read_file(path)
     local file = io.open(path, "rb")
     if not file then error("Cannot read file " .. path) end
     local content = file:read("*a")
@@ -620,9 +620,11 @@ function clue.compiler.read_file(path)
     return content
 end
 
-function clue.compiler.compile_file(filename)
+function M.compile_file(filename)
     clue._file_ = filename
-    local c = clue.compiler.compile(clue.compiler.read_file(filename))
+    local c = M.compile(M.read_file(filename))
     clue._file_ = nil
     return c
 end
+
+return clue.compiler

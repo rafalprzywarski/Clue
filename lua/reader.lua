@@ -1,6 +1,6 @@
+require 'clue'
 require 'core'
-
-clue = clue or {}
+require 'class'
 
 clue.class("ReadError")
 
@@ -28,21 +28,22 @@ function clue.ReadError:__tostring()
     return prefix .. self.message
 end
 
-clue.reader = clue.reader or {}
-clue.reader.nothing = clue.reader.nothing or {"nothing"}
-clue.reader.constants = {
+clue.reader = {}
+local M = clue.reader
+M.nothing = {"nothing"}
+M.constants = {
     ["true"] = true,
     ["false"] = false
 }
 
-clue.reader.COMMENT = ";"
-clue.reader.QUOTE = clue.symbol("quote")
-clue.reader.SYNTAX_QUOTE = clue.symbol("syntax-quote")
-clue.reader.UNQUOTE = clue.symbol("unquote")
-clue.reader.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
-clue.reader.VAR = clue.symbol("var")
+M.COMMENT = ";"
+M.QUOTE = clue.symbol("quote")
+M.SYNTAX_QUOTE = clue.symbol("syntax-quote")
+M.UNQUOTE = clue.symbol("unquote")
+M.UNQUOTE_SPLICING = clue.symbol("unquote-splicing")
+M.VAR = clue.symbol("var")
 
-function clue.reader.read_error(msg, source)
+function M.read_error(msg, source)
     local text = source("text")
     local pos = source("pos")
     local column, row
@@ -56,36 +57,36 @@ function clue.reader.read_error(msg, source)
     error(clue.ReadError.new(msg, clue._file_, row, column))
  end
 
-function clue.reader.number(value)
+function M.number(value)
     return {type = "number", value = value}
 end
 
-function clue.reader.string(value)
+function M.string(value)
     return {type = "string", value = value}
 end
 
-function clue.reader.symbol(value)
+function M.symbol(value)
     return {type = "symbol", value = value}
 end
 
-function clue.reader.keyword(value)
+function M.keyword(value)
     return {type = "keyword", value = value}
 end
 
-function clue.reader.is_space(c)
+function M.is_space(c)
     return c == " " or c == "," or c == "\t" or c == "\r" or c == "\n"
 end
 
-clue.reader.delimiters = clue.set("(", ")", "[", "]", "{", "}", "^", "\'", "`", "~")
+M.delimiters = clue.set("(", ")", "[", "]", "{", "}", "^", "\'", "`", "~")
 
-function clue.reader.is_delimiter(c)
-    return clue.reader.delimiters:at(c) ~= nil
+function M.is_delimiter(c)
+    return M.delimiters:at(c) ~= nil
 end
 
-function clue.reader.skip_comment(s)
+function M.skip_comment(s)
     local text = s("text")
     local pos = s("pos")
-    if text:sub(pos, pos) == clue.reader.COMMENT then
+    if text:sub(pos, pos) == M.COMMENT then
         for i = pos, text:len() do
             if text:sub(i, i) == "\n" then
                 return s:assoc("pos", i + 1)
@@ -96,11 +97,11 @@ function clue.reader.skip_comment(s)
     return s
 end
 
-function clue.reader.skip_space(s)
+function M.skip_space(s)
     local text = s("text")
     local pos = s("pos")
     for i = pos, text:len() do
-        if not clue.reader.is_space(text:sub(i, i)) then
+        if not M.is_space(text:sub(i, i)) then
             if i == pos then
                 return s
             end
@@ -110,54 +111,54 @@ function clue.reader.skip_space(s)
     return s:assoc("pos", text:len() + 1)
 end
 
-function clue.reader.skip_space_and_comments(s)
-    local skipped = clue.reader.skip_space(clue.reader.skip_comment(s))
+function M.skip_space_and_comments(s)
+    local skipped = M.skip_space(M.skip_comment(s))
     while skipped ~= s and skipped("pos") <= skipped("text"):len() do
         s = skipped
-        skipped = clue.reader.skip_space(clue.reader.skip_comment(s))
+        skipped = M.skip_space(M.skip_comment(s))
     end
     return skipped
 end
 
-function clue.reader.read_string(s)
+function M.read_string(s)
     local text = s("text")
     local pos = s("pos")
     for i = pos + 1, s("text"):len() do
         if text:sub(i, i) == "\"" then
-            return clue.reader.string(text:sub(pos + 1, i - 1)), s:assoc("pos", i + 1)
+            return M.string(text:sub(pos + 1, i - 1)), s:assoc("pos", i + 1)
         end
     end
-    clue.reader.read_error("missing closing \"", s:assoc("pos", text:len() + 1))
+    M.read_error("missing closing \"", s:assoc("pos", text:len() + 1))
 end
 
-function clue.reader.read_number(s)
+function M.read_number(s)
     local text = s("text")
     local pos = s("pos")
     local i = pos + 1
     while i <= text:len() and tonumber(text:sub(pos, i)) do
         i = i + 1
     end
-    return clue.reader.number(tonumber(text:sub(pos, i - 1))), s:assoc("pos", i)
+    return M.number(tonumber(text:sub(pos, i - 1))), s:assoc("pos", i)
 end
 
-function clue.reader.read_symbol(s)
+function M.read_symbol(s)
     local text = s("text")
     local pos = s("pos")
     for i = pos + 1, text:len() do
-        if clue.reader.is_space(text:sub(i, i)) or clue.reader.is_delimiter(text:sub(i, i)) or text:sub(i, i) == clue.reader.COMMENT then
-            return clue.reader.symbol(text:sub(pos, i - 1)), s:assoc("pos", i)
+        if M.is_space(text:sub(i, i)) or M.is_delimiter(text:sub(i, i)) or text:sub(i, i) == M.COMMENT then
+            return M.symbol(text:sub(pos, i - 1)), s:assoc("pos", i)
         end
     end
-    return clue.reader.symbol(text:sub(pos)), s:assoc("pos", text:len() + 1)
+    return M.symbol(text:sub(pos)), s:assoc("pos", text:len() + 1)
 end
 
-function clue.reader.read_keyword(s)
+function M.read_keyword(s)
     local sym
-    sym, s = clue.reader.read_symbol(s:assoc("pos", s("pos") + 1))
-    return clue.reader.keyword(sym.value), s
+    sym, s = M.read_symbol(s:assoc("pos", s("pos") + 1))
+    return M.keyword(sym.value), s
 end
 
-function clue.reader.split_by_slash(s)
+function M.split_by_slash(s)
     if s == "/" then
         return s
     end
@@ -168,23 +169,23 @@ function clue.reader.split_by_slash(s)
     return s:sub(1, slash - 1), s:sub(slash + 1)
 end
 
-function clue.reader.split_symbol(s)
-    return clue.symbol(clue.reader.split_by_slash(s.value))
+function M.split_symbol(s)
+    return clue.symbol(M.split_by_slash(s.value))
 end
 
-function clue.reader.split_keyword(s)
-    return clue.keyword(clue.reader.split_by_slash(s.value))
+function M.split_keyword(s)
+    return clue.keyword(M.split_by_slash(s.value))
 end
 
-function clue.reader.read_token(source)
-    local source = clue.reader.skip_space_and_comments(source)
+function M.read_token(source)
+    local source = M.skip_space_and_comments(source)
     local text = source("text")
     local pos = source("pos")
     local first = text:sub(pos, pos)
     if first == "" then
-        return clue.reader.nothing, source
+        return M.nothing, source
     end
-    if clue.reader.is_delimiter(first) or first == "#" then
+    if M.is_delimiter(first) or first == "#" then
         second = text:sub(pos + 1, pos + 1)
         if first == "~" and second == "@" then
             first = "~@"
@@ -193,39 +194,39 @@ function clue.reader.read_token(source)
         end
         return {type = "delimiter", value = first}, source:assoc("pos", pos + first:len())
     elseif first == "\"" then
-        return clue.reader.read_string(source)
+        return M.read_string(source)
     elseif first == ":" then
-        return clue.reader.read_keyword(source)
+        return M.read_keyword(source)
     elseif tonumber(first) then
-        return clue.reader.read_number(source)
+        return M.read_number(source)
     else
-        return clue.reader.read_symbol(source)
+        return M.read_symbol(source)
     end
 end
 
-function clue.reader.read_sequence(source, create, closing)
+function M.read_sequence(source, create, closing)
     local l = clue.vector()
-    local e, nsource = clue.reader.read_expression(source)
-    while e ~= clue.reader.nothing do
+    local e, nsource = M.read_expression(source)
+    while e ~= M.nothing do
         l:append(e)
         source = nsource
-        e, nsource = clue.reader.read_expression(source)
+        e, nsource = M.read_expression(source)
     end
 
-    local t, tsource = clue.reader.read_token(source)
-    if t == clue.reader.nothing then
-        clue.reader.read_error("expected " .. closing, tsource)
+    local t, tsource = M.read_token(source)
+    if t == M.nothing then
+        M.read_error("expected " .. closing, tsource)
     end
     if t.value ~= closing then
-        clue.reader.read_error("expected " .. closing .. " got " .. tostring(t.value), source)
+        M.read_error("expected " .. closing .. " got " .. tostring(t.value), source)
     end
     return create(l:unpack()), tsource
 end
 
-function clue.reader.read_expression(source)
-    local t, tsource = clue.reader.read_token(source)
-    if t == clue.reader.nothing then
-        return clue.reader.nothing, tsource
+function M.read_expression(source)
+    local t, tsource = M.read_token(source)
+    if t == M.nothing then
+        return M.nothing, tsource
     end
     if t.type == "number" then
         return t.value, tsource
@@ -234,38 +235,38 @@ function clue.reader.read_expression(source)
         return t.value, tsource
     end
     if t.type == "symbol" then
-        if clue.reader.constants[t.value] ~= nil then
-            return clue.reader.constants[t.value], tsource
+        if M.constants[t.value] ~= nil then
+            return M.constants[t.value], tsource
         end
         if t.value == "nil" then
             return nil, tsource
         end
-        return clue.reader.split_symbol(t), tsource
+        return M.split_symbol(t), tsource
     end
     if t.type == "keyword" then
-        return clue.reader.split_keyword(t), tsource
+        return M.split_keyword(t), tsource
     end
     if t.type == "delimiter" and t.value == ")" then
-        return clue.reader.nothing, tsource
+        return M.nothing, tsource
     end
     if t.type == "delimiter" and t.value == "(" then
-        return clue.reader.read_sequence(tsource, clue.list, ")")
+        return M.read_sequence(tsource, clue.list, ")")
     end
     if t.type == "delimiter" and t.value == "]" then
-        return clue.reader.nothing, tsource
+        return M.nothing, tsource
     end
     if t.type == "delimiter" and t.value == "[" then
-        return clue.reader.read_sequence(tsource, clue.vector, "]")
+        return M.read_sequence(tsource, clue.vector, "]")
     end
     if t.type == "delimiter" and t.value == "}" then
-        return clue.reader.nothing, tsource
+        return M.nothing, tsource
     end
     if t.type == "delimiter" and t.value == "{" then
-        return clue.reader.read_sequence(tsource, clue.map, "}")
+        return M.read_sequence(tsource, clue.map, "}")
     end
     if t.type == "delimiter" and t.value == "^" then
-        local meta, source = clue.reader.read_expression(tsource)
-        local value, source = clue.reader.read_expression(source)
+        local meta, source = M.read_expression(tsource)
+        local value, source = M.read_expression(source)
         if clue.type(meta) == clue.Keyword then
             meta = clue.map(meta, true)
         end
@@ -273,35 +274,35 @@ function clue.reader.read_expression(source)
         return value, source
     end
     if t.type == "delimiter" and t.value == "\'" then
-        local expr, source = clue.reader.read_expression(tsource)
-        return clue.list(clue.reader.QUOTE, expr), source
+        local expr, source = M.read_expression(tsource)
+        return clue.list(M.QUOTE, expr), source
     end
     if t.type == "delimiter" and t.value == "`" then
-        local expr, source = clue.reader.read_expression(tsource)
-        return clue.list(clue.reader.SYNTAX_QUOTE, expr), source
+        local expr, source = M.read_expression(tsource)
+        return clue.list(M.SYNTAX_QUOTE, expr), source
     end
     if t.type == "delimiter" and t.value == "~" then
-        local expr, source = clue.reader.read_expression(tsource)
-        return clue.list(clue.reader.UNQUOTE, expr), source
+        local expr, source = M.read_expression(tsource)
+        return clue.list(M.UNQUOTE, expr), source
     end
     if t.type == "delimiter" and t.value == "~@" then
-        local expr, source = clue.reader.read_expression(tsource)
-        return clue.list(clue.reader.UNQUOTE_SPLICING, expr), source
+        local expr, source = M.read_expression(tsource)
+        return clue.list(M.UNQUOTE_SPLICING, expr), source
     end
     if t.type == "delimiter" and t.value == "#'" then
-        local expr, source = clue.reader.read_expression(tsource)
-        return clue.list(clue.reader.VAR, expr), source
+        local expr, source = M.read_expression(tsource)
+        return clue.list(M.VAR, expr), source
     end
-    clue.reader.read_error("unexpected token: " .. t.value, source)
+    M.read_error("unexpected token: " .. t.value, source)
 end
 
-function clue.reader.read(source)
+function M.read(source)
     source = clue.map("text", source, "pos", 1)
     local es = clue.vector()
-    local e, source = clue.reader.read_expression(source)
-    while e ~= clue.reader.nothing do
+    local e, source = M.read_expression(source)
+    while e ~= M.nothing do
         es:append(e)
-        e, source = clue.reader.read_expression(source)
+        e, source = M.read_expression(source)
     end
     return es
 end
