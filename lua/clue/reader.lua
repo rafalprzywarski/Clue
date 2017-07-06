@@ -261,13 +261,13 @@ function M.read_expression(source)
         return M.nothing, tsource
     end
     if t.type == "delimiter" and t.value == "{" then
-        return M.read_sequence(tsource, clue.map, "}")
+        return M.read_sequence(tsource, clue.hash_map, "}")
     end
     if t.type == "delimiter" and t.value == "^" then
         local meta, source = M.read_expression(tsource)
         local value, source = M.read_expression(source)
         if clue.type(meta) == clue.Keyword then
-            meta = clue.map(meta, true)
+            meta = clue.hash_map(meta, true)
         end
         value.meta = meta:merge(value.meta)
         return value, source
@@ -296,7 +296,7 @@ function M.read_expression(source)
 end
 
 function M.read(source)
-    source = clue.map("text", source, "pos", 1)
+    source = clue.hash_map("text", source, "pos", 1)
     local es = clue.vector()
     local e, source = M.read_expression(source)
     while e ~= M.nothing do

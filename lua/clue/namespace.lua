@@ -4,8 +4,8 @@ local M = clue.class('Namespace')
 
 function M:init(name, aliases)
     self.name = name
-    self.vars = clue.map()
-    self.aliases = aliases or clue.map()
+    self.vars = clue.hash_map()
+    self.aliases = aliases or clue.hash_map()
 end
 
 function M:get(name)

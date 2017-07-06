@@ -8,7 +8,7 @@
 (def conj lua/clue.conj)
 (def list lua/clue.list)
 (def vector lua/clue.vector)
-(def hash-map lua/clue.map)
+(def hash-map lua/clue.hash_map)
 (def seq lua/clue.seq)
 (def vec lua/clue.vec)
 (def first lua/clue.first)
@@ -27,7 +27,7 @@
 
 (def type (fn [obj] (lua/clue.type obj)))
 (def instance? (fn [cls obj] (lua/clue.identical cls (type obj))))
-(def map? (fn [obj] (instance? lua/clue.Map obj)))
+(def map? (fn [obj] (instance? lua/clue.HashMap obj)))
 (def string? (fn [obj] (instance? "string" obj)))
 
 (def with-meta (fn [obj m] (. obj (with_meta m))))

@@ -96,25 +96,25 @@ t.describe("clue.core", {
             t.assert_false(clue.var("clue.core", "="):get()(1, clue.list(1)))
         end,
         ["maps"] = function()
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map(), clue.map()), true)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", 1), clue.map("a", 1)), true)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", 1), clue.map("b", 1)), false)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", 1), clue.map("a", 2)), false)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", 1, "b", 2), clue.map("a", 1, "b", 2)), true)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", 1, "b", 2), clue.map("a", "X", "b", 2)), false)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", 1, "b", 2), clue.map("a", 1, "b", "X")), false)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", 1, "b", 2), clue.map("a", 1, "X", 2)), false)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", clue.vector(1, 2), "b", 2), clue.map("a", clue.vector(1, 2), "b", 2)), true)
-            t.assert_equals(clue.var("clue.core", "="):get()(clue.map("a", clue.vector(1, 2), "b", 2), clue.map("a", clue.vector(1, "X"), "b", 2)), false)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map(), clue.hash_map()), true)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", 1), clue.hash_map("a", 1)), true)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", 1), clue.hash_map("b", 1)), false)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", 1), clue.hash_map("a", 2)), false)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", 1, "b", 2), clue.hash_map("a", 1, "b", 2)), true)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", 1, "b", 2), clue.hash_map("a", "X", "b", 2)), false)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", 1, "b", 2), clue.hash_map("a", 1, "b", "X")), false)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", 1, "b", 2), clue.hash_map("a", 1, "X", 2)), false)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", clue.vector(1, 2), "b", 2), clue.hash_map("a", clue.vector(1, 2), "b", 2)), true)
+            t.assert_equals(clue.var("clue.core", "="):get()(clue.hash_map("a", clue.vector(1, 2), "b", 2), clue.hash_map("a", clue.vector(1, "X"), "b", 2)), false)
         end,
         ["maps against other types (false)"] = function()
-            t.assert_false(clue.var("clue.core", "="):get()(clue.map(), nil))
-            t.assert_false(clue.var("clue.core", "="):get()(nil, clue.map()))
-            t.assert_false(clue.var("clue.core", "="):get()(clue.map(), "xxx"))
-            t.assert_false(clue.var("clue.core", "="):get()("xxx", clue.map()))
-            t.assert_false(clue.var("clue.core", "="):get()(clue.map(), 10))
-            t.assert_false(clue.var("clue.core", "="):get()(clue.map(), clue.list()))
-            t.assert_false(clue.var("clue.core", "="):get()(clue.list(), clue.map()))
+            t.assert_false(clue.var("clue.core", "="):get()(clue.hash_map(), nil))
+            t.assert_false(clue.var("clue.core", "="):get()(nil, clue.hash_map()))
+            t.assert_false(clue.var("clue.core", "="):get()(clue.hash_map(), "xxx"))
+            t.assert_false(clue.var("clue.core", "="):get()("xxx", clue.hash_map()))
+            t.assert_false(clue.var("clue.core", "="):get()(clue.hash_map(), 10))
+            t.assert_false(clue.var("clue.core", "="):get()(clue.hash_map(), clue.list()))
+            t.assert_false(clue.var("clue.core", "="):get()(clue.list(), clue.hash_map()))
         end,
         ["tables"] = function()
             t.assert_true(clue.var("clue.core", "="):get()({}, {}))
@@ -192,19 +192,19 @@ t.describe("clue.core", {
             t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.list(clue.list(2), 3, 4)), "((2) 3 4)")
         end,
         ["maps"] = function()
-            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.map()), "{}")
-            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.map(1, 2)), "{1 2}")
-            t.assert_equals_any(clue.var("clue.core", "pr-str"):get()(clue.map(1, 2, 3, 4, 5, 6)),
+            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.hash_map()), "{}")
+            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.hash_map(1, 2)), "{1 2}")
+            t.assert_equals_any(clue.var("clue.core", "pr-str"):get()(clue.hash_map(1, 2, 3, 4, 5, 6)),
                 "{1 2, 3 4, 5 6}", "{1 2, 5 6, 3 4}",
                 "{3 4, 1 2, 5 6}", "{3 4, 5 6, 1 2}",
                 "{5 6, 1 2, 3 4}", "{5 6, 3 4, 1 2}")
-            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.map(clue.map(1, 2), clue.map(3, 4))), "{{1 2} {3 4}}")
+            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.hash_map(clue.hash_map(1, 2), clue.hash_map(3, 4))), "{{1 2} {3 4}}")
         end,
         ["vars"] = function()
             t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.Var.new("ns", "some")), "#'ns/some")
         end,
         ["mixed structures"] = function()
-            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.vector(clue.list(clue.map(1, 2), "x"), nil, clue.symbol("N", "s"))), "[({1 2} \"x\") nil N/s]")
+            t.assert_equals(clue.var("clue.core", "pr-str"):get()(clue.vector(clue.list(clue.hash_map(1, 2), "x"), nil, clue.symbol("N", "s"))), "[({1 2} \"x\") nil N/s]")
         end,
         ["tables"] = function()
             t.assert_equals(clue.var("clue.core", "pr-str"):get()({}), "(lua-table)")
@@ -299,8 +299,8 @@ t.describe("clue.core", {
             t.assert_false(k1a == k2)
         end,
         ["should key maps when called"] = function()
-            ct.assert_equals(clue.keyword("key")(clue.map(clue.keyword("key"), 20)), 20)
-            ct.assert_equals(clue.keyword("key")(clue.map(clue.keyword("other"), 20)), nil)
+            ct.assert_equals(clue.keyword("key")(clue.hash_map(clue.keyword("key"), 20)), 20)
+            ct.assert_equals(clue.keyword("key")(clue.hash_map(clue.keyword("other"), 20)), nil)
         end
     },
     ["clue.nth"] = {

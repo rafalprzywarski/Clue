@@ -1,8 +1,8 @@
 require 'clue.class'
 
-clue.class("Map")
+local M = clue.class("HashMap")
 
-function clue.Map:init(...)
+function M:init(...)
     local values = {}
     local size = 0
     for i=1,select("#", ...),2 do
@@ -13,28 +13,28 @@ function clue.Map:init(...)
     self.size = size
 end
 
-function clue.Map:__call(k)
+function M:__call(k)
     local v = self.values[tostring(k)]
     return v and v.val
 end
 
-function clue.Map:at(k)
+function M:at(k)
     local v = self.values[tostring(k)]
     return v and v.val
 end
 
-function clue.Map:contains(k)
+function M:contains(k)
     return self.values[tostring(k)] ~= nil
 end
 
-function clue.Map:each(f)
+function M:each(f)
     for _,v in pairs(self.values) do
         f(v.key, v.val)
     end
 end
 
-function clue.Map:assoc(k,v)
-    local n = clue.map()
+function M:assoc(k,v)
+    local n = M.new()
     for k,v in pairs(self.values) do
         n.values[tostring(k)] = v
     end
@@ -46,8 +46,8 @@ function clue.Map:assoc(k,v)
     return n
 end
 
-function clue.Map:merge(other)
-    local n = clue.map()
+function M:merge(other)
+    local n = M.new()
     for k,v in pairs(self.values) do
         n.values[tostring(k)] = v
     end
@@ -64,8 +64,8 @@ function clue.Map:merge(other)
     return n
 end
 
-function clue.Map:equals(other)
-    if clue.type(other) ~= clue.Map then
+function M:equals(other)
+    if clue.type(other) ~= M then
         return false
     end
     for k,v in pairs(self.values) do
@@ -81,11 +81,11 @@ function clue.Map:equals(other)
     return true
 end
 
-function clue.Map:with_meta(m)
-    local wm = clue.Map.new()
+function M:with_meta(m)
+    local wm = M.new()
     wm.values = self.values
     wm.meta = m
     return wm
 end
 
-clue.map = clue.Map.new
+clue.hash_map = M.new

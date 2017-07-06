@@ -152,7 +152,7 @@ function M.syntax_quote(ns, expr)
             end
             s = clue.symbol(gname)
         else
-            local rs = M.resolve_symbol(ns, clue.map(), s)
+            local rs = M.resolve_symbol(ns, clue.hash_map(), s)
             if not rs then
                 rs = clue.symbol(s.ns or ns.name, s.name)
             end
@@ -161,7 +161,7 @@ function M.syntax_quote(ns, expr)
         return clue.list(M.QUOTE, s)
     end
     local function quote_map(ns, gens, m)
-        local q = clue.map()
+        local q = clue.hash_map()
         m:each(function(k, v) q = q:assoc(quote_expr(ns, gens, k), quote_expr(ns, gens, v)) end)
         return q
     end
@@ -176,7 +176,7 @@ function M.syntax_quote(ns, expr)
         if clue.type(expr) == clue.Vector then
             return quote_vector(ns, gens, expr)
         end
-        if clue.type(expr) == clue.Map then
+        if clue.type(expr) == clue.HashMap then
             return quote_map(ns, gens, expr)
         end
         return expr
@@ -196,9 +196,9 @@ M.special_forms = {
         local sym, value = clue.first(args), clue.second(args)
         local var = clue.Var.new(ns.name, sym.name):with_meta(sym.meta)
         ns:add(var)
-        local val = loadstring("return " .. M.translate_expr(ns, clue.map(), value))
+        local val = loadstring("return " .. M.translate_expr(ns, clue.hash_map(), value))
         var:reset(val())
-        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. M.translate_expr(ns, clue.map(), value) .. ", " .. M.translate_expr(nil, nil, sym.meta) .. ")"
+        return "clue.def(\"" .. ns.name .. "\", \"" .. sym.name .. "\", " .. M.translate_expr(ns, clue.hash_map(), value) .. ", " .. M.translate_expr(nil, nil, sym.meta) .. ")"
     end,
     var = function(ns, locals, meta, args)
         local sym = clue.first(args)
@@ -229,7 +229,7 @@ M.special_forms = {
     ns = function(ns, locals, meta, args)
         local sym, requires = clue.first(args), clue.second(args)
         local translated_reqs = ""
-        local aliases = clue.map()
+        local aliases = clue.hash_map()
         if requires then
             local reqs = {}
             requires = clue.seq(requires):next()
@@ -247,7 +247,7 @@ M.special_forms = {
                 table.insert(reqs, "\"" .. req_alias .. "\", \"" .. req_ns .. "\"")
                 requires = requires:next()
             end
-            translated_reqs = ", " .. "clue.map(" .. table.concat(reqs, ", ") .. ")"
+            translated_reqs = ", " .. "clue.hash_map(" .. table.concat(reqs, ", ") .. ")"
         end
         clue.ns(sym.name, aliases)
         return "clue.ns(\"" .. sym.name .. "\"" .. translated_reqs .. ")"
@@ -319,7 +319,7 @@ M.special_forms = {
             return clue.list(M.SYMBOL, s.ns, s.name)
         end
         local function quote_map(m)
-            local q = clue.map()
+            local q = clue.hash_map()
             m:each(function(k, v) q = q:assoc(quote_expr(k), quote_expr(v)) end)
             return q
         end
@@ -337,7 +337,7 @@ M.special_forms = {
             if clue.type(expr) == clue.Vector then
                 return quote_vector(expr)
             end
-            if clue.type(expr) == clue.Map then
+            if clue.type(expr) == clue.HashMap then
                 return quote_map(expr)
             end
             return expr
@@ -386,7 +386,7 @@ M.special_forms = {
             sigs = sigs:next()
             while sigs do
                 local sig = sigs:first()
-                local prefixed_fields = clue.map()
+                local prefixed_fields = clue.hash_map()
                 for _, f in ipairs(field_names) do
                     prefixed_fields = prefixed_fields:assoc(f, clue.first(clue.second(sig)).name .. "." .. f)
                 end
@@ -520,7 +520,7 @@ function M.translate_map(ns, locals, map)
     map:each(function(k, v)
         table.insert(translated, M.translate_expr(ns, locals, k) .. ", " .. M.translate_expr(ns, locals, v))
     end)
-    return "clue.map(" .. table.concat(translated, ", ").. ")" .. M.translate_meta(map.meta)
+    return "clue.hash_map(" .. table.concat(translated, ", ").. ")" .. M.translate_meta(map.meta)
 end
 
 function M.resolve_symbol(ns, locals, sym)
@@ -588,7 +588,7 @@ function M.translate_expr(ns, locals, expr)
         return M.translate_keyword(ns, locals, expr)
     elseif etype == clue.Vector then
         return M.translate_vector(ns, locals, expr)
-    elseif etype == clue.Map then
+    elseif etype == clue.HashMap then
         return M.translate_map(ns, locals, expr)
     elseif etype == "table" then
         return tostring(expr)
@@ -601,7 +601,7 @@ function M.translate(exprs)
     local translated = {}
     local expr = clue.seq(exprs)
     while expr do
-        local t = M.translate_expr(clue._ns_, clue.map(), expr:first())
+        local t = M.translate_expr(clue._ns_, clue.hash_map(), expr:first())
     	table.insert(translated, t)
         expr = expr:next()
     end

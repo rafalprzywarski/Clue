@@ -45,9 +45,9 @@ t.describe("clue.compiler", {
                 t.assert_equals(compile("[1 2 3 4]"), "clue.vector(1, 2, 3, 4)")
                 t.assert_equals(compile("[(hello) user.ns/x]"), "clue.vector(clue.var(\"user.ns\", \"hello\"):get()(), clue.var(\"user.ns\", \"x\"):get())")
             end,
-            ["maps into clue.map calls"] = function()
-                t.assert_equals(compile("{}"), "clue.map()")
-                t.assert_equals_any(compile("{3 4 1 2}"), "clue.map(1, 2, 3, 4)", "clue.map(3, 4, 1, 2)")
+            ["maps into clue.hash_map calls"] = function()
+                t.assert_equals(compile("{}"), "clue.hash_map()")
+                t.assert_equals_any(compile("{3 4 1 2}"), "clue.hash_map(1, 2, 3, 4)", "clue.hash_map(3, 4, 1, 2)")
             end,
             ["function definitions"] = {
                 ["with no parameters"] = function()
@@ -91,17 +91,17 @@ t.describe("clue.compiler", {
             },
             ["metadata"] = {
                 ["in vectors"] = function()
-                    t.assert_equals(compile("^:yes [1 2 3]"), "clue.vector(1, 2, 3):with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                    t.assert_equals(compile("^:yes [1 2 3]"), "clue.vector(1, 2, 3):with_meta(clue.hash_map(clue.keyword(\"yes\"), true))")
                 end,
                 ["in keywords"] = function()
-                    t.assert_equals(compile("^:yes :ok"), "clue.keyword(\"ok\"):with_meta(clue.map(clue.keyword(\"yes\"), true))")
-                    t.assert_equals(compile("^:yes :ss/ok"), "clue.keyword(\"ss\", \"ok\"):with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                    t.assert_equals(compile("^:yes :ok"), "clue.keyword(\"ok\"):with_meta(clue.hash_map(clue.keyword(\"yes\"), true))")
+                    t.assert_equals(compile("^:yes :ss/ok"), "clue.keyword(\"ss\", \"ok\"):with_meta(clue.hash_map(clue.keyword(\"yes\"), true))")
                 end,
                 ["in maps"] = function()
-                    t.assert_equals(compile("^:yes {1 2}"), "clue.map(1, 2):with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                    t.assert_equals(compile("^:yes {1 2}"), "clue.hash_map(1, 2):with_meta(clue.hash_map(clue.keyword(\"yes\"), true))")
                 end,
                 ["in fn"] = function()
-                    t.assert_equals(compile("^:yes (fn [& xs] nil)"), compile("(fn [& xs] nil)") .. ":with_meta(clue.map(clue.keyword(\"yes\"), true))")
+                    t.assert_equals(compile("^:yes (fn [& xs] nil)"), compile("(fn [& xs] nil)") .. ":with_meta(clue.hash_map(clue.keyword(\"yes\"), true))")
                 end,
                 ["but not function calls"] = function()
                     compile("(def print nil)")
@@ -111,7 +111,7 @@ t.describe("clue.compiler", {
             ["variable definitions"] = function()
                 t.assert_equals(compile("(def a 10)"), "clue.def(\"user.ns\", \"a\", 10, nil)")
                 t.assert_equals(compile("(def ready? (fn [& args] nil))"), "clue.def(\"user.ns\", \"ready?\", clue.fn(function(...) local args = clue.list(...); return nil end), nil)")
-                t.assert_equals(compile("(def ^:dynamic a 10)"), "clue.def(\"user.ns\", \"a\", 10, clue.map(clue.keyword(\"dynamic\"), true))")
+                t.assert_equals(compile("(def ^:dynamic a 10)"), "clue.def(\"user.ns\", \"a\", 10, clue.hash_map(clue.keyword(\"dynamic\"), true))")
             end,
             ["variable access"] = function()
                 compile("(def some nil) (ns other) (def some nil) (in-ns user.ns)")
@@ -149,13 +149,13 @@ t.describe("clue.compiler", {
                 ["with require"] = function()
                     t.save_global("clue.load_ns")
                     clue.load_ns = function() end
-                    t.assert_equals(compile("(ns user.core (:require org.some.xyz))"), "clue.ns(\"user.core\", clue.map(\"org.some.xyz\", \"org.some.xyz\"))")
-                    t.assert_equals(compile("(ns user.core (:require [org.some.xyz :as some]))"), "clue.ns(\"user.core\", clue.map(\"some\", \"org.some.xyz\"))")
-                    t.assert_equals(compile("(ns user.core (:require [org.some.xyz :as xyz] [org.some.abc :as other]))"), "clue.ns(\"user.core\", clue.map(\"xyz\", \"org.some.xyz\", \"other\", \"org.some.abc\"))")
+                    t.assert_equals(compile("(ns user.core (:require org.some.xyz))"), "clue.ns(\"user.core\", clue.hash_map(\"org.some.xyz\", \"org.some.xyz\"))")
+                    t.assert_equals(compile("(ns user.core (:require [org.some.xyz :as some]))"), "clue.ns(\"user.core\", clue.hash_map(\"some\", \"org.some.xyz\"))")
+                    t.assert_equals(compile("(ns user.core (:require [org.some.xyz :as xyz] [org.some.abc :as other]))"), "clue.ns(\"user.core\", clue.hash_map(\"xyz\", \"org.some.xyz\", \"other\", \"org.some.abc\"))")
                     compile("(ns org.some.xyz) (def f1 nil)")
                     t.assert_equals(compile(
                         "(ns user.core (:require [org.some.xyz :as some])) (some/f1)"),
-                        "clue.ns(\"user.core\", clue.map(\"some\", \"org.some.xyz\"));\n" ..
+                        "clue.ns(\"user.core\", clue.hash_map(\"some\", \"org.some.xyz\"));\n" ..
                         "clue.var(\"org.some.xyz\", \"f1\"):get()()")
                 end
             },
@@ -225,11 +225,11 @@ t.describe("clue.compiler", {
                 t.assert_equals(compile("lua/some"), "some")
             end,
             ["aliased"] = function()
-                t.assert_equals(compile("(ns user (:require [lua :as L])) L/some"), "clue.ns(\"user\", clue.map(\"L\", \"lua\"));\n" .. "some")
+                t.assert_equals(compile("(ns user (:require [lua :as L])) L/some"), "clue.ns(\"user\", clue.hash_map(\"L\", \"lua\"));\n" .. "some")
             end,
             ["but not lua aliases"] = function()
                 compile("(ns other) (def some nil)")
-                t.assert_equals(compile("(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", clue.map(\"lua\", \"other\"));\n" .. "clue.var(\"other\", \"some\"):get()")
+                t.assert_equals(compile("(ns user (:require [other :as lua])) lua/some"), "clue.ns(\"user\", clue.hash_map(\"lua\", \"other\"));\n" .. "clue.var(\"other\", \"some\"):get()")
             end
         },
         ["quote should"] = {
@@ -249,7 +249,7 @@ t.describe("clue.compiler", {
                     t.assert_equals(compile("'[1 (2 3) [4 (5 6) 7]]"), "clue.vector(1, clue.list(2, 3), clue.vector(4, clue.list(5, 6), 7))")
                 end,
                 ["inside maps"] = function()
-                    t.assert_equals_any(compile("'{1 (2 3) (4 5) (6 7)}"), "clue.map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
+                    t.assert_equals_any(compile("'{1 (2 3) (4 5) (6 7)}"), "clue.hash_map(1, clue.list(2, 3), clue.list(4, 5), clue.list(6, 7))", "'{1 (2 3) (4 5) (6 7)}", "clue.hash_map(clue.list(4, 5), clue.list(6, 7), 1, clue.list(2, 3))")
                 end
             },
             ["forward simple values"] = function()
@@ -283,8 +283,8 @@ t.describe("clue.compiler", {
                 ["inside maps"] = function()
                     t.assert_equals_any(
                         compile("`{1 (2 3) (4 5) (6 7)}"),
-                        "clue.map(1, clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(2), clue.list(3))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(4), clue.list(5))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(6), clue.list(7))))",
-                        "clue.map(clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(4), clue.list(5))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(6), clue.list(7))), 1, clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(2), clue.list(3))))")
+                        "clue.hash_map(1, clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(2), clue.list(3))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(4), clue.list(5))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(6), clue.list(7))))",
+                        "clue.hash_map(clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(4), clue.list(5))), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(6), clue.list(7))), 1, clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(2), clue.list(3))))")
                 end
             },
             ["forward simple values"] = function()
@@ -323,7 +323,7 @@ t.describe("clue.compiler", {
                 end,
                 ["symbols inside maps"] = function()
                     compile("(def a nil) (def b nil)")
-                    t.assert_equals_any(compile("`{a (b)}"), "clue.map(clue.symbol(\"user.ns\", \"a\"), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(clue.symbol(\"user.ns\", \"b\")))))")
+                    t.assert_equals_any(compile("`{a (b)}"), "clue.hash_map(clue.symbol(\"user.ns\", \"a\"), clue.var(\"clue.core\", \"seq\"):get()(clue.var(\"clue.core\", \"concat\"):get()(clue.list(clue.symbol(\"user.ns\", \"b\")))))")
                 end
             }
         },
@@ -361,11 +361,11 @@ t.describe("clue.compiler", {
             ["should convert suffix . to new"] = function()
                 compile("(def so.me nil)")
                 compile("(def some nil)")
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(so.me)")), read("(so.me)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(some.)")), read("(new some)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(some. a)")), read("(new some a)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(some. x y)")), read("(new some x y)"))
-                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.map(), nil, read("(user/some. x y)")), read("(new user/some x y)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.hash_map(), nil, read("(so.me)")), read("(so.me)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.hash_map(), nil, read("(some.)")), read("(new some)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.hash_map(), nil, read("(some. a)")), read("(new some a)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.hash_map(), nil, read("(some. x y)")), read("(new some x y)"))
+                ct.assert_equals(clue.compiler.expand_macro(clue._ns_, clue.hash_map(), nil, read("(user/some. x y)")), read("(new user/some x y)"))
             end
         },
         ["deftype"] = {

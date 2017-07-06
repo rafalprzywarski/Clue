@@ -90,11 +90,11 @@ t.describe("clue.reader", {
             },
             ["a map"] = {
                 ["empty"] = function()
-                    ct.assert_equals(clue.reader.read("{}"), clue.list(clue.map()))
+                    ct.assert_equals(clue.reader.read("{}"), clue.list(clue.hash_map()))
                 end,
                 ["of strings and numbers"] = function()
-                    ct.assert_equals(clue.reader.read("{1 2}"), clue.list(clue.map(1, 2)))
-                    ct.assert_equals(clue.reader.read("{1 2 \"x\" \"y\" 3 [1 2]}"), clue.list(clue.map(1, 2, "x", "y", 3, clue.vector(1, 2))))
+                    ct.assert_equals(clue.reader.read("{1 2}"), clue.list(clue.hash_map(1, 2)))
+                    ct.assert_equals(clue.reader.read("{1 2 \"x\" \"y\" 3 [1 2]}"), clue.list(clue.hash_map(1, 2, "x", "y", 3, clue.vector(1, 2))))
                 end
             },
             ["lists"] = function()
@@ -151,18 +151,18 @@ t.describe("clue.reader", {
             ["- map"] = function()
                 local form = clue.reader.read("^{:yes 22} [1 2 3]")
                 ct.assert_equals(form, clue.list(clue.vector(1, 2, 3)))
-                ct.assert_equals(form:first().meta, clue.map(clue.keyword("yes"), 22))
+                ct.assert_equals(form:first().meta, clue.hash_map(clue.keyword("yes"), 22))
             end,
             ["- keyword"] = function()
                 local form = clue.reader.read("^:some [1 2 3]")
                 ct.assert_equals(form, clue.list(clue.vector(1, 2, 3)))
-                ct.assert_equals(form:first().meta, clue.map(clue.keyword("some"), true))
+                ct.assert_equals(form:first().meta, clue.hash_map(clue.keyword("some"), true))
             end
         },
         ["should merge a sequence of metadata"] = function()
             local form = clue.reader.read("^{:some 22} ^:more ^:and_more ^{:more false} [1 2 3]")
             ct.assert_equals(form, clue.list(clue.vector(1, 2, 3)))
-            ct.assert_equals(form:first().meta, clue.map(clue.keyword("some"), 22, clue.keyword("more"), false, clue.keyword("and_more"), true))
+            ct.assert_equals(form:first().meta, clue.hash_map(clue.keyword("some"), 22, clue.keyword("more"), false, clue.keyword("and_more"), true))
         end,
         ["should convert ' to quote"] = function()
             ct.assert_equals(clue.reader.read("\'a"), clue.list(clue.list(clue.symbol("quote"), clue.symbol("a"))))

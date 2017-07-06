@@ -5,14 +5,14 @@ require 'clue.vector'
 require 'clue.list'
 require 'clue.cons'
 require 'clue.lazy_seq'
-require 'clue.map'
+require 'clue.hash_map'
 require 'clue.set'
 require 'clue.fn'
 require 'clue.var'
 require 'clue.namespace'
 require 'clue.protocol'
 
-clue.namespaces = clue.map("lua", {})
+clue.namespaces = clue.hash_map("lua", {})
 
 function clue.arg_count_error(n)
     error("Wrong number of args (" .. n .. ")")
@@ -97,7 +97,7 @@ function clue.vec(coll)
 end
 
 function clue.to_self_map(a)
-    local s = clue.map()
+    local s = clue.hash_map()
     for i=1,a.size do
         s = s:assoc(a[i], a[i])
     end
@@ -160,7 +160,7 @@ function clue.ns(name, aliases)
     if name ~= "clue.core" then
         ns:use(clue.namespaces:at("clue.core"))
     end
-    aliases = aliases or clue.map()
+    aliases = aliases or clue.hash_map()
     aliases:each(function(_, ref_ns)
         if not clue.namespaces:at(ref_ns) then
             clue.load_ns(ref_ns)
@@ -196,7 +196,7 @@ function clue.pr_str(value)
             end
             return op .. table.concat(t, " ") .. cp
         end
-        if clue.type(value) == clue.Map then
+        if clue.type(value) == clue.HashMap then
             local t = {}
             value:each(function(k,v) table.insert(t, clue.pr_str(k) .. " " .. clue.pr_str(v)) end)
             return "{" .. table.concat(t, ", ") .. "}"
@@ -289,8 +289,8 @@ function clue.equals(...)
                 if not table_equals(x, y) then
                     return false
                 end
-            elseif clue.type(x) ~= clue.Map then
-                if clue.type(y) == clue.Map or not seq_equals(x, y) then
+            elseif clue.type(x) ~= clue.HashMap then
+                if clue.type(y) == clue.HashMap or not seq_equals(x, y) then
                     return false
                 end
             else
