@@ -144,7 +144,9 @@
             (if s
                 (cons (f (first s)) (map f (rest s)))))))
 
-(defn pr [val] (lua/print (pr-str val)))
+(def *print* lua/print)
+
+(defn pr [val] (*print* (pr-str val)))
 
 
 (defmacro when
