@@ -1,6 +1,6 @@
 local t = require("ut")
 local ct = require("clue_ut")
-require("compiler")
+require("clue.compiler")
 
 local compile = clue.compiler.compile
 local read = function(e) return clue.reader.read(e):at(0) end

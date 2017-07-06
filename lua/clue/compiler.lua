@@ -1,5 +1,5 @@
-require 'core'
-require 'reader'
+require 'clue.core'
+require 'clue.reader'
 
 clue.compiler = {}
 local M = clue.compiler

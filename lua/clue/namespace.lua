@@ -1,4 +1,4 @@
-require 'class'
+require 'clue.class'
 
 local M = clue.class('Namespace')
 

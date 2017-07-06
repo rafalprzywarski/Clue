@@ -1,13 +1,13 @@
-require 'class'
+require 'clue.class'
 
-clue.class("Protocol")
+local M = clue.class("Protocol")
 
-function clue.Protocol:init(name)
+function M:init(name)
     self.name = name
     self.extended = clue.map()
 end
 
-function clue.Protocol:extend(type, methods)
+function M:extend(type, methods)
     type = tostring(type)
     methods:each(function(name, f)
         local methods = (self.extended(name.name) or clue.map()):assoc(type, f)

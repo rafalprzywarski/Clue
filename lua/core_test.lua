@@ -1,6 +1,6 @@
 local t = require("ut")
 local ct = require("clue_ut")
-require("compiler")
+require("clue.compiler")
 
 clue.load_ns("clue.core")
 

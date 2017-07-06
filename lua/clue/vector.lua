@@ -1,4 +1,4 @@
-require 'class'
+require 'clue.class'
 
 clue.class("Vector")
 

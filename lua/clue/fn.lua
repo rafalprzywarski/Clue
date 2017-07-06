@@ -1,30 +1,30 @@
-require 'class'
+require 'clue.class'
 
-clue.class("Fn")
+local M = clue.class("Fn")
 
-function clue.Fn:init(fn)
+function M:init(fn)
     self.fn = fn
 end
 
-function clue.Fn:__call(...)
+function M:__call(...)
     return self.fn(...)
 end
 
-function clue.Fn:__tostring()
+function M:__tostring()
     return tostring(self.fn)
 end
 
-function clue.Fn:__eq(other)
+function M:__eq(other)
     return self.fn == other.fn
 end
 
-function clue.Fn:with_meta(m)
-    local wm = clue.Fn.new(self.fn)
+function M:with_meta(m)
+    local wm = M.new(self.fn)
     wm.meta = m
     return wm
 end
 
-clue.fn = clue.Fn.new
+clue.fn = M.new
 
 function clue.apply_to(f, args)
     local function unpack_seq(s)

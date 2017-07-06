@@ -1,17 +1,17 @@
-require 'class'
+require 'clue.class'
 
-clue.class("Symbol")
+local M = clue.class("Symbol")
 
-function clue.Symbol:init(ns, name)
+function M:init(ns, name)
     self.ns = ns
     self.name = name
 end
 
-function clue.Symbol:__eq(other)
+function M:__eq(other)
     return self.ns == other.ns and self.name == other.name
 end
 
-function clue.Symbol:__tostring()
+function M:__tostring()
     local ns = self.ns
     if ns then
         return ns .. "/" .. self.name
@@ -19,8 +19,8 @@ function clue.Symbol:__tostring()
     return self.name
 end
 
-function clue.Symbol:with_meta(m)
-    local wm = clue.Symbol.new(self.ns, self.name)
+function M:with_meta(m)
+    local wm = M.new(self.ns, self.name)
     wm.meta = m
     return wm
 end
@@ -30,9 +30,9 @@ function clue.symbol(ns, name)
         name = ns
         ns = nil
     end
-    return clue.Symbol.new(ns, name)
+    return M.new(ns, name)
 end
 
 function clue.is_symbol(s)
-    return clue.type(s) == clue.Symbol
+    return clue.type(s) == M
 end

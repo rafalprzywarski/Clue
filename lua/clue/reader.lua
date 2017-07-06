@@ -1,6 +1,5 @@
-require 'clue'
-require 'core'
-require 'class'
+require 'clue.core'
+require 'clue.class'
 
 clue.class("ReadError")
 

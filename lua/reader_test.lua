@@ -1,6 +1,6 @@
 local t = require("ut")
 local ct = require("clue_ut")
-require("reader")
+require("clue.reader")
 
 local function assert_read_error(source, message, row, column)
     local ok, error = pcall(clue.reader.read, source)
