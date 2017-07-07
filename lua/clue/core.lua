@@ -364,6 +364,22 @@ function clue.op_mod(...)
     return s
 end
 
+function clue.op_less(...)
+    local n = select("#", ...)
+    if n < 1 then
+        clue.arg_count_error(n)
+    end
+    local prev = select(1, ...)
+    for i=2,n do
+        local cur = select(i, ...)
+        if not (prev < cur) then
+            return false
+        end
+        prev = cur
+    end
+    return true
+end
+
 function clue.new(type, ...)
     return type.new(...)
 end

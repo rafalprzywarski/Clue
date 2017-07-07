@@ -23,6 +23,7 @@
 (def / lua/clue.op_div)
 (def % lua/clue.op_mod)
 (def = lua/clue.equals)
+(def < lua/clue.op_less)
 (def merge (fn [m1 m2] (. m1 (merge m2))))
 
 (def type (fn [obj] (lua/clue.type obj)))
