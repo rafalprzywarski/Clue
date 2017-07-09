@@ -1,0 +1,15 @@
+(ns fib.core)
+
+(defn time [f]
+    (let [t0 (lua/os.clock)
+          v (f)
+          t1 (lua/os.clock)]
+         (pr v)
+         (lua/print (str "time: " (- t1 t0)))))
+
+(defn fib [n]
+    (if (pos? n)
+        (+ (fib (- n 1)) (fib (- n 2)))
+        1))
+
+(time (fn [] (fib 29)))
