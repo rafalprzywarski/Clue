@@ -123,6 +123,8 @@
 (defn dec [n] (- n 1))
 (defn inc [n] (+ n 1))
 (defn zero? [n] (= n 0))
+(defn pos? [n] (< 0 n))
+(defn neg? [n] (< n 0))
 
 (defn take [n coll]
     (cons
